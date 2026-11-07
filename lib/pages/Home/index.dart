@@ -4,6 +4,7 @@ import 'package:hm_shop/components/Home/HmHot.dart';
 import 'package:hm_shop/components/Home/HmMoreList.dart';
 import 'package:hm_shop/components/Home/HmSlider.dart';
 import 'package:hm_shop/components/Home/HmSuggestion.dart';
+import 'package:hm_shop/models/home.dart';
 
 class HomeView extends StatefulWidget {
   HomeView({Key? key}) : super(key: key);
@@ -13,10 +14,28 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
+  final List<BannerItem> _bannerList = [
+    BannerItem(
+      id: '1',
+      imageUrl:
+          'https://yjy-teach-oss.oss-cn-beijing.aliyuncs.com/meituan/1.jpg',
+    ),
+    BannerItem(
+      id: '2',
+      imageUrl:
+          'https://yjy-teach-oss.oss-cn-beijing.aliyuncs.com/meituan/2.png',
+    ),
+    BannerItem(
+      id: '3',
+      imageUrl:
+          'https://yjy-teach-oss.oss-cn-beijing.aliyuncs.com/meituan/3.jpg',
+    ),
+  ];
+
   List<Widget> _getScrollChildren() {
     return [
       // 轮播图
-      SliverToBoxAdapter(child: HmSlider()),
+      SliverToBoxAdapter(child: HmSlider(bannerList: _bannerList)),
       // 分类
       SliverToBoxAdapter(child: SizedBox(height: 10)),
       // 分类

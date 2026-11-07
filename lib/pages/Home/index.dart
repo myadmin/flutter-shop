@@ -16,6 +16,7 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   List<BannerItem> _bannerList = [];
+  List<CategoryItem> _categoryList = [];
 
   List<Widget> _getScrollChildren() {
     return [
@@ -24,7 +25,7 @@ class _HomeViewState extends State<HomeView> {
       // 间隔
       SliverToBoxAdapter(child: SizedBox(height: 10)),
       // 分类
-      SliverToBoxAdapter(child: HmCategory()),
+      SliverToBoxAdapter(child: HmCategory(categoryList: _categoryList)),
       // 间隔
       SliverToBoxAdapter(child: SizedBox(height: 10)),
       // 推荐
@@ -56,12 +57,22 @@ class _HomeViewState extends State<HomeView> {
   void initState() {
     super.initState();
     _getBannerList();
+    _getCategoryList();
   }
 
+  // 获取轮播图列表
   void _getBannerList() async {
     final bannerList = await getBannerListAPI();
     setState(() {
       _bannerList = bannerList;
+    });
+  }
+
+  // 获取分类列表
+  void _getCategoryList() async {
+    final categoryList = await getCategoryListAPI();
+    setState(() {
+      _categoryList = categoryList;
     });
   }
 

@@ -29,3 +29,40 @@ class BannerItem {
     return BannerItem(id: json['id'], imageUrl: json['imgUrl']);
   }
 }
+
+// 根据json编写class对象和工厂转化函数
+class CategoryItem {
+  String id;
+  String name;
+  String picture;
+  List<CategoryItem>? children;
+  List<CategoryItem>? goods;
+
+  CategoryItem({
+    required this.id,
+    required this.name,
+    required this.picture,
+    this.children,
+    this.goods,
+  });
+
+  // 工厂转化函数
+  factory CategoryItem.fromJson(Map<String, dynamic> json) {
+    // 必须返回CategoryItem对象，否则会报错
+    return CategoryItem(
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      picture: json['picture'] ?? '',
+      children: json['children'] == null
+          ? null
+          : (json['children'] as List)
+                .map((e) => CategoryItem.fromJson(e as Map<String, dynamic>))
+                .toList(),
+      goods: json['goods'] == null
+          ? null
+          : (json['goods'] as List)
+                .map((e) => CategoryItem.fromJson(e as Map<String, dynamic>))
+                .toList(),
+    );
+  }
+}

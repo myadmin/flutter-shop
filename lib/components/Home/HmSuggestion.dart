@@ -172,7 +172,6 @@ class _HmSuggestionState extends State<HmSuggestion> {
         padding: EdgeInsets.all(12), // 卡片四周内边距 12
         decoration: BoxDecoration(
           // 卡片装饰配置开始
-          color: Colors.blue, // 设置蓝色兜底背景色
           borderRadius: BorderRadius.circular(12), // 设置 12 的圆角
           image: DecorationImage(
             // 设置卡片背景图片

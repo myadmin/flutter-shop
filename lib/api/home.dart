@@ -19,3 +19,17 @@ Future<SpecialRecommendResult> getProductListAPI() async {
     await dioRequest.get(HttpConstants.productList) as Map<String, dynamic>,
   );
 }
+
+// 爆款推荐
+Future<SpecialRecommendResult> getInVogueListAPI() async {
+  return SpecialRecommendResult.fromJson(
+    await dioRequest.get(HttpConstants.inVogueList) as Map<String, dynamic>,
+  );
+}
+
+// 一站全买
+Future<SpecialRecommendResult> getOneStopListAPI() async {
+  return SpecialRecommendResult.fromJson(
+    await dioRequest.get(HttpConstants.oneStopList) as Map<String, dynamic>,
+  );
+}

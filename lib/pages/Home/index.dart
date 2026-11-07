@@ -17,7 +17,20 @@ class HomeView extends StatefulWidget {
 class _HomeViewState extends State<HomeView> {
   List<BannerItem> _bannerList = [];
   List<CategoryItem> _categoryList = [];
+  // 特惠推荐
   SpecialRecommendResult _specialRecommendResult = SpecialRecommendResult(
+    id: '',
+    title: '',
+    subTypes: [],
+  );
+  // 爆款推荐
+  SpecialRecommendResult _inVogueRecommendResult = SpecialRecommendResult(
+    id: '',
+    title: '',
+    subTypes: [],
+  );
+  // 一站全买
+  SpecialRecommendResult _oneStopRecommendResult = SpecialRecommendResult(
     id: '',
     title: '',
     subTypes: [],
@@ -34,19 +47,33 @@ class _HomeViewState extends State<HomeView> {
       // 间隔
       SliverToBoxAdapter(child: SizedBox(height: 10)),
       // 推荐
-      SliverToBoxAdapter(child: HmSuggestion(specialRecommendResult: _specialRecommendResult)),
+      SliverToBoxAdapter(
+        child: HmSuggestion(specialRecommendResult: _specialRecommendResult),
+      ),
       // 间隔
       SliverToBoxAdapter(child: SizedBox(height: 10)),
       // 爆款推荐
       SliverToBoxAdapter(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 10),
-          child: Flex(
-            direction: Axis.horizontal,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: HmHot()),
+              // 爆款推荐场景
+              Expanded(
+                child: HmHot(
+                  config: HmHotConfig.inVogue,
+                  result: _inVogueRecommendResult,
+                ),
+              ),
               SizedBox(width: 10),
-              Expanded(child: HmHot()),
+              // 一站全买场景
+              Expanded(
+                child: HmHot(
+                  config: HmHotConfig.oneStop,
+                  result: _oneStopRecommendResult,
+                ),
+              ),
             ],
           ),
         ),
@@ -61,9 +88,16 @@ class _HomeViewState extends State<HomeView> {
   @override
   void initState() {
     super.initState();
+    // 获取轮播图列表
     _getBannerList();
+    // 获取分类列表
     _getCategoryList();
+    // 获取特惠推荐列表
     _getSpecialRecommendList();
+    // 获取爆款推荐列表
+    _getVogueRecommendList();
+    // 获取一站全买列表
+    _getOneStopRecommendList();
   }
 
   // 获取轮播图列表
@@ -87,6 +121,22 @@ class _HomeViewState extends State<HomeView> {
     final specialRecommendResult = await getProductListAPI();
     setState(() {
       _specialRecommendResult = specialRecommendResult;
+    });
+  }
+
+  // 获取爆款推荐列表
+  void _getVogueRecommendList() async {
+    final inVogueRecommendResult = await getInVogueListAPI();
+    setState(() {
+      _inVogueRecommendResult = inVogueRecommendResult;
+    });
+  }
+
+  // 获取一站全买列表
+  void _getOneStopRecommendList() async {
+    final oneStopRecommendResult = await getOneStopListAPI();
+    setState(() {
+      _oneStopRecommendResult = oneStopRecommendResult;
     });
   }
 

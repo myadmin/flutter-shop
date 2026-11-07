@@ -15,23 +15,7 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  List<BannerItem> _bannerList = [
-    // BannerItem(
-    //   id: '1',
-    //   imageUrl:
-    //       'https://yjy-teach-oss.oss-cn-beijing.aliyuncs.com/meituan/1.jpg',
-    // ),
-    // BannerItem(
-    //   id: '2',
-    //   imageUrl:
-    //       'https://yjy-teach-oss.oss-cn-beijing.aliyuncs.com/meituan/2.png',
-    // ),
-    // BannerItem(
-    //   id: '3',
-    //   imageUrl:
-    //       'https://yjy-teach-oss.oss-cn-beijing.aliyuncs.com/meituan/3.jpg',
-    // ),
-  ];
+  List<BannerItem> _bannerList = [];
 
   List<Widget> _getScrollChildren() {
     return [

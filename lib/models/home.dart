@@ -1,6 +1,21 @@
 // https://yjy-teach-oss.oss-cn-beijing.aliyuncs.com/meituan/1.jpg
 // https://yjy-teach-oss.oss-cn-beijing.aliyuncs.com/meituan/2.png
 // https://yjy-teach-oss.oss-cn-beijing.aliyuncs.com/meituan/3.jpg
+// BannerItem(
+//   id: '1',
+//   imageUrl:
+//       'https://yjy-teach-oss.oss-cn-beijing.aliyuncs.com/meituan/1.jpg',
+// ),
+// BannerItem(
+//   id: '2',
+//   imageUrl:
+//       'https://yjy-teach-oss.oss-cn-beijing.aliyuncs.com/meituan/2.png',
+// ),
+// BannerItem(
+//   id: '3',
+//   imageUrl:
+//       'https://yjy-teach-oss.oss-cn-beijing.aliyuncs.com/meituan/3.jpg',
+// ),
 // https://meikou-api.itheima.net
 // https://meikou-api.itheima.net/home/banner
 

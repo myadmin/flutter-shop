@@ -18,6 +18,9 @@ class HmSuggestion extends StatefulWidget {
 
 class _HmSuggestionState extends State<HmSuggestion> {
   // 声明特惠推荐组件的状态类
+  // 商品图片的宽高比，宽度随可用空间自适应，避免固定宽度在窄屏下被挤压
+  static const double _imageAspectRatio = 100 / 140;
+
   List<GoodsItem> _getDisplayItems() {
     // 定义获取待展示商品的方法
     if (widget.specialRecommendResult.subTypes.isEmpty) {
@@ -72,20 +75,25 @@ class _HmSuggestionState extends State<HmSuggestion> {
   // 左侧结构
   Widget _buildLeft() {
     // 定义构建左侧活动图片的方法
-    return Container(
-      // 左侧活动图片容器
-      width: 100, // 容器宽度 100
-      height: 140, // 容器高度 140
-      decoration: BoxDecoration(
-        // 容器装饰配置开始
-        borderRadius: BorderRadius.circular(10), // 设置 10 的圆角
-        image: DecorationImage(
-          // 设置容器背景图片
-          image: AssetImage('lib/assets/home_cmd_inner.png'), // 加载本地活动图片资源
-          fit: BoxFit.cover, // 图片等比裁剪并铺满容器
-        ), // 结束背景图片配置
-      ), // 结束容器装饰配置
-    ); // 结束左侧活动图片容器
+    return ClipRRect(
+      // 按外层分配的宽度等比撑满，避免固定尺寸被挤压变形
+      borderRadius: BorderRadius.circular(8), // 设置 8 的圆角
+      child: AspectRatio(
+        // 用宽高比代替固定宽高，图片宽度由 Expanded 分配
+        aspectRatio: _imageAspectRatio, // 保持 100:140 的原始比例
+        child: Container(
+          // 左侧活动图片容器
+          decoration: BoxDecoration(
+            // 容器装饰配置开始
+            image: DecorationImage(
+              // 设置容器背景图片
+              image: AssetImage('lib/assets/home_cmd_inner.png'), // 加载本地活动图片资源
+              fit: BoxFit.cover, // 图片等比裁剪并铺满容器
+            ), // 结束背景图片配置
+          ), // 结束容器装饰配置
+        ), // 结束左侧活动图片容器
+      ), // 结束 AspectRatio
+    ); // 结束 ClipRRect
   } // 结束 _buildLeft 方法
 
   List<Widget> _getChildrenList() {
@@ -100,49 +108,52 @@ class _HmSuggestionState extends State<HmSuggestion> {
           ClipRRect(
             // 用圆角裁剪包裹商品图片
             borderRadius: BorderRadius.circular(8), // 设置 8 的圆角
-            child: Container(
-              // 商品图片外层容器
-              width: 100, // 容器宽度 100
-              height: 140, // 容器高度 140
-              color: Colors.white, // 设置白色背景，避免透明图片露出底色
-              child: Image.network(
-                // 加载商品网络图片
-                errorBuilder: (context, error, stackTrace) {
-                  // 图片加载失败时的回调
-                  return Image.asset(
-                    // 加载加载失败时的本地占位图
-                    'lib/assets/home_cmd_inner.png', // 本地占位图路径
-                    width: 100, // 占位图宽度 100
-                    height: 140, // 占位图高度 140
-                    fit: BoxFit.cover, // 占位图等比裁剪铺满
-                  ); // 结束占位图组件
-                }, // 结束图片加载失败回调
-                list[index].picture, // 当前商品的图片地址
-                width: 100, // 商品图片宽度 100
-                height: 140, // 商品图片高度 140
-                fit: BoxFit.cover, // 商品图片等比裁剪铺满
-              ), // 结束商品网络图片组件
-            ), // 结束商品图片外层容器
+            child: AspectRatio(
+              // 宽度跟随外层分配，高度按比例自动计算
+              aspectRatio: _imageAspectRatio, // 保持 100:140 的原始比例
+              child: Container(
+                // 商品图片外层容器
+                color: Colors.white, // 设置白色背景，避免透明图片露出底色
+                child: Image.network(
+                  // 加载商品网络图片
+                  errorBuilder: (context, error, stackTrace) {
+                    // 图片加载失败时的回调
+                    return Image.asset(
+                      // 加载加载失败时的本地占位图
+                      'lib/assets/home_cmd_inner.png', // 本地占位图路径
+                      fit: BoxFit.cover, // 占位图等比裁剪铺满
+                    ); // 结束占位图组件
+                  }, // 结束图片加载失败回调
+                  list[index].picture, // 当前商品的图片地址
+                  fit: BoxFit.cover, // 商品图片等比裁剪铺满
+                ), // 结束商品网络图片组件
+              ), // 结束商品图片外层容器
+            ), // 结束 AspectRatio
           ), // 结束 ClipRRect
           SizedBox(height: 10), // 商品图片与价格标签之间留 10 的间距
           Container(
             // 价格标签容器
             padding: EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 4,
-            ), // 左右内边距 10、上下内边距 4
+              horizontal: 6,
+              vertical: 3,
+            ), // 左右内边距 6、上下内边距 3
             decoration: BoxDecoration(
               // 价格标签装饰配置开始
               color: const Color.fromARGB(255, 244, 125, 98), // 设置橙红色背景
               borderRadius: BorderRadius.circular(10), // 设置 10 的圆角
             ), // 结束价格标签装饰配置
-            child: Text(
-              // 价格文字组件
-              "￥${list[index].price}元", // 拼接当前商品的价格文字
-              style: TextStyle(
-                color: Color.fromARGB(255, 255, 255, 255),
-              ), // 设置白色文字
-            ), // 结束价格文字组件
+            child: FittedBox(
+              // 价格过长时等比缩小，避免文字换行或溢出
+              fit: BoxFit.scaleDown,
+              child: Text(
+                // 价格文字组件
+                "￥${list[index].price}元", // 拼接当前商品的价格文字
+                maxLines: 1, // 价格固定单行展示
+                style: TextStyle(
+                  color: Color.fromARGB(255, 255, 255, 255),
+                ), // 设置白色文字
+              ), // 结束价格文字组件
+            ), // 结束 FittedBox
           ), // 结束价格标签容器
         ], // 结束商品内部子组件列表
       ); // 结束每个商品的 Column
@@ -178,14 +189,15 @@ class _HmSuggestionState extends State<HmSuggestion> {
             SizedBox(height: 10), // 标题与下方内容之间留 10 的间距
             Row(
               // 横向排列左侧活动图和右侧商品
+              crossAxisAlignment: CrossAxisAlignment.start, // 顶部对齐，避免左侧图片被垂直居中下移
+              spacing: 8, // 各图片之间留 8 的间距，避免贴在一起
               children: [
                 // Row 子组件列表开始
                 // 左侧图片与右侧商品均分空间，保证左右及中间间距一致
-                Expanded(child: Center(child: _buildLeft())), // 左侧活动图占一份空间并居中显示
+                Expanded(child: _buildLeft()), // 左侧活动图占一份空间
                 ..._getChildrenList().map(
                   // 将右侧商品组件展开到当前子组件列表中
-                  (child) =>
-                      Expanded(child: Center(child: child)), // 每个商品占一份空间并居中显示
+                  (child) => Expanded(child: child), // 每个商品占一份空间
                 ), // 结束右侧商品组件的展开
               ], // 结束 Row 子组件列表
             ), // 结束 Row

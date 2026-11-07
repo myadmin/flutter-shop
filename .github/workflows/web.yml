@@ -1,0 +1,38 @@
+# Web 打包工作流：在 master 推送、PR 或手动触发时构建 Web 产物，
+# 并上传构建结果，便于从 Actions 运行记录中下载。
+
+name: Build Web
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-web:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build web
+        run: flutter build web --release
+
+      - name: Upload web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hm-shop-web
+          path: build/web
+          if-no-files-found: error
+          retention-days: 14

@@ -101,4 +101,3 @@ flutter analyze
 - `HmMoreList` 商品列表为 10 条静态蓝色占位，分页接口尚未接入。
 - 轮播图、商品卡片点击暂未接入跳转详情或加入购物车逻辑；顶部搜索框为静态展示。
 - `test/widget_test.dart` 仍为计数器模板测试，与首页不匹配，`flutter test` 无法通过，需按首页交互重写。
-- `models/home.dart` 中的 `HotInVogue*`、`OneStop*` 为独立数据模型，首页当前统一使用 `SpecialRecommendResult`，尚未启用。

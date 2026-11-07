@@ -37,16 +37,17 @@ class _HomeViewState extends State<HomeView> {
     return [
       // 轮播图
       SliverToBoxAdapter(child: HmSlider(bannerList: _bannerList)),
-      // 分类
+      // 间隔
       SliverToBoxAdapter(child: SizedBox(height: 10)),
       // 分类
       SliverToBoxAdapter(child: HmCategory()),
-      // 推荐
+      // 间隔
       SliverToBoxAdapter(child: SizedBox(height: 10)),
       // 推荐
       SliverToBoxAdapter(child: HmSuggestion()),
-      // 爆款推荐
+      // 间隔
       SliverToBoxAdapter(child: SizedBox(height: 10)),
+      // 爆款推荐
       SliverToBoxAdapter(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 10),
@@ -60,16 +61,15 @@ class _HomeViewState extends State<HomeView> {
           ),
         ),
       ),
-      // 无限滚动列表
+      // 间隔
       SliverToBoxAdapter(child: SizedBox(height: 10)),
+      // 无限滚动列表
       HmMoreList(),
-      // 建议
     ];
   }
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _getBannerList();
   }

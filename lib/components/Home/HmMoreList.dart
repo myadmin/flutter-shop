@@ -16,6 +16,7 @@ class _HmMoreListState extends State<HmMoreList> {
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
       ),
+      itemCount: 10,
       itemBuilder: (BuildContext context, int index) {
         return Container(
           color: Colors.blue,

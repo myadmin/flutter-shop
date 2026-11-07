@@ -1,7 +1,10 @@
-# Web 打包工作流：在 master 推送、PR 或手动触发时构建 Web 产物，
-# 并上传构建结果，便于从 Actions 运行记录中下载。
+# Web 打包与部署工作流：
+# - push 到 master、PR 或手动触发时构建 Web 产物并上传 Artifact
+# - 仅 push 到 master 或手动触发（且处于 master 分支）时自动部署到 GitHub Pages
+#
+# 使用前提：仓库 Settings -> Pages -> Build and deployment -> Source 选择 "GitHub Actions"
 
-name: Build Web
+name: Build and Deploy Web
 
 on:
   push:
@@ -9,6 +12,15 @@ on:
   pull_request:
     branches: [ "master" ]
   workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   build-web:
@@ -26,8 +38,14 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
       - name: Build web
-        run: flutter build web --release
+        # 项目站点地址为 https://<owner>.github.io/<repo>/，需要匹配仓库名子路径
+        run: |
+          REPO_NAME="${GITHUB_REPOSITORY#*/}"
+          flutter build web --release --base-href "/${REPO_NAME}/"
 
       - name: Upload web artifact
         uses: actions/upload-artifact@v4
@@ -36,3 +54,22 @@ jobs:
           path: build/web
           if-no-files-found: error
           retention-days: 14
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    # PR 只构建不部署；仅 master 分支的 push 或手动触发会发布
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    needs: build-web
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

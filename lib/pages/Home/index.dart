@@ -17,6 +17,11 @@ class HomeView extends StatefulWidget {
 class _HomeViewState extends State<HomeView> {
   List<BannerItem> _bannerList = [];
   List<CategoryItem> _categoryList = [];
+  SpecialRecommendResult _specialRecommendResult = SpecialRecommendResult(
+    id: '',
+    title: '',
+    subTypes: [],
+  );
 
   List<Widget> _getScrollChildren() {
     return [
@@ -29,7 +34,7 @@ class _HomeViewState extends State<HomeView> {
       // 间隔
       SliverToBoxAdapter(child: SizedBox(height: 10)),
       // 推荐
-      SliverToBoxAdapter(child: HmSuggestion()),
+      SliverToBoxAdapter(child: HmSuggestion(specialRecommendResult: _specialRecommendResult)),
       // 间隔
       SliverToBoxAdapter(child: SizedBox(height: 10)),
       // 爆款推荐
@@ -58,6 +63,7 @@ class _HomeViewState extends State<HomeView> {
     super.initState();
     _getBannerList();
     _getCategoryList();
+    _getSpecialRecommendList();
   }
 
   // 获取轮播图列表
@@ -73,6 +79,14 @@ class _HomeViewState extends State<HomeView> {
     final categoryList = await getCategoryListAPI();
     setState(() {
       _categoryList = categoryList;
+    });
+  }
+
+  // 获取特惠推荐列表
+  void _getSpecialRecommendList() async {
+    final specialRecommendResult = await getProductListAPI();
+    setState(() {
+      _specialRecommendResult = specialRecommendResult;
     });
   }
 

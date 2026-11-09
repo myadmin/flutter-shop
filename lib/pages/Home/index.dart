@@ -49,6 +49,12 @@ class _HomeViewState extends State<HomeView> {
   ); // 一站全买数据初始化完成
   // 推荐列表
   List<GoodDetailItem> _recommendList = []; // 保存推荐列表数据初始化完成
+  // 页码
+  int _page = 1; // 当前页码，默认第一页
+  // 当前正在加载状态
+  bool _loading = false; // 默认不加载更多
+  // 是否还有下一页
+  bool _hasMore = true; // 默认还有下一页
 
   // 首页数据是否仍在加载
   bool _isLoading = true; // 为 true 时页面展示骨架屏
@@ -147,6 +153,8 @@ class _HomeViewState extends State<HomeView> {
         _getOneStopRecommendList(), // 一站全买请求
         // 获取推荐列表
         _getRecommendList(), // 推荐列表请求
+        // 注册事件
+        _registerEvent(), // 注册事件请求
       ]); // 所有请求完成
     } catch (e) {
       // 捕获接口异常
@@ -163,6 +171,19 @@ class _HomeViewState extends State<HomeView> {
       }
     }
   } // _loadHomeData 方法结束
+
+  // 监听滚动到底部的事件
+  Future<void> _registerEvent() async {
+    // 监听滚动到底部的事件
+    _scrollController.addListener(() {
+      // 滚动到底部时触发
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 50) {
+        // 加载下一页
+        _getRecommendList(); // 触发加载更多数据
+      }
+    });
+  } // _registerEvent 方法结束
 
   // 获取轮播图列表
   Future<void> _getBannerList() async {
@@ -216,16 +237,32 @@ class _HomeViewState extends State<HomeView> {
 
   // 获取推荐列表
   Future<void> _getRecommendList() async {
+    // 检查是否正在加载更多或没有更多数据
+    if (_loading || !_hasMore) {
+      // 正在加载更多，不重复请求
+      return;
+    }
+    // 设置加载状态为 true
+    _loading = true;
+    // 重置是否有下一页
+    _hasMore = true;
+    int limit = _page * 10;
     // 请求推荐列表数据
     final recommendList = await getRecommendListAPI({
-      "limit": 10,
+      "limit": limit,
     }); // 调用推荐列表接口获取数据
-    print('推荐列表数据: $recommendList'); // 打印推荐列表数据便于调试
-    setState(() {
-      // 请求成功后刷新界面
-      _recommendList = recommendList; // 更新推荐列表数据
-    });
+    // 请求成功后刷新界面
+    _recommendList = recommendList; // 更新推荐列表数据
+    // 设置加载状态为 false
+    _loading = false;
+    setState(() {});
+    // 检查是否有还有下一页
+    _hasMore = _recommendList.length >= limit; // 检查是否有还有下一页数据
+    // 增加页码
+    _page++;
   } // _getRecommendList 方法结束
+
+  final ScrollController _scrollController = ScrollController(); // 滚动控制器
 
   @override // 重写构建方法
   Widget build(BuildContext context) {
@@ -235,6 +272,9 @@ class _HomeViewState extends State<HomeView> {
       // 仍在加载中
       return const HomeSkeleton(); // 展示骨架屏占位
     }
-    return CustomScrollView(slivers: _getScrollChildren()); // 加载完成，渲染真实内容
+    return CustomScrollView(
+      controller: _scrollController, // 滚动控制器
+      slivers: _getScrollChildren(),
+    ); // 加载完成，渲染真实内容
   } // build 方法结束
 } // 状态类结束

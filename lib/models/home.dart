@@ -147,3 +147,28 @@ class GoodsItem {
     );
   }
 }
+
+class GoodDetailItem extends GoodsItem {
+  int payCount = 0;
+
+  GoodDetailItem({
+    required super.id,
+    required super.name,
+    required super.price,
+    required super.picture,
+    required super.orderNum,
+    required this.payCount,
+  }) : super(desc: "");
+
+  factory GoodDetailItem.fromJson(Map<String, dynamic> json) {
+    return GoodDetailItem(
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      // 接口返回的 price 可能是数字（如 69.9），统一转成字符串，避免类型转换异常
+      price: json['price']?.toString() ?? '',
+      picture: json['picture'] ?? '',
+      orderNum: int.tryParse(json["orderNum"]?.toString() ?? "0") ?? 0,
+      payCount: int.tryParse(json["payCount"]?.toString() ?? "0") ?? 0,
+    );
+  }
+}

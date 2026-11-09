@@ -17,4 +17,6 @@ class HttpConstants {
   static const String inVogueList = '/hot/inVogue';
   // 一站全买
   static const String oneStopList = '/hot/oneStop';
+  // 推荐列表
+  static const String recommendList = '/home/recommend';
 }

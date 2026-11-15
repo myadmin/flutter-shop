@@ -6,7 +6,8 @@ import 'package:hm_shop/components/Home/HmMoreList.dart'; // 引入首页无限�
 import 'package:hm_shop/components/Home/HmSlider.dart'; // 引入首页轮播图组件
 import 'package:hm_shop/components/Home/HmSuggestion.dart'; // 引入首页特惠推荐组件
 import 'package:hm_shop/models/home.dart'; // 引入首页数据模型
-import 'package:hm_shop/pages/Home/skeleton.dart'; // 引入首页骨架屏组件
+import 'package:hm_shop/pages/Home/skeleton.dart';
+import 'package:hm_shop/utils/ToastUtils.dart'; // 引入首页骨架屏组件
 
 /// 首页视图
 ///
@@ -132,10 +133,14 @@ class _HomeViewState extends State<HomeView> {
     super.initState(); // 调用父类初始化方法
     // 首次进入页面时加载首页数据
     _loadHomeData(); // 触发首页数据加载
+    // Future.microtask(() => _key.currentState?.show()); // 触发刷新指示器显示
   } // initState 方法结束
 
+  // initState > build 方法结束
+
   // 加载首页全部数据，全部完成后关闭骨架屏
-  Future<void> _loadHomeData() async {
+  Future<void> _loadHomeData({bool isRefresh = false}) async {
+    _paddingTop = 100; // 初始顶部内边距为 100，模拟骨架屏效果
     // 异步加载首页所有模块数据
     try {
       // 开始捕获接口异常
@@ -167,7 +172,10 @@ class _HomeViewState extends State<HomeView> {
         setState(() {
           // 通知框架刷新界面
           _isLoading = false; // 关闭骨架屏
+          _paddingTop = 0; // 顶部内边距恢复为 0，显示真实内容
+
         });
+        ToastUtils.showToast(context, '数据加载完成');
       }
     }
   } // _loadHomeData 方法结束
@@ -264,6 +272,11 @@ class _HomeViewState extends State<HomeView> {
 
   final ScrollController _scrollController = ScrollController(); // 滚动控制器
 
+  final GlobalKey<RefreshIndicatorState> _key =
+      GlobalKey<RefreshIndicatorState>(); // 刷新指示器键值对
+
+  double _paddingTop = 0; // 初始顶部内边距
+
   @override // 重写构建方法
   Widget build(BuildContext context) {
     // 构建页面内容
@@ -272,9 +285,17 @@ class _HomeViewState extends State<HomeView> {
       // 仍在加载中
       return const HomeSkeleton(); // 展示骨架屏占位
     }
-    return CustomScrollView(
-      controller: _scrollController, // 滚动控制器
-      slivers: _getScrollChildren(),
+    return RefreshIndicator(
+      key: _key, // 刷新指示器键值对
+      onRefresh: _loadHomeData, // 刷新数据
+      child: AnimatedContainer(
+        padding: EdgeInsets.only(top: _paddingTop),
+        duration: const Duration(milliseconds: 300),
+        child: CustomScrollView(
+          controller: _scrollController, // 滚动控制器
+          slivers: _getScrollChildren(),
+        ),
+      ),
     ); // 加载完成，渲染真实内容
   } // build 方法结束
 } // 状态类结束

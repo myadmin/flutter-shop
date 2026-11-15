@@ -16,24 +16,24 @@ class _HmMoreListState extends State<HmMoreList> {
   Widget _getChildren(int index) {
     final item = widget.recommendList[index];
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 上方：商品图片
-        ClipRRect(
+        // 上方：商品图片，占据文字区域之外的剩余高度，
+        // 避免窄屏（如 iPhone 12）下固定正方形图片把价格行挤出卡片造成溢出
+        Expanded(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8), // 图片圆角
-            child: AspectRatio(
-              aspectRatio: 1.0, // 图片宽度与高度的比例
-              child: Image.network(
-                item.picture, // 商品图片地址
-                fit: BoxFit.cover, // 等比裁剪铺满
-                errorBuilder: (context, error, stackTrace) {
-                  // 图片加载失败时展示本地占位图
-                  return Image.asset(
-                    'lib/assets/home_cmd_inner.png',
-                    fit: BoxFit.cover,
-                  );
-                },
-              ),
+            child: Image.network(
+              item.picture, // 商品图片地址
+              width: double.infinity,
+              fit: BoxFit.cover, // 等比裁剪铺满
+              errorBuilder: (context, error, stackTrace) {
+                // 图片加载失败时展示本地占位图
+                return Image.asset(
+                  'lib/assets/home_cmd_inner.png',
+                  fit: BoxFit.cover,
+                );
+              },
             ),
           ),
         ),
@@ -53,30 +53,38 @@ class _HmMoreListState extends State<HmMoreList> {
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 10),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             // 间距
             children: [
-              Text.rich(
-                TextSpan(
-                  text: '￥${item.price}',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black,
-                  ),
-                  children: [
-                    TextSpan(text: " "),
+              // 金额区域占满剩余宽度，价格过长时等比缩小，避免窄屏横向溢出
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text.rich(
                     TextSpan(
-                      text: item.price,
+                      text: '￥${item.price}',
                       style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                        decoration: TextDecoration.lineThrough,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black,
                       ),
+                      children: [
+                        TextSpan(text: " "),
+                        TextSpan(
+                          text: item.price,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                    maxLines: 1,
+                  ),
                 ),
               ),
+              SizedBox(width: 6), // 金额与付款人数之间的间距
               Text('${item.payCount}人付款', style: TextStyle(color: Colors.grey)),
             ],
           ),

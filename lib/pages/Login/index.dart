@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:hm_shop/api/user.dart';
+import 'package:hm_shop/stores/UserController.dart';
 import 'package:hm_shop/utils/ToastUtils.dart';
 
 class LoginPage extends StatefulWidget {
@@ -14,6 +16,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _agreed = false;
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _codeController = TextEditingController();
+  final UserController _userController = Get.find<UserController>();
 
   Widget _buildHeader() {
     return Text(
@@ -167,6 +170,7 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) {
         return;
       }
+      _userController.updateUserInfo(res);
       ToastUtils.showToast(context, '登录成功，欢迎 ${res.nickname}');
       Navigator.pop(context);
     } catch (e) {

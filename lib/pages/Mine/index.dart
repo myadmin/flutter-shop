@@ -1,8 +1,10 @@
+import 'package:get/get.dart';
 import 'package:hm_shop/api/mine.dart';
 import 'package:hm_shop/components/Home/HmMoreList.dart';
 import 'package:hm_shop/components/Mine/HmGuess.dart';
 import 'package:flutter/material.dart';
 import 'package:hm_shop/models/home.dart';
+import 'package:hm_shop/stores/UserController.dart';
 
 class MineView extends StatefulWidget {
   const MineView({super.key});
@@ -12,6 +14,10 @@ class MineView extends StatefulWidget {
 }
 
 class _MineViewState extends State<MineView> {
+  final UserController _userController = Get.put<UserController>(
+    UserController(),
+  );
+
   Widget _buildHeader() {
     return Container(
       decoration: const BoxDecoration(
@@ -24,24 +30,38 @@ class _MineViewState extends State<MineView> {
       padding: const EdgeInsets.only(left: 20, right: 40, top: 40, bottom: 20),
       child: Row(
         children: [
-          const CircleAvatar(
-            radius: 26,
-            backgroundImage: AssetImage("lib/assets/goods_avatar.png"),
-          ),
+          Obx(() {
+            return CircleAvatar(
+              radius: 26,
+              backgroundImage: _userController.user.value.avatar.isNotEmpty
+                  ? NetworkImage(_userController.user.value.avatar)
+                  : AssetImage("lib/assets/goods_avatar.png"),
+              backgroundColor: Colors.white,
+            );
+          }),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(context, '/login');
-                  },
-                  child: const Text(
-                    "登录",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
+                Obx(() {
+                  return GestureDetector(
+                    onTap: () {
+                      if (_userController.user.value.id.isEmpty) {
+                        Navigator.pushNamed(context, '/login');
+                      }
+                    },
+                    child: Text(
+                      _userController.user.value.id.isNotEmpty
+                          ? _userController.user.value.account
+                          : "立即登录",
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
+                }),
               ],
             ),
           ),
@@ -191,8 +211,8 @@ class _MineViewState extends State<MineView> {
     _isLoading = false;
     // _list = res.items;
     _list.addAll(res.items); // 合并数据
-     setState(() {});
-    if (_params['page']  >= res.pages) {
+    setState(() {});
+    if (_params['page'] >= res.pages) {
       _hasMore = false;
       return;
     }
@@ -211,7 +231,8 @@ class _MineViewState extends State<MineView> {
   void _registerEvent() {
     _controller.addListener(() {
       // 滚动逻辑
-      if (_controller.position.pixels <= _controller.position.maxScrollExtent - 50) {
+      if (_controller.position.pixels <=
+          _controller.position.maxScrollExtent - 50) {
         _getGuessList();
       }
     });

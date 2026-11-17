@@ -19,4 +19,6 @@ class HttpConstants {
   static const String oneStopList = '/hot/oneStop';
   // 推荐列表
   static const String recommendList = '/home/recommend';
-}
+  // 猜你喜欢
+  static const String guessList = '/home/goods/guessLike';
+ }

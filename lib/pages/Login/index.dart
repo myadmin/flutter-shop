@@ -1,4 +1,6 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:hm_shop/api/user.dart';
 import 'package:hm_shop/utils/ToastUtils.dart';
 
 class LoginPage extends StatefulWidget {
@@ -146,35 +148,81 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // 登录中状态
+  bool _isLogging = false;
+
+  // 登录
+  Future<void> _login() async {
+    if (_isLogging) {
+      return;
+    }
+    setState(() {
+      _isLogging = true;
+    });
+    try {
+      final res = await loginAPI({
+        'account': _phoneController.text,
+        'password': _codeController.text,
+      });
+      if (!mounted) {
+        return;
+      }
+      ToastUtils.showToast(context, '登录成功，欢迎 ${res.nickname}');
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+      ToastUtils.showToast(context, (e as DioException).message);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLogging = false;
+        });
+      }
+    }
+  }
+
   Widget _buildLoginButton() {
     return SizedBox(
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: () {
-          if (_formKey.currentState?.validate() == true) {
-            // 登录逻辑，需要判断勾选框逻辑
-            if (!_agreed) {
-              ToastUtils.showToast(context, '请勾选隐私条款和用户协议');
-              return;
-            }
-            ToastUtils.showToast(context, '登录成功');
-          }
-        },
+        onPressed: _isLogging
+            ? null
+            : () {
+                if (_formKey.currentState?.validate() == true) {
+                  // 登录逻辑，需要判断勾选框逻辑
+                  if (!_agreed) {
+                    ToastUtils.showToast(context, '请勾选隐私条款和用户协议');
+                  } else {
+                    _login();
+                  }
+                }
+              },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.black,
           foregroundColor: Colors.white,
           elevation: 0,
           shape: const StadiumBorder(),
         ),
-        child: const Text(
-          '登录',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        child: _isLogging
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : const Text(
+                '登录',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
       ),
     );
   }

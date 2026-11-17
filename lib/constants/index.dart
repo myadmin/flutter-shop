@@ -21,4 +21,6 @@ class HttpConstants {
   static const String recommendList = '/home/recommend';
   // 猜你喜欢
   static const String guessList = '/home/goods/guessLike';
+  // 登录
+  static const String login = '/login';
  }

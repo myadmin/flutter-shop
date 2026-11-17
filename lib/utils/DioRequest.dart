@@ -30,7 +30,13 @@ class DioRequest {
           );
         },
         onError: (error, handler) {
-          return handler.next(error);
+          // return handler.next(error);
+          return handler.reject(
+            DioException(
+              requestOptions: error.requestOptions,
+              message: error.response?.data['msg'] ?? " ",
+            ),
+          );
         },
       ),
     );
@@ -54,9 +60,14 @@ class DioRequest {
       if (data['code'] == GlobalConstants.successCode) {
         return data['result'];
       }
-      throw Exception(data['msg'] ?? '请求失败');
+      // throw Exception(data['msg'] ?? '请求失败');
+      throw DioException(
+        requestOptions: res.requestOptions,
+        message: data['msg'] ?? "加载数据失败",
+      );
     } catch (e) {
-      throw Exception(e.toString());
+      // throw Exception(e.toString());
+      rethrow;
     }
   }
 }

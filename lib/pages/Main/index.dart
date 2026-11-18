@@ -8,6 +8,30 @@ import 'package:hm_shop/pages/Mine/index.dart';
 import 'package:hm_shop/stores/TokenManager.dart';
 import 'package:hm_shop/stores/UserController.dart';
 
+// 定义 tabbar 数据
+final List<Map<String, String>> _tabList = [
+  {
+    'icon': 'lib/assets/ic_public_home_normal.png',
+    'activeIcon': 'lib/assets/ic_public_home_active.png',
+    'title': '首页',
+  },
+  {
+    'icon': 'lib/assets/ic_public_pro_normal.png',
+    'activeIcon': 'lib/assets/ic_public_pro_active.png',
+    'title': '分类',
+  },
+  {
+    'icon': 'lib/assets/ic_public_cart_normal.png',
+    'activeIcon': 'lib/assets/ic_public_cart_active.png',
+    'title': '购物车',
+  },
+  {
+    'icon': 'lib/assets/ic_public_my_normal.png',
+    'activeIcon': 'lib/assets/ic_public_my_active.png',
+    'title': '我的',
+  },
+];
+
 class MainPage extends StatefulWidget {
   MainPage({Key? key}) : super(key: key);
 
@@ -17,29 +41,6 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   final UserController _userController = Get.put(UserController());
-  // 定义 tabbar 数据
-  final List<Map<String, String>> _tabList = [
-    {
-      'icon': 'lib/assets/ic_public_home_normal.png',
-      'activeIcon': 'lib/assets/ic_public_home_active.png',
-      'title': '首页',
-    },
-    {
-      'icon': 'lib/assets/ic_public_pro_normal.png',
-      'activeIcon': 'lib/assets/ic_public_pro_active.png',
-      'title': '分类',
-    },
-    {
-      'icon': 'lib/assets/ic_public_cart_normal.png',
-      'activeIcon': 'lib/assets/ic_public_cart_active.png',
-      'title': '购物车',
-    },
-    {
-      'icon': 'lib/assets/ic_public_my_normal.png',
-      'activeIcon': 'lib/assets/ic_public_my_active.png',
-      'title': '我的',
-    },
-  ];
 
   // 底部渲染的tabbar items
   List<BottomNavigationBarItem> _getTabBarWidgets() {

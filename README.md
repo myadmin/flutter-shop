@@ -1,6 +1,6 @@
 # hm_shop
 
-基于 Flutter 的商城类 App 示例项目，采用「页面 / 组件 / API / 模型 / 状态」分层组织代码。当前已接入黑马 meikou 接口完成首页（轮播图、分类、特惠推荐、爆款推荐、一站全买、推荐列表分页）、登录页与「我的」页面（用户信息、会员卡、订单入口、猜你喜欢分页）；分类、购物车仍为占位页面。
+基于 Flutter 的商城类 App 示例项目，采用「页面 / 组件 / API / 模型 / 状态」分层组织代码。当前已接入黑马 meikou 接口完成首页（轮播图、分类、特惠推荐、爆款推荐、一站全买、推荐列表分页）、登录（含 token 持久化与请求鉴权）与「我的」页面（用户信息、会员卡、订单入口、退出登录、猜你喜欢分页）；分类、购物车仍为占位页面。
 
 ## 功能概览
 
@@ -19,6 +19,7 @@
 ### 我的
 
 - **用户信息头部**：展示头像与账号；未登录时显示「立即登录」，点击跳转 `/login`
+- **退出登录**：已登录时右上角显示「退出」，二次确认后清除本地 token 与用户信息
 - **会员卡片**：展示美荟商城会员开通入口（静态）
 - **快捷入口**：我的收藏、我的足迹、我的客服（静态）
 - **订单管理**：我的订单、待付款、待发货、待收货、待评价（静态）
@@ -28,13 +29,15 @@
 
 - **账号密码表单**：手机号与密码正则校验，密码为 6-16 位字母、数字、下划线
 - **协议勾选**：未勾选隐私条款 / 用户协议时拦截登录并 Toast 提示
-- **登录状态**：请求期间按钮禁用并展示 loading，成功后写入 `UserController` 并返回上一页，失败 Toast 展示错误信息
+- **登录状态**：请求期间展示 `LoadingDialog`，成功后写入 `UserController`、持久化 token 并返回上一页，失败 Toast 展示错误信息
 
 ### 其他
 
 - **底部导航**：首页 / 分类 / 购物车 / 我的，使用 `IndexedStack` 保持各页面状态
 - **状态管理**：GetX（`UserController` 保存登录用户信息，页面通过 `Obx` 响应式刷新）
+- **登录态管理**：`TokenManager` 基于 `shared_preferences` 持久化 token；应用启动时若已登录，自动请求 `/member/profile` 恢复用户信息；Dio 请求拦截器自动注入 `Authorization: Bearer <token>`
 - **网络层**：Dio 单例封装，统一超时、HTTP 状态拦截与业务状态码校验
+- **加载弹窗**：`LoadingDialog` 提供统一的加载中对话框（`show` / `hide`）
 - **Toast 工具**：`ToastUtils` 基于 `SnackBar`，宽度随文案自适应，并做 2 秒防重复弹出
 
 ## 技术栈
@@ -44,6 +47,7 @@
 | 框架 | Flutter（stable channel），Dart SDK `^3.13.7` |
 | 状态与路由 | `setState` + `MaterialApp` 命名路由 |
 | 状态管理 | [get](https://pub.dev/packages/get) `^4.7.3` |
+| 本地存储 | [shared_preferences](https://pub.dev/packages/shared_preferences) `^2.5.6` |
 | 轮播组件 | [carousel_slider](https://pub.dev/packages/carousel_slider) `^5.1.2` |
 | 网络请求 | [dio](https://pub.dev/packages/dio) `^5.11.1` |
 | 代码规范 | `flutter_lints` `^6.0.0` |
@@ -56,7 +60,7 @@ lib/
 ├── api/                    # 接口调用
 │   ├── home.dart           # 首页 6 个接口的请求函数
 │   ├── mine.dart           # 猜你喜欢分页接口
-│   └── user.dart           # 登录接口
+│   └── user.dart           # 登录 / 用户信息接口
 ├── components/
 │   ├── Home/               # 首页业务组件
 │   │   ├── HmSlider.dart   # 轮播图 + 搜索框 + 指示点
@@ -80,9 +84,12 @@ lib/
 │   ├── Mine/index.dart     # 我的：用户信息、会员卡、订单、猜你喜欢
 │   └── Login/index.dart    # 登录页
 ├── routes/index.dart       # 路由与根 Widget
-├── stores/UserController.dart # GetX 用户状态（登录信息）
+├── stores/
+│   ├── TokenManager.dart   # token 本地持久化（shared_preferences）
+│   └── UserController.dart # GetX 用户状态（登录用户信息）
 ├── utils/
-│   ├── DioRequest.dart     # Dio 单例封装
+│   ├── DioRequest.dart     # Dio 单例封装（自动注入 token）
+│   ├── LoadingDialog.dart  # 统一加载中对话框
 │   └── ToastUtils.dart     # 自适应宽度 Toast
 ├── assets/                 # 底部导航图标、我的页图标、首页活动图等资源
 └── main.dart               # 程序入口
@@ -111,6 +118,7 @@ lib/
 | GET | `/home/recommend` | 推荐列表，`limit` 控制返回数量，滚动加载时递增 |
 | GET | `/home/goods/guessLike` | 猜你喜欢分页列表，参数 `page`、`pageSize`，映射为 `GoodsDetailsItems` |
 | POST | `/login` | 账号密码登录，返回用户信息（含 `token`），映射为 `UserInfo` |
+| GET | `/member/profile` | 获取当前登录用户信息（携带 token），映射为 `UserInfo` |
 
 ## 快速开始
 
@@ -130,5 +138,5 @@ flutter analyze
 - 分类、购物车页面仅为占位文本，功能尚未开发。
 - 轮播图、商品卡片点击暂未接入详情页或加入购物车逻辑；顶部搜索框为静态展示。
 - 我的页面会员卡、快捷入口、订单管理暂未接入交互。
-- 登录状态仅保存在内存中的 `UserController`，未做本地持久化，也未在请求头中注入 `token`。
+- token 失效（如 401）暂未做统一拦截处理，需手动退出后重新登录。
 - `test/widget_test.dart` 仍为计数器模板测试（仅引入 `HomeView`），与首页不匹配，`flutter test` 无法通过，需按首页交互重写。

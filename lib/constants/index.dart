@@ -3,6 +3,7 @@ class GlobalConstants {
   static const String baseUrl = 'https://meikou-api.itheima.net';
   static const int timeout = 10;
   static const String successCode = '1';
+  static const String tokenKey = 'hm_shop_token';
 }
 
 // 请求接口地址常量
@@ -23,4 +24,6 @@ class HttpConstants {
   static const String guessList = '/home/goods/guessLike';
   // 登录
   static const String login = '/login';
+  // 用户信息
+  static const String userProfile = '/member/profile';
  }

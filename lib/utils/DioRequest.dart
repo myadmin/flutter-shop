@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:hm_shop/constants/index.dart';
+import 'package:hm_shop/stores/TokenManager.dart';
 
 class DioRequest {
   final _dio = Dio();
@@ -19,6 +20,12 @@ class DioRequest {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (request, handler) {
+          // 注入token
+          if (tokenManager.getToken().isNotEmpty) {
+            request.headers = {
+              'Authorization': 'Bearer ${tokenManager.getToken()}',
+            };
+          }
           return handler.next(request);
         },
         onResponse: (response, handler) {
@@ -52,7 +59,7 @@ class DioRequest {
     return await _handleResponse(_dio.post(url, data: data));
   }
 
-  // 处理响应数据F
+  // 处理响应数据
   Future<dynamic> _handleResponse(Future<Response<dynamic>> task) async {
     try {
       Response<dynamic> res = await task;

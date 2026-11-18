@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hm_shop/api/user.dart';
+import 'package:hm_shop/stores/TokenManager.dart';
 import 'package:hm_shop/stores/UserController.dart';
 import 'package:hm_shop/utils/ToastUtils.dart';
 
@@ -173,6 +174,7 @@ class _LoginPageState extends State<LoginPage> {
       _userController.updateUserInfo(res);
       ToastUtils.showToast(context, '登录成功，欢迎 ${res.nickname}');
       Navigator.pop(context);
+      await tokenManager.setToken(res.token);
     } catch (e) {
       if (!mounted) {
         return;

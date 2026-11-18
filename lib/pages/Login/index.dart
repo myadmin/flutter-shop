@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:hm_shop/api/user.dart';
 import 'package:hm_shop/stores/TokenManager.dart';
 import 'package:hm_shop/stores/UserController.dart';
+import 'package:hm_shop/utils/LoadingDialog.dart';
 import 'package:hm_shop/utils/ToastUtils.dart';
 
 class LoginPage extends StatefulWidget {
@@ -157,13 +158,8 @@ class _LoginPageState extends State<LoginPage> {
 
   // 登录
   Future<void> _login() async {
-    if (_isLogging) {
-      return;
-    }
-    setState(() {
-      _isLogging = true;
-    });
     try {
+      LoadingDialog.show(context, message: "努力登录中");
       final res = await loginAPI({
         'account': _phoneController.text,
         'password': _codeController.text,
@@ -182,9 +178,7 @@ class _LoginPageState extends State<LoginPage> {
       ToastUtils.showToast(context, (e as DioException).message);
     } finally {
       if (mounted) {
-        setState(() {
-          _isLogging = false;
-        });
+        LoadingDialog.hide(context);
       }
     }
   }

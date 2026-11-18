@@ -12,7 +12,7 @@ class MineView extends StatefulWidget {
   const MineView({super.key});
 
   @override
-  _MineViewState createState() => _MineViewState();
+  State<MineView> createState() => _MineViewState();
 }
 
 class _MineViewState extends State<MineView> {

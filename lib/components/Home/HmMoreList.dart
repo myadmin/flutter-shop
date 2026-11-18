@@ -1,20 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:hm_shop/models/home.dart';
 
-class HmMoreList extends StatefulWidget {
+class HmMoreList extends StatelessWidget {
   // 推荐列表数据
   final List<GoodDetailItem> recommendList;
   // 构造函数，透传推荐列表数据
-  const HmMoreList({Key? key, required this.recommendList}) : super(key: key);
+  const HmMoreList({super.key, required this.recommendList});
 
-  @override
-  _HmMoreListState createState() => _HmMoreListState();
-}
-
-class _HmMoreListState extends State<HmMoreList> {
   // 获取推荐列表项
   Widget _getChildren(int index) {
-    final item = widget.recommendList[index];
+    final item = recommendList[index];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -37,21 +32,21 @@ class _HmMoreListState extends State<HmMoreList> {
             ),
           ),
         ),
-        SizedBox(height: 6), // 图片与标题之间的间距
+        const SizedBox(height: 6), // 图片与标题之间的间距
         // 中间：商品标题，最多展示两行，超出省略
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Text(
             item.name,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 14, color: Colors.black),
+            style: const TextStyle(fontSize: 14, color: Colors.black),
           ),
         ),
-        SizedBox(height: 6), // 标题与价格行之间的间距
+        const SizedBox(height: 6), // 标题与价格行之间的间距
         // 下方：左右布局，左侧金额，右侧付款人数
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Row(
             // 间距
             children: [
@@ -63,29 +58,18 @@ class _HmMoreListState extends State<HmMoreList> {
                   child: Text.rich(
                     TextSpan(
                       text: '￥${item.price}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
                         color: Colors.black,
                       ),
-                      children: [
-                        TextSpan(text: " "),
-                        TextSpan(
-                          text: item.price,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                            decoration: TextDecoration.lineThrough,
-                          ),
-                        ),
-                      ],
                     ),
                     maxLines: 1,
                   ),
                 ),
               ),
-              SizedBox(width: 6), // 金额与付款人数之间的间距
-              Text('${item.payCount}人付款', style: TextStyle(color: Colors.grey)),
+              const SizedBox(width: 6), // 金额与付款人数之间的间距
+              Text('${item.payCount}人付款', style: const TextStyle(color: Colors.grey)),
             ],
           ),
         ),
@@ -96,16 +80,16 @@ class _HmMoreListState extends State<HmMoreList> {
   @override
   Widget build(BuildContext context) {
     return SliverGrid.builder(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
         childAspectRatio: 0.78, // 卡片宽高比，数值越大格子越矮、行间空白越小
       ),
-      itemCount: widget.recommendList.length,
+      itemCount: recommendList.length,
       itemBuilder: (BuildContext context, int index) {
         return Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           child: _getChildren(index),
         );
       },

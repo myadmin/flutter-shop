@@ -5,10 +5,10 @@ import 'package:hm_shop/models/home.dart';
 class HmSlider extends StatefulWidget {
   final List<BannerItem> bannerList;
 
-  HmSlider({Key? key, required this.bannerList}) : super(key: key);
+  const HmSlider({super.key, required this.bannerList});
 
   @override
-  _HmSliderState createState() => _HmSliderState();
+  State<HmSlider> createState() => _HmSliderState();
 }
 
 class _HmSliderState extends State<HmSlider> {
@@ -26,6 +26,19 @@ class _HmSliderState extends State<HmSlider> {
           widget.bannerList[index].imageUrl,
           fit: BoxFit.cover,
           width: screenWidth,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              color: Colors.grey.shade200,
+              width: screenWidth,
+              height: 300,
+              alignment: Alignment.center,
+              child: const Icon(
+                Icons.broken_image_outlined,
+                size: 48,
+                color: Colors.grey,
+              ),
+            );
+          },
         );
       }),
       options: CarouselOptions(

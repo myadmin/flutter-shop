@@ -1,29 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:hm_shop/models/home.dart';
 
-class HmCategory extends StatefulWidget {
+class HmCategory extends StatelessWidget {
   final List<CategoryItem> categoryList;
 
-  HmCategory({Key? key, required this.categoryList}) : super(key: key);
+  const HmCategory({super.key, required this.categoryList});
 
-  @override
-  _HmCategoryState createState() => _HmCategoryState();
-}
-
-class _HmCategoryState extends State<HmCategory> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 100,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: widget.categoryList.length,
+        itemCount: categoryList.length,
         itemBuilder: (BuildContext context, int index) {
-          final category = widget.categoryList[index];
+          final category = categoryList[index];
           return Container(
             width: 80,
             height: 100,
-            margin: EdgeInsets.symmetric(horizontal: 10),
+            margin: const EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
               color: const Color.fromARGB(255, 235, 234, 234),
               borderRadius: BorderRadius.circular(40),
@@ -31,10 +26,21 @@ class _HmCategoryState extends State<HmCategory> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.network(category.picture, width: 40, height: 40),
+                Image.network(
+                  category.picture,
+                  width: 40,
+                  height: 40,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(
+                      Icons.category_outlined,
+                      size: 32,
+                      color: Colors.grey,
+                    );
+                  },
+                ),
                 Text(
                   category.name,
-                  style: TextStyle(fontSize: 12, color: Colors.black),
+                  style: const TextStyle(fontSize: 12, color: Colors.black),
                 ),
               ],
             ),

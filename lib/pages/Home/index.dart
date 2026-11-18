@@ -7,7 +7,6 @@ import 'package:hm_shop/components/Home/HmSlider.dart'; // 引入首页轮播图
 import 'package:hm_shop/components/Home/HmSuggestion.dart'; // 引入首页特惠推荐组件
 import 'package:hm_shop/models/home.dart'; // 引入首页数据模型
 import 'package:hm_shop/pages/Home/skeleton.dart';
-import 'package:hm_shop/utils/ToastUtils.dart'; // 引入首页骨架屏组件
 
 /// 首页视图
 ///
@@ -15,10 +14,10 @@ import 'package:hm_shop/utils/ToastUtils.dart'; // 引入首页骨架屏组件
 /// 加载期间展示骨架屏，加载完成后渲染真实内容。
 class HomeView extends StatefulWidget {
   // 首页视图组件
-  HomeView({Key? key}) : super(key: key); // 构造函数，透传 key
+  const HomeView({super.key}); // 构造函数，透传 key
 
   @override // 重写创建状态对象的方法
-  _HomeViewState createState() => _HomeViewState(); // 返回首页状态实例
+  State<HomeView> createState() => _HomeViewState(); // 返回首页状态实例
 } // HomeView 类结束
 
 class _HomeViewState extends State<HomeView> {

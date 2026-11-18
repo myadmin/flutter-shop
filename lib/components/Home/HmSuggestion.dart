@@ -1,35 +1,27 @@
 import 'package:flutter/material.dart'; // 引入 Flutter 的 Material UI 组件库
 import 'package:hm_shop/models/home.dart'; // 引入首页数据模型（特惠推荐相关类）
 
-class HmSuggestion extends StatefulWidget {
-  // 声明特惠推荐组件，继承有状态组件
+class HmSuggestion extends StatelessWidget {
+  // 声明特惠推荐组件，继承无状态组件
   // 特惠推荐结果
   final SpecialRecommendResult specialRecommendResult; // 保存接口返回的特惠推荐数据
 
   const HmSuggestion({
-    Key? key,
+    super.key,
     required this.specialRecommendResult,
-  }) // 构造函数，接收必填的特惠推荐数据
-  : super(key: key); // 调用父类构造函数并传递 key
+  }); // 构造函数，接收必填的特惠推荐数据
 
-  @override // 重写创建状态对象的方法
-  _HmSuggestionState createState() => _HmSuggestionState(); // 创建对应的状态对象
-} // 结束 HmSuggestion 类
-
-class _HmSuggestionState extends State<HmSuggestion> {
-  // 声明特惠推荐组件的状态类
   // 商品图片的宽高比，宽度随可用空间自适应，避免固定宽度在窄屏下被挤压
   static const double _imageAspectRatio = 100 / 140;
 
   List<GoodsItem> _getDisplayItems() {
     // 定义获取待展示商品的方法
-    if (widget.specialRecommendResult.subTypes.isEmpty) {
+    if (specialRecommendResult.subTypes.isEmpty) {
       // 判断子类型列表是否为空
       return []; // 为空时返回空列表
     } // 结束空数据判断
 
-    return widget
-        .specialRecommendResult
+    return specialRecommendResult
         .subTypes
         .first
         .goodsItems
@@ -205,4 +197,4 @@ class _HmSuggestionState extends State<HmSuggestion> {
       ), // 结束特惠推荐卡片容器
     ); // 结束外层 Padding
   } // 结束 build 方法
-} // 结束 _HmSuggestionState 类
+} // 结束 HmSuggestion 类

@@ -8,10 +8,10 @@ import 'package:hm_shop/utils/LoadingDialog.dart';
 import 'package:hm_shop/utils/ToastUtils.dart';
 
 class LoginPage extends StatefulWidget {
-  LoginPage({Key? key}) : super(key: key);
+  const LoginPage({super.key});
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
@@ -173,11 +173,12 @@ class _LoginPageState extends State<LoginPage> {
       }
       _userController.updateUserInfo(res);
       await tokenManager.setToken(res.token);
+      if (!mounted) {
+        return;
+      }
       LoadingDialog.hide(context); // 先关闭加载对话框
       ToastUtils.showToast(context, '登录成功，欢迎 ${res.nickname}');
-      if (mounted) {
-        Navigator.pop(context); // 再返回上一页
-      }
+      Navigator.pop(context); // 再返回上一页
     } catch (e) {
       if (!mounted) {
         return;

@@ -59,9 +59,12 @@ class _MainPageState extends State<MainPage> {
 
   int _currentIndex = 0;
 
-  List<Widget> _getChildren() {
-    return [HomeView(), CategoryView(), CartView(), MineView()];
-  }
+  late final List<Widget> _children = [
+    HomeView(),
+    CategoryView(),
+    CartView(),
+    MineView(),
+  ];
 
   @override
   void initState() {
@@ -74,8 +77,14 @@ class _MainPageState extends State<MainPage> {
   Future<void> _initUser() async {
     await tokenManager.init();
     if (tokenManager.getToken().isNotEmpty) {
-      // 已登录，获取用户信息
-      _userController.updateUserInfo(await getUserInfoAPI());
+      try {
+        final userInfo = await getUserInfoAPI();
+        _userController.updateUserInfo(userInfo);
+      } catch (e) {
+        debugPrint('恢复登录态失败，清除本地失效token: $e');
+        await tokenManager.removeToken();
+        _userController.updateUserInfo(UserInfo.fromJson({}));
+      }
     }
   }
 
@@ -83,7 +92,7 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: IndexedStack(index: _currentIndex, children: _getChildren()),
+        child: IndexedStack(index: _currentIndex, children: _children),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,

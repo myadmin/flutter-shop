@@ -39,4 +39,6 @@ class UserInfo {
     provinceCode: json['provinceCode'] ?? '',
     profession: json['profession'] ?? '',
   );
+
+  bool get isLoggedIn => id.isNotEmpty;
 }

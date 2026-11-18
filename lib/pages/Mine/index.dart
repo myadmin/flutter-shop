@@ -19,7 +19,7 @@ class _MineViewState extends State<MineView> {
   final UserController _userController = Get.find();
 
   Widget _getLogout() {
-    return _userController.user.value.avatar.isNotEmpty
+    return _userController.user.value.isLoggedIn
         ? GestureDetector(
             onTap: () {
               showDialog(
@@ -91,13 +91,15 @@ class _MineViewState extends State<MineView> {
                 Obx(() {
                   return GestureDetector(
                     onTap: () {
-                      if (_userController.user.value.id.isEmpty) {
+                      if (!_userController.user.value.isLoggedIn) {
                         Navigator.pushNamed(context, '/login');
                       }
                     },
                     child: Text(
-                      _userController.user.value.id.isNotEmpty
-                          ? _userController.user.value.account
+                      _userController.user.value.isLoggedIn
+                          ? (_userController.user.value.nickname.isNotEmpty
+                              ? _userController.user.value.nickname
+                              : _userController.user.value.account)
                           : "立即登录",
                       style: const TextStyle(
                         fontSize: 18,

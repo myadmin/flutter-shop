@@ -162,28 +162,31 @@ class _LoginPageState extends State<LoginPage> {
 
   // 登录
   Future<void> _login() async {
+    LoadingDialog.show(context, message: "努力登录中");
     try {
-      LoadingDialog.show(context, message: "努力登录中");
       final res = await loginAPI({
-        'account': _phoneController.text,
+        'account': _phoneController.text.trim(),
         'password': _codeController.text,
       });
       if (!mounted) {
         return;
       }
       _userController.updateUserInfo(res);
-      ToastUtils.showToast(context, '登录成功，欢迎 ${res.nickname}');
-      Navigator.pop(context);
       await tokenManager.setToken(res.token);
+      LoadingDialog.hide(context); // 先关闭加载对话框
+      ToastUtils.showToast(context, '登录成功，欢迎 ${res.nickname}');
+      if (mounted) {
+        Navigator.pop(context); // 再返回上一页
+      }
     } catch (e) {
       if (!mounted) {
         return;
       }
-      ToastUtils.showToast(context, (e as DioException).message);
-    } finally {
-      if (mounted) {
-        LoadingDialog.hide(context);
-      }
+      LoadingDialog.hide(context); // 登录失败时仅关闭加载弹窗，保留在登录页
+      final errorMsg = e is DioException
+          ? (e.message ?? '登录失败')
+          : '网络或服务异常，请稍后重试';
+      ToastUtils.showToast(context, errorMsg);
     }
   }
 

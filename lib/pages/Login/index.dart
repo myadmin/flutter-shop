@@ -20,6 +20,13 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _codeController = TextEditingController();
   final UserController _userController = Get.find<UserController>();
 
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _codeController.dispose();
+    super.dispose();
+  }
+
   Widget _buildHeader() {
     return Text(
       '账号密码登录',

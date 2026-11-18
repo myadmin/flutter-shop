@@ -131,58 +131,45 @@ class _HomeViewState extends State<HomeView> {
   void initState() {
     // 页面首次创建时执行
     super.initState(); // 调用父类初始化方法
+    _registerEvent(); // 仅注册一次滚动监听
     // 首次进入页面时加载首页数据
     _loadHomeData(); // 触发首页数据加载
-    // Future.microtask(() => _key.currentState?.show()); // 触发刷新指示器显示
   } // initState 方法结束
 
-  // initState > build 方法结束
+  @override
+  void dispose() {
+    _scrollController.dispose(); // 释放滚动控制器，防止内存泄漏
+    super.dispose();
+  }
 
   // 加载首页全部数据，全部完成后关闭骨架屏
-  Future<void> _loadHomeData({bool isRefresh = false}) async {
+  Future<void> _loadHomeData() async {
     _paddingTop = 100; // 初始顶部内边距为 100，模拟骨架屏效果
     // 异步加载首页所有模块数据
     try {
-      // 开始捕获接口异常
+      // 并行请求各模块数据，每个子模块独立捕获异常
       await Future.wait([
-        // 并行等待所有请求完成
-        // 获取轮播图列表
         _getBannerList(), // 轮播图请求
-        // 获取分类列表
         _getCategoryList(), // 分类请求
-        // 获取特惠推荐列表
         _getSpecialRecommendList(), // 特惠推荐请求
-        // 获取爆款推荐列表
         _getVogueRecommendList(), // 爆款推荐请求
-        // 获取一站全买列表
         _getOneStopRecommendList(), // 一站全买请求
-        // 获取推荐列表
-        _getRecommendList(), // 推荐列表请求
-        // 注册事件
-        _registerEvent(), // 注册事件请求
-      ]); // 所有请求完成
+        _getRecommendList(isRefresh: true), // 推荐列表首次或刷新请求
+      ]);
     } catch (e) {
-      // 捕获接口异常
-      // 某个接口失败时不影响其余模块展示
-      debugPrint('首页数据加载失败: $e'); // 输出错误日志便于排查问题
+      debugPrint('首页数据加载失败: $e');
     } finally {
-      // 无论成功失败都会执行
       if (mounted) {
-        // 页面仍挂载时才更新状态
         setState(() {
-          // 通知框架刷新界面
           _isLoading = false; // 关闭骨架屏
           _paddingTop = 0; // 顶部内边距恢复为 0，显示真实内容
-
         });
-        ToastUtils.showToast(context, '数据加载完成');
       }
     }
   } // _loadHomeData 方法结束
 
   // 监听滚动到底部的事件
-  Future<void> _registerEvent() async {
-    // 监听滚动到底部的事件
+  void _registerEvent() {
     _scrollController.addListener(() {
       // 滚动到底部时触发
       if (_scrollController.position.pixels >=
@@ -195,79 +182,95 @@ class _HomeViewState extends State<HomeView> {
 
   // 获取轮播图列表
   Future<void> _getBannerList() async {
-    // 请求轮播图数据
-    final bannerList = await getBannerListAPI(); // 调用轮播图接口获取数据
-    setState(() {
-      // 请求成功后刷新界面
-      _bannerList = bannerList; // 更新轮播图数据
-    });
+    try {
+      final bannerList = await getBannerListAPI();
+      if (!mounted) return;
+      setState(() {
+        _bannerList = bannerList;
+      });
+    } catch (e) {
+      debugPrint('获取轮播图失败: $e');
+    }
   } // _getBannerList 方法结束
 
   // 获取分类列表
   Future<void> _getCategoryList() async {
-    // 请求分类入口数据
-    final categoryList = await getCategoryListAPI(); // 调用分类接口获取数据
-    setState(() {
-      // 请求成功后刷新界面
-      _categoryList = categoryList; // 更新分类入口数据
-    });
+    try {
+      final categoryList = await getCategoryListAPI();
+      if (!mounted) return;
+      setState(() {
+        _categoryList = categoryList;
+      });
+    } catch (e) {
+      debugPrint('获取分类列表失败: $e');
+    }
   } // _getCategoryList 方法结束
 
   // 获取特惠推荐列表
   Future<void> _getSpecialRecommendList() async {
-    // 请求特惠推荐数据
-    final specialRecommendResult = await getProductListAPI(); // 调用特惠推荐接口获取数据
-    setState(() {
-      // 请求成功后刷新界面
-      _specialRecommendResult = specialRecommendResult; // 更新特惠推荐数据
-    });
+    try {
+      final specialRecommendResult = await getProductListAPI();
+      if (!mounted) return;
+      setState(() {
+        _specialRecommendResult = specialRecommendResult;
+      });
+    } catch (e) {
+      debugPrint('获取特惠推荐失败: $e');
+    }
   } // _getSpecialRecommendList 方法结束
 
   // 获取爆款推荐列表
   Future<void> _getVogueRecommendList() async {
-    // 请求爆款推荐数据
-    final inVogueRecommendResult = await getInVogueListAPI(); // 调用爆款推荐接口获取数据
-    setState(() {
-      // 请求成功后刷新界面
-      _inVogueRecommendResult = inVogueRecommendResult; // 更新爆款推荐数据
-    });
+    try {
+      final inVogueRecommendResult = await getInVogueListAPI();
+      if (!mounted) return;
+      setState(() {
+        _inVogueRecommendResult = inVogueRecommendResult;
+      });
+    } catch (e) {
+      debugPrint('获取爆款推荐失败: $e');
+    }
   } // _getVogueRecommendList 方法结束
 
   // 获取一站全买列表
   Future<void> _getOneStopRecommendList() async {
-    // 请求一站全买数据
-    final oneStopRecommendResult = await getOneStopListAPI(); // 调用一站全买接口获取数据
-    setState(() {
-      // 请求成功后刷新界面
-      _oneStopRecommendResult = oneStopRecommendResult; // 更新一站全买数据
-    });
+    try {
+      final oneStopRecommendResult = await getOneStopListAPI();
+      if (!mounted) return;
+      setState(() {
+        _oneStopRecommendResult = oneStopRecommendResult;
+      });
+    } catch (e) {
+      debugPrint('获取一站全买失败: $e');
+    }
   } // _getOneStopRecommendList 方法结束
 
   // 获取推荐列表
-  Future<void> _getRecommendList() async {
-    // 检查是否正在加载更多或没有更多数据
-    if (_loading || !_hasMore) {
-      // 正在加载更多，不重复请求
+  Future<void> _getRecommendList({bool isRefresh = false}) async {
+    if (_loading || (!_hasMore && !isRefresh)) {
       return;
     }
-    // 设置加载状态为 true
     _loading = true;
-    // 重置是否有下一页
-    _hasMore = true;
+    if (isRefresh) {
+      _page = 1;
+      _hasMore = true;
+    }
     int limit = _page * 10;
-    // 请求推荐列表数据
-    final recommendList = await getRecommendListAPI({
-      "limit": limit,
-    }); // 调用推荐列表接口获取数据
-    // 请求成功后刷新界面
-    _recommendList = recommendList; // 更新推荐列表数据
-    // 设置加载状态为 false
-    _loading = false;
-    setState(() {});
-    // 检查是否有还有下一页
-    _hasMore = _recommendList.length >= limit; // 检查是否有还有下一页数据
-    // 增加页码
-    _page++;
+    try {
+      final recommendList = await getRecommendListAPI({
+        "limit": limit,
+      });
+      if (!mounted) return;
+      setState(() {
+        _recommendList = recommendList;
+        _hasMore = recommendList.length >= limit;
+      });
+      _page++;
+    } catch (e) {
+      debugPrint('获取推荐列表失败: $e');
+    } finally {
+      _loading = false;
+    }
   } // _getRecommendList 方法结束
 
   final ScrollController _scrollController = ScrollController(); // 滚动控制器

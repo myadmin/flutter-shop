@@ -276,6 +276,12 @@ class _MineViewState extends State<MineView> {
     _registerEvent();
   }
 
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   final ScrollController _controller = ScrollController();
 
   void _registerEvent() {

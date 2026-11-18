@@ -1,12 +1,12 @@
 import 'package:get/get.dart';
 import 'package:hm_shop/api/mine.dart';
-import 'package:hm_shop/components/Home/HmMoreList.dart';
-import 'package:hm_shop/components/Mine/HmGuess.dart';
+import 'package:hm_shop/components/Home/hm_more_list.dart';
+import 'package:hm_shop/components/Mine/hm_guess.dart';
 import 'package:flutter/material.dart';
 import 'package:hm_shop/models/home.dart';
 import 'package:hm_shop/models/user.dart';
-import 'package:hm_shop/stores/TokenManager.dart';
-import 'package:hm_shop/stores/UserController.dart';
+import 'package:hm_shop/stores/token_manager.dart';
+import 'package:hm_shop/stores/user_controller.dart';
 
 class MineView extends StatefulWidget {
   const MineView({super.key});

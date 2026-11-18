@@ -6,8 +6,8 @@ import 'package:hm_shop/pages/Cart/index.dart';
 import 'package:hm_shop/pages/Category/index.dart';
 import 'package:hm_shop/pages/Home/index.dart';
 import 'package:hm_shop/pages/Mine/index.dart';
-import 'package:hm_shop/stores/TokenManager.dart';
-import 'package:hm_shop/stores/UserController.dart';
+import 'package:hm_shop/stores/token_manager.dart';
+import 'package:hm_shop/stores/user_controller.dart';
 
 // 定义 tabbar 数据
 final List<Map<String, String>> _tabList = [

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hm_shop/components/Home/HmHot.dart';
+import 'package:hm_shop/components/Home/hm_hot.dart';
 import 'package:hm_shop/models/home.dart';
 import 'package:hm_shop/models/user.dart';
 import 'package:hm_shop/pages/Home/skeleton.dart';

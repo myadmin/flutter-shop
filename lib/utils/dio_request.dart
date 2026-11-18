@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:hm_shop/constants/index.dart';
-import 'package:hm_shop/stores/TokenManager.dart';
+import 'package:hm_shop/stores/token_manager.dart';
 
 class DioRequest {
   final _dio = Dio();

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart'; // 引入 Flutter 基础 UI 组件库
 import 'package:hm_shop/api/home.dart'; // 引入首页数据请求接口
-import 'package:hm_shop/components/Home/HmCategory.dart'; // 引入首页分类入口组件
-import 'package:hm_shop/components/Home/HmHot.dart'; // 引入首页爆款推荐组件
-import 'package:hm_shop/components/Home/HmMoreList.dart'; // 引入首页无限滚动列表组件
-import 'package:hm_shop/components/Home/HmSlider.dart'; // 引入首页轮播图组件
-import 'package:hm_shop/components/Home/HmSuggestion.dart'; // 引入首页特惠推荐组件
+import 'package:hm_shop/components/Home/hm_category.dart'; // 引入首页分类入口组件
+import 'package:hm_shop/components/Home/hm_hot.dart'; // 引入首页爆款推荐组件
+import 'package:hm_shop/components/Home/hm_more_list.dart'; // 引入首页无限滚动列表组件
+import 'package:hm_shop/components/Home/hm_slider.dart'; // 引入首页轮播图组件
+import 'package:hm_shop/components/Home/hm_suggestion.dart'; // 引入首页特惠推荐组件
 import 'package:hm_shop/models/home.dart'; // 引入首页数据模型
 import 'package:hm_shop/pages/Home/skeleton.dart';
 

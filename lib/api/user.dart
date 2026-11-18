@@ -1,6 +1,6 @@
 import 'package:hm_shop/constants/index.dart';
 import 'package:hm_shop/models/user.dart';
-import 'package:hm_shop/utils/DioRequest.dart';
+import 'package:hm_shop/utils/dio_request.dart';
 
 // 登录
 Future<UserInfo> loginAPI(Map<String, dynamic> data) async {

@@ -1,29 +1,79 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hm_shop/pages/Home/index.dart';
+import 'package:hm_shop/components/Home/HmHot.dart';
+import 'package:hm_shop/models/home.dart';
+import 'package:hm_shop/models/user.dart';
+import 'package:hm_shop/pages/Home/skeleton.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(HomeView() as Widget);
+  group('hm_shop Widget & Model Tests', () {
+    testWidgets('HomeSkeleton 能够正常渲染并包含呼吸动画', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: HomeSkeleton(),
+          ),
+        ),
+      );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+      expect(find.byType(HomeSkeleton), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(HomeSkeleton),
+          matching: find.byType(FadeTransition),
+        ),
+        findsOneWidget,
+      );
+      expect(find.byType(SingleChildScrollView), findsOneWidget);
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    testWidgets('HmHot 能够根据配置正确渲染爆款推荐与一站全买标题', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Column(
+              children: [
+                HmHot(
+                  config: HmHotConfig.inVogue,
+                  result: SpecialRecommendResult(
+                    id: '1',
+                    title: '爆款推荐',
+                    subTypes: [],
+                  ),
+                ),
+                HmHot(
+                  config: HmHotConfig.oneStop,
+                  result: SpecialRecommendResult(
+                    id: '2',
+                    title: '一站全买',
+                    subTypes: [],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+      expect(find.text('爆款推荐'), findsOneWidget);
+      expect(find.text('最受欢迎'), findsOneWidget);
+      expect(find.text('一站全买'), findsOneWidget);
+      expect(find.text('精心优选'), findsOneWidget);
+    });
+
+    test('UserInfo 能够正确从 json 解析并判断登录态', () {
+      final guest = UserInfo.fromJson({});
+      expect(guest.isLoggedIn, isFalse);
+
+      final user = UserInfo.fromJson({
+        'id': '1001',
+        'account': 'test_user',
+        'nickname': '测试账号',
+        'token': 'mock_token',
+      });
+      expect(user.isLoggedIn, isTrue);
+      expect(user.account, 'test_user');
+      expect(user.nickname, '测试账号');
+    });
   });
 }

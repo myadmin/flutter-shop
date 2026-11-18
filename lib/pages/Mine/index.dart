@@ -252,16 +252,21 @@ class _MineViewState extends State<MineView> {
       return;
     }
     _isLoading = true;
-    final res = await getGuessListAPI(_params);
-    _isLoading = false;
-    // _list = res.items;
-    _list.addAll(res.items); // 合并数据
-    setState(() {});
-    if (_params['page'] >= res.pages) {
-      _hasMore = false;
-      return;
+    try {
+      final res = await getGuessListAPI(_params);
+      if (!mounted) return;
+      _list.addAll(res.items); // 合并数据
+      if (_params['page'] >= res.pages) {
+        _hasMore = false;
+      } else {
+        _params['page']++;
+      }
+      setState(() {});
+    } catch (e) {
+      debugPrint('获取猜你喜欢列表失败: $e');
+    } finally {
+      _isLoading = false;
     }
-    _params['page']++;
   }
 
   @override
@@ -275,8 +280,8 @@ class _MineViewState extends State<MineView> {
 
   void _registerEvent() {
     _controller.addListener(() {
-      // 滚动逻辑
-      if (_controller.position.pixels <=
+      // 滚动到底部时触发加载下一页
+      if (_controller.position.pixels >=
           _controller.position.maxScrollExtent - 50) {
         _getGuessList();
       }

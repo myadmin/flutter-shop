@@ -63,13 +63,13 @@ lib/
 │   └── user.dart           # 登录 / 用户信息接口
 ├── components/
 │   ├── Home/               # 首页业务组件
-│   │   ├── HmSlider.dart   # 轮播图 + 搜索框 + 指示点
-│   │   ├── HmCategory.dart # 分类横向列表
-│   │   ├── HmSuggestion.dart # 特惠推荐区
-│   │   ├── HmHot.dart      # 爆款推荐 / 一站全买通用组件
-│   │   └── HmMoreList.dart # 双列商品网格（首页推荐 / 猜你喜欢共用）
+│   │   ├── hm_slider.dart  # 轮播图 + 搜索框 + 指示点
+│   │   ├── hm_category.dart# 分类横向列表
+│   │   ├── hm_suggestion.dart # 特惠推荐区
+│   │   ├── hm_hot.dart     # 爆款推荐 / 一站全买通用组件
+│   │   └── hm_more_list.dart # 双列商品网格（首页推荐 / 猜你喜欢共用）
 │   └── Mine/
-│       └── HmGuess.dart    # 「猜你喜欢」吸顶标题（SliverPersistentHeaderDelegate）
+│       └── hm_guess.dart   # 「猜你喜欢」吸顶标题（SliverPersistentHeaderDelegate）
 ├── constants/index.dart    # 全局常量、接口地址
 ├── models/
 │   ├── home.dart           # 首页数据模型（Banner、分类、推荐、商品等）
@@ -85,12 +85,12 @@ lib/
 │   └── Login/index.dart    # 登录页
 ├── routes/index.dart       # 路由与根 Widget
 ├── stores/
-│   ├── TokenManager.dart   # token 本地持久化（shared_preferences）
-│   └── UserController.dart # GetX 用户状态（登录用户信息）
+│   ├── token_manager.dart  # token 本地持久化（shared_preferences）
+│   └── user_controller.dart# GetX 用户状态（登录用户信息）
 ├── utils/
-│   ├── DioRequest.dart     # Dio 单例封装（自动注入 token）
-│   ├── LoadingDialog.dart  # 统一加载中对话框
-│   └── ToastUtils.dart     # 自适应宽度 Toast
+│   ├── dio_request.dart    # Dio 单例封装（自动注入 token）
+│   ├── loading_dialog.dart # 统一加载中对话框
+│   └── toast_utils.dart    # 自适应宽度 Toast
 ├── assets/                 # 底部导航图标、我的页图标、首页活动图等资源
 └── main.dart               # 程序入口
 ```
@@ -138,5 +138,3 @@ flutter analyze
 - 分类、购物车页面仅为占位文本，功能尚未开发。
 - 轮播图、商品卡片点击暂未接入详情页或加入购物车逻辑；顶部搜索框为静态展示。
 - 我的页面会员卡、快捷入口、订单管理暂未接入交互。
-- token 失效（如 401）暂未做统一拦截处理，需手动退出后重新登录。
-- `test/widget_test.dart` 仍为计数器模板测试（仅引入 `HomeView`），与首页不匹配，`flutter test` 无法通过，需按首页交互重写。

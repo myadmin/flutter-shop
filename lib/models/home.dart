@@ -5,7 +5,10 @@ class BannerItem {
   BannerItem({required this.id, required this.imageUrl});
 
   factory BannerItem.fromJson(Map<String, dynamic> json) {
-    return BannerItem(id: json['id'], imageUrl: json['imgUrl']);
+    return BannerItem(
+      id: json['id']?.toString() ?? '',
+      imageUrl: json['imgUrl']?.toString() ?? '',
+    );
   }
 }
 

@@ -3,9 +3,12 @@ import 'package:hm_shop/constants/index.dart';
 import 'package:hm_shop/stores/token_manager.dart';
 
 class DioRequest {
+  static final DioRequest _instance = DioRequest._internal();
+  factory DioRequest() => _instance;
+
   final _dio = Dio();
 
-  DioRequest() {
+  DioRequest._internal() {
     _dio.options
       ..baseUrl = GlobalConstants.baseUrl
       ..connectTimeout = Duration(seconds: GlobalConstants.timeout)
@@ -20,28 +23,32 @@ class DioRequest {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (request, handler) {
-          // 注入token
-          if (tokenManager.getToken().isNotEmpty) {
-            request.headers = {
-              'Authorization': 'Bearer ${tokenManager.getToken()}',
-            };
+          // 注入token，保留原有请求头
+          final token = tokenManager.getToken();
+          if (token.isNotEmpty) {
+            request.headers['Authorization'] = 'Bearer $token';
           }
           return handler.next(request);
         },
         onResponse: (response, handler) {
-          if (response.statusCode! >= 200 && response.statusCode! < 300) {
-            return handler.next(response);
-          }
-          return handler.reject(
-            DioException(requestOptions: response.requestOptions),
-          );
+          return handler.next(response);
         },
         onError: (error, handler) {
-          // return handler.next(error);
+          String message = '网络连接异常，请检查网络';
+          if (error.type == DioExceptionType.connectionTimeout ||
+              error.type == DioExceptionType.sendTimeout ||
+              error.type == DioExceptionType.receiveTimeout) {
+            message = '网络请求超时，请稍后重试';
+          } else if (error.response?.data is Map) {
+            message = error.response?.data['msg']?.toString() ?? message;
+          }
           return handler.reject(
             DioException(
               requestOptions: error.requestOptions,
-              message: error.response?.data['msg'] ?? " ",
+              response: error.response,
+              type: error.type,
+              error: error.error,
+              message: message,
             ),
           );
         },
@@ -63,17 +70,19 @@ class DioRequest {
   Future<dynamic> _handleResponse(Future<Response<dynamic>> task) async {
     try {
       Response<dynamic> res = await task;
-      final data = res.data as Map<String, dynamic>;
-      if (data['code'] == GlobalConstants.successCode) {
-        return data['result'];
+      if (res.data is Map) {
+        final data = res.data as Map;
+        if (data['code']?.toString() == GlobalConstants.successCode) {
+          return data['result'];
+        }
+        throw DioException(
+          requestOptions: res.requestOptions,
+          response: res,
+          message: data['msg']?.toString() ?? "加载数据失败",
+        );
       }
-      // throw Exception(data['msg'] ?? '请求失败');
-      throw DioException(
-        requestOptions: res.requestOptions,
-        message: data['msg'] ?? "加载数据失败",
-      );
+      return res.data;
     } catch (e) {
-      // throw Exception(e.toString());
       rethrow;
     }
   }

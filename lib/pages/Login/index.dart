@@ -153,9 +153,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // 登录中状态
-  bool _isLogging = false;
-
   // 登录
   Future<void> _login() async {
     try {
@@ -188,41 +185,30 @@ class _LoginPageState extends State<LoginPage> {
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: _isLogging
-            ? null
-            : () {
-                if (_formKey.currentState?.validate() == true) {
-                  // 登录逻辑，需要判断勾选框逻辑
-                  if (!_agreed) {
-                    ToastUtils.showToast(context, '请勾选隐私条款和用户协议');
-                  } else {
-                    _login();
-                  }
-                }
-              },
+        onPressed: () {
+          if (_formKey.currentState?.validate() == true) {
+            // 登录逻辑，需要判断勾选框逻辑
+            if (!_agreed) {
+              ToastUtils.showToast(context, '请勾选隐私条款和用户协议');
+            } else {
+              _login();
+            }
+          }
+        },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.black,
           foregroundColor: Colors.white,
           elevation: 0,
           shape: const StadiumBorder(),
         ),
-        child: _isLogging
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-            : const Text(
-                '登录',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+        child: const Text(
+          '登录',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }

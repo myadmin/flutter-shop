@@ -6,39 +6,42 @@
 
 ### 首页
 
-- **骨架屏**：数据加载期间展示 `HomeSkeleton`，带呼吸闪烁动画；全部接口返回（或失败）后切换为真实内容
-- **并行加载**：`Future.wait` 同时请求 6 个首页接口，单个接口失败不影响其余模块展示
-- **下拉刷新**：`RefreshIndicator` 重新拉取全部首页数据
-- **轮播图**：`/home/banner` 获取图片，自动播放，底部指示点可点击切换
+- **骨架屏**：数据加载期间展示 `HomeSkeleton`，带呼吸闪烁动画；全部接口返回（或失败）后平滑切换为真实内容
+- **并行加载与容错**：`Future.wait` 同时请求 6 个首页接口，各模块子请求独立异常隔离，单个接口失败不影响其余模块展示
+- **下拉刷新**：`RefreshIndicator` 重新拉取全部首页数据，自动重置分页参数（`_page = 1`）与加载状态，避免无差别弹窗打扰
+- **轮播图**：`/home/banner` 获取图片，自动播放，底部指示点可点击切换，包含网络图片加载异常保护
 - **顶部搜索框**：叠加在轮播图上方的半透明搜索入口（静态展示，暂未接入搜索）
-- **分类快捷入口**：`/home/category/head` 获取分类，横向滚动列表展示图标与名称
+- **分类快捷入口**：`/home/category/head` 获取分类，横向滚动列表展示图标与名称（`HmCategory` 已优化为 `StatelessWidget`）
 - **特惠推荐**：`/hot/preference` 获取数据，展示第一个子类型的前 3 个商品，含本地背景图与价格标签
 - **爆款推荐 / 一站全买**：`/hot/inVogue`、`/hot/oneStop` 获取数据，左右两栏布局，复用 `HmHot` 组件，通过 `HmHotConfig` 区分场景样式
 - **推荐列表**：`/home/recommend` 获取数据，`HmMoreList` 以 `SliverGrid` 双列展示，滚动到底部时通过递增 `limit` 自动加载更多
+- **生命周期安全**：滚动监听器单次绑定，并在组件销毁时及时释放 `ScrollController`，杜绝内存泄漏
 
 ### 我的
 
-- **用户信息头部**：展示头像与账号；未登录时显示「立即登录」，点击跳转 `/login`
-- **退出登录**：已登录时右上角显示「退出」，二次确认后清除本地 token 与用户信息
+- **用户信息头部**：展示头像与账号；未登录时显示「立即登录」，点击跳转 `/login`；统一依据 `isLoggedIn` 状态自适应展示昵称/账号
+- **退出登录**：已登录时右上角显示「退出」（即使无头像账号亦能正常显示），二次确认后清除本地 token 与用户信息
 - **会员卡片**：展示美荟商城会员开通入口（静态）
 - **快捷入口**：我的收藏、我的足迹、我的客服（静态）
 - **订单管理**：我的订单、待付款、待发货、待收货、待评价（静态）
-- **猜你喜欢**：`HmGuess` 作为吸顶标题（`SliverPersistentHeaderDelegate`），复用 `HmMoreList` 双列网格，调用 `/home/goods/guessLike` 按 `page`、`pageSize` 分页，滚动到底部自动加载
+- **猜你喜欢**：`HmGuess` 作为吸顶标题（`SliverPersistentHeaderDelegate`），复用 `HmMoreList` 双列网格，调用 `/home/goods/guessLike` 按 `page`、`pageSize` 分页；滚动触底（`>= maxScrollExtent - 50`）时精准加载更多，内置防抖与异常保护；页面销毁自动释放 `ScrollController`
 
 ### 登录
 
-- **账号密码表单**：手机号与密码正则校验，密码为 6-16 位字母、数字、下划线
+- **账号密码表单**：手机号与密码正则校验，密码为 6-16 位字母、数字、下划线，输入控制器在 `dispose` 中自动释放
 - **协议勾选**：未勾选隐私条款 / 用户协议时拦截登录并 Toast 提示
-- **登录状态**：请求期间展示 `LoadingDialog`，成功后写入 `UserController`、持久化 token 并返回上一页，失败 Toast 展示错误信息
+- **登录状态与弹窗控制**：请求期间展示 `LoadingDialog`（屏蔽误触背景关闭），成功后写入 `UserController`、持久化 token、先关 Loading 再退出登录页；失败仅关闭 Loading 并展示安全提取的错误信息
 
 ### 其他
 
-- **底部导航**：首页 / 分类 / 购物车 / 我的，使用 `IndexedStack` 保持各页面状态
+- **底部导航**：首页 / 分类 / 购物车 / 我的，使用 `IndexedStack` 保持各页面状态，并在初始化阶段缓存子页面避免 `build` 重建
 - **状态管理**：GetX（`UserController` 保存登录用户信息，页面通过 `Obx` 响应式刷新）
-- **登录态管理**：`TokenManager` 基于 `shared_preferences` 持久化 token；应用启动时若已登录，自动请求 `/member/profile` 恢复用户信息；Dio 请求拦截器自动注入 `Authorization: Bearer <token>`
-- **网络层**：Dio 单例封装，统一超时、HTTP 状态拦截与业务状态码校验
-- **加载弹窗**：`LoadingDialog` 提供统一的加载中对话框（`show` / `hide`）
+- **登录态管理**：`TokenManager` 基于 `shared_preferences` 持久化 token；应用启动时若已登录，自动请求 `/member/profile` 恢复用户信息，若 Token 过期失效自动清理并安全降级；Dio 请求拦截器安全注入 `Authorization: Bearer <token>` 且不覆盖既有 Header
+- **网络层**：Dio 单例封装（标准工厂模式），统一超时、网络异常/超时/非 JSON 错误安全提取与业务状态码校验
+- **加载弹窗**：`LoadingDialog` 提供统一的加载中对话框（`show` / `hide`，支持 `barrierDismissible: false` 与 `PopScope` 防误触）
 - **Toast 工具**：`ToastUtils` 基于 `SnackBar`，宽度随文案自适应，并做 2 秒防重复弹出
+- **自动化测试**：覆盖骨架屏渲染、商品聚合场景及用户数据模型解析，`flutter test` 全部绿灯通过
+- **代码规范**：全面遵循 Dart 官方规范（小写下划线文件名、`StatelessWidget` 纯组件化、`super.key` 与 `const` 构造），`flutter analyze` 零告警
 
 ## 技术栈
 
@@ -50,7 +53,8 @@
 | 本地存储 | [shared_preferences](https://pub.dev/packages/shared_preferences) `^2.5.6` |
 | 轮播组件 | [carousel_slider](https://pub.dev/packages/carousel_slider) `^5.1.2` |
 | 网络请求 | [dio](https://pub.dev/packages/dio) `^5.11.1` |
-| 代码规范 | `flutter_lints` `^6.0.0` |
+| 测试框架 | `flutter_test`（单元测试与 Widget 测试） |
+| 代码规范 | `flutter_lints` `^6.0.0`（0 warnings/errors） |
 | 运行平台 | Web（仓库当前仅包含 `web/` 平台目录） |
 
 ## 目录结构
@@ -129,8 +133,11 @@ flutter pub get
 # 2. 启动 Web 版本
 flutter run -d chrome
 
-# 3. 静态分析
+# 3. 静态分析（当前 0 告警）
 flutter analyze
+
+# 4. 运行单元与组件测试（当前 100% 通过）
+flutter test
 ```
 
 ## 当前状态与已知问题

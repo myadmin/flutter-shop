@@ -112,6 +112,16 @@ class DioRequest {
     return await _handleResponse(() => _dio.post(url, data: data));
   }
 
+  // 通用PUT请求
+  Future<dynamic> put(String url, {Map<String, dynamic>? data}) async {
+    return await _handleResponse(() => _dio.put(url, data: data));
+  }
+
+  // 通用DELETE请求（本项目的删除接口要求参数放在请求体里）
+  Future<dynamic> delete(String url, {Map<String, dynamic>? data}) async {
+    return await _handleResponse(() => _dio.delete(url, data: data));
+  }
+
   /// 统一处理响应：校验业务码，成功时返回 `result` 字段。
   ///
   /// [task] 用回调延迟创建请求，这样业务错误可以直接抛出 [ApiException]，

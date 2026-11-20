@@ -1,6 +1,6 @@
 # hm_shop
 
-基于 Flutter 的商城类 App 示例项目，采用「页面 / 组件 / API / 模型 / 状态」分层组织代码。已接入黑马 meikou 接口，完成首页（轮播图、分类、特惠推荐、爆款推荐、一站全买、推荐列表分页）、分类（一级导航 + 二级宫格 + 推荐）、登录（token 持久化与请求鉴权）、商品详情、订单确认与「我的」页面；购物车仍为占位页面。
+基于 Flutter 的商城类 App 示例项目，采用「页面 / 组件 / API / 模型 / 状态」分层组织代码。已接入黑马 meikou 接口，完成首页（轮播图、分类、特惠推荐、爆款推荐、一站全买、推荐列表分页）、分类（一级导航 + 二级宫格 + 推荐）、登录（token 持久化与请求鉴权）、商品详情、购物车、订单确认与「我的」页面。
 
 ## 功能概览
 
@@ -58,10 +58,21 @@
 - **协议勾选**：未勾选隐私条款 / 用户协议时拦截登录并 Toast 提示
 - **登录状态与弹窗控制**：请求期间展示 `LoadingDialog`，成功路径先关闭 Loading 再退出登录页，确保任何分支都不会残留加载弹窗
 
+### 购物车
+
+- **商品清单**：`HmCartTile` 展示图片、名称、规格、现价与数量步进器；同一商品不同规格按 `skuId` 区分成独立条目
+- **勾选与全选**：单个条目直接 `PUT /member/cart/{skuId}`；「全选」逐条串行请求（接口没有批量选中接口），失败后重新拉取列表兜底
+- **数量调整**：`HmCartQuantityStepper` 限制在 1~库存之间，触达边界或请求在途时按钮禁用
+- **乐观更新**：勾选、改数量、删除都先更新界面再请求，失败回滚并 Toast 提示；删除走 `DELETE /member/cart`
+- **结算入口**：`HmCartSummaryBar` 展示已选件数与合计（不含运费），点击「结算」进入订单确认页
+- **角标同步**：`CartController` 维护件数，底部导航的购物车角标通过 `Obx` 响应更新，加购成功与登录态变化后自动刷新
+- **状态与容错**：未登录展示「登录后查看购物车」，空车展示「去逛逛」，接口失败展示 `AppErrorView` 与重试入口，支持下拉刷新
+- **宽屏适配**：正文与结算栏内容宽度统一收窄到 600 并居中，避免 Web 宽屏下条目被拉长
+
 ### 其他
 
-- **底部导航**：首页 / 分类 / 购物车 / 我的，使用 `IndexedStack` 保持各页面状态
-- **状态管理分工**：跨页面共享的用户态放在 GetX `UserController`（页面通过 `Obx` 响应式刷新），且仅在 `main()` 中注册一次；页面私有的列表数据、加载态与错误文案用 `State` + `setState`
+- **底部导航**：首页 / 分类 / 购物车 / 我的，使用 `IndexedStack` 保持各页面状态；购物车 tab 带件数角标
+- **状态管理分工**：跨页面共享的用户态与购物车件数放在 GetX 控制器（`UserController` / `CartController`，页面通过 `Obx` 响应式刷新），且仅在 `main()` 中注册一次；页面私有的列表数据、加载态与错误文案用 `State` + `setState`
 - **登录态管理**：`TokenManager` 基于 `shared_preferences` 持久化 token（写盘 `await` 落盘完成）；启动时若已登录则请求 `/member/profile` 恢复用户信息，失效时自动清理并降级
 - **网络层**：Dio 单例封装，统一超时与请求头注入；异常被翻译为 `ApiException`（业务错误，带 `code`）或 `NetworkException`（网络 / 超时 / 401），页面统一用 `resolveErrorMessage` 提取可展示文案
 - **登录态失效**：拦截器识别 HTTP 401，自动清理 token 并触发 `DioRequest.onUnauthorized`，由 `MainPage` 统一跳转登录页
@@ -69,7 +80,7 @@
 - **图片统一**：所有网络图片经 `AppNetworkImage` 加载，列表项按 `decodeWidth` 设置 `cacheWidth`，降低解码内存占用
 - **加载弹窗**：`LoadingDialog` 持有 `DialogRoute` 引用，`hide()` 精确移除自身路由，不会误弹页面
 - **Toast 工具**：`ToastUtils` 基于 `SnackBar`，宽度随文案自适应，并做重复弹出节流
-- **自动化测试**：59 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、全局用户态、骨架屏、商品聚合组件、订单组件、「我的」页面组件与分类页组件
+- **自动化测试**：75 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、全局用户态与购物车件数、骨架屏、商品聚合组件、订单组件、「我的」页面组件、分类页组件与购物车组件
 - **代码规范**：`dart format`、`flutter analyze --fatal-infos`、`flutter test` 三项在 CI 中全部强制通过
 
 ## 技术栈
@@ -94,7 +105,7 @@ lib/
 │   ├── home.dart               # 首页 6 个接口的请求函数
 │   ├── goods.dart              # 商品详情
 │   ├── order.dart              # 结算信息 / 提交订单
-│   ├── cart.dart               # 加入购物车
+│   ├── cart.dart               # 购物车列表 / 件数 / 增删改
 │   ├── mine.dart               # 猜你喜欢分页接口
 │   └── user.dart               # 登录 / 用户信息接口
 ├── components/
@@ -125,6 +136,11 @@ lib/
 │   │   ├── hm_order_address.dart   # 收货地址
 │   │   ├── hm_order_goods.dart     # 商品行
 │   │   └── hm_order_summary.dart   # 金额汇总
+│   ├── Cart/                   # 购物车页组件
+│   │   ├── hm_cart_tile.dart          # 条目行（勾选 / 图片 / 规格 / 步进器 / 删除）
+│   │   ├── hm_cart_quantity_stepper.dart # 数量增减控件
+│   │   ├── hm_cart_summary_bar.dart   # 全选 / 合计 / 结算栏
+│   │   └── hm_cart_empty.dart         # 空态与未登录态
 │   └── Mine/
 │       ├── hm_mine_header.dart      # 头像 / 昵称 / 登录与退出入口
 │       ├── hm_mine_vip_card.dart    # 会员卡
@@ -142,6 +158,7 @@ lib/
 │   ├── home.dart               # 首页数据模型
 │   ├── goods.dart              # 商品详情模型
 │   ├── order.dart              # 结算与订单模型
+│   ├── cart.dart               # 购物车条目模型（含小计与结算条件）
 │   └── user.dart               # 用户信息模型
 ├── pages/
 │   ├── Main/index.dart         # 底部 Tab 容器
@@ -151,13 +168,14 @@ lib/
 │   ├── GoodsDetail/index.dart  # 商品详情页
 │   ├── OrderConfirm/index.dart # 订单确认页
 │   ├── Category/index.dart     # 分类页：一级导航 + 二级宫格 + 推荐
-│   ├── Cart/index.dart         # 购物车（占位）
+│   ├── Cart/index.dart         # 购物车：清单、勾选、改数量、删除、结算入口
 │   ├── Mine/index.dart         # 我的：用户信息、会员卡、订单、猜你喜欢
 │   └── Login/index.dart        # 登录页
 ├── routes/index.dart           # 路由、根 Widget 与主题
 ├── stores/
 │   ├── token_manager.dart      # token 本地持久化
-│   └── user_controller.dart    # GetX 全局用户态
+│   ├── user_controller.dart    # GetX 全局用户态
+│   └── cart_controller.dart    # GetX 全局购物车件数（底部角标）
 ├── utils/
 │   ├── dio_request.dart        # Dio 单例封装（注入 token、401 处理）
 │   ├── api_exception.dart      # ApiException / NetworkException / resolveErrorMessage
@@ -194,7 +212,11 @@ lib/
 | GET | `/home/recommend` | 推荐列表，仅支持 `limit` 参数（**不支持 `page`/`pageSize`**），返回稳定前缀序，因此用递增 `limit` 累积加载 |
 | GET | `/home/goods/guessLike` | 猜你喜欢分页列表，参数 `page`、`pageSize`，映射为 `GoodsDetailsItems` |
 | GET | `/goods` | 商品详情，参数 `id` |
-| POST | `/member/cart` | 加入购物车，参数 `skuId`、`count` |
+| POST | `/member/cart` | 加入购物车，参数 `skuId`、`count`；同 `skuId` 会合并累加，返回该条目 |
+| GET | `/member/cart` | 购物车列表，映射为 `CartItem` 数组（条目的唯一标识是 `skuId`，同一商品不同规格会重复出现） |
+| GET | `/member/cart/count` | 购物车件数，返回 `{"count": 13}`（各条目 `count` 之和） |
+| PUT | `/member/cart/{skuId}` | 修改单条购物车，可只传 `count`、只传 `selected`，或两者同传 |
+| DELETE | `/member/cart` | 批量删除，请求体 `{"ids": [skuId, ...]}`（放 query 会报缺少请求体） |
 | GET | `/member/order/pre/now` | 立即购买结算信息，参数 `skuId`、`count`，映射为 `PreOrderResult` |
 | POST | `/member/order` | 提交订单，返回订单 id |
 | POST | `/login` | 账号密码登录，返回用户信息（含 `token`），映射为 `UserInfo` |
@@ -225,7 +247,7 @@ flutter test
 
 ## 当前状态与已知问题
 
-- 购物车页面仅为占位文本，功能尚未开发。
 - 顶部搜索框、会员卡开通、快捷入口与订单管理入口均为静态占位，点击提示「功能开发中」。
 - 接口侧没有「按分类取商品」的接口（`/category/goods`、`/category/list`、`/category/tree` 等路径均返回 4xx/5xx），因此二级分类点击只提示「商品列表开发中」；分类页的「猜你喜欢」用的是 `/home/goods/guessLike`。
-- 购物车接口已接入（加入购物车），但购物车页面与结算流程尚未联通。
+- 购物车结算复用「立即购买」链路（`/member/order/pre/now` + `/member/order`），**接口只支持单件商品结算**，因此多选时点击「结算」会提示只勾选一件。
+- 接口没有「全选 / 批量勾选」的接口（`PUT /member/cart` 与 `PUT /member/cart/checked` 均不存在），「全选」是逐条 `PUT /member/cart/{skuId}` 串行完成的，条目很多时会较慢。

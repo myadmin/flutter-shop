@@ -24,8 +24,10 @@ class HttpConstants {
   static const String guessList = '/home/goods/guessLike';
   // 商品详情
   static const String goodsDetail = '/goods';
-  // 购物车
+  // 购物车（GET 列表、POST 加入、DELETE 删除）
   static const String cart = '/member/cart';
+  // 购物车商品件数（用于 tab 角标）
+  static const String cartCount = '/member/cart/count';
   // 立即购买-预付订单
   static const String preOrder = '/member/order/pre/now';
   // 提交订单

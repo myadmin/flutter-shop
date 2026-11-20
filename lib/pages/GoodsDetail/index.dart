@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:hm_shop/api/cart.dart';
 import 'package:hm_shop/api/goods.dart';
 import 'package:hm_shop/components/GoodsDetail/hm_action_bar.dart';
@@ -9,6 +10,7 @@ import 'package:hm_shop/components/GoodsDetail/hm_goods_properties.dart';
 import 'package:hm_shop/components/common/app_error_view.dart';
 import 'package:hm_shop/components/common/app_network_image.dart';
 import 'package:hm_shop/models/goods.dart';
+import 'package:hm_shop/stores/cart_controller.dart';
 import 'package:hm_shop/stores/token_manager.dart';
 import 'package:hm_shop/utils/api_exception.dart';
 import 'package:hm_shop/utils/loading_dialog.dart';
@@ -40,6 +42,9 @@ class _GoodsDetailPageState extends State<GoodsDetailPage> {
 
   // 当前展示的主图下标
   int _pictureIndex = 0;
+
+  // 购物车件数的全局态，加购成功后刷新底部 tab 角标
+  final CartController _cartController = Get.find<CartController>();
 
   @override
   void initState() {
@@ -113,6 +118,9 @@ class _GoodsDetailPageState extends State<GoodsDetailPage> {
     try {
       await addCartAPI(sku.id, 1);
       LoadingDialog.hide();
+      if (!mounted) return;
+      // 同步底部 tab 的购物车角标
+      await _cartController.refreshCount();
       if (!mounted) return;
       ToastUtils.showToast(context, '已加入购物车');
     } catch (e) {

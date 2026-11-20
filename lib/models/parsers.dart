@@ -20,6 +20,16 @@ int asInt(dynamic value, {int fallback = 0}) {
   return int.tryParse(value?.toString().trim() ?? '') ?? fallback;
 }
 
+/// 转成布尔值；兼容 `true` / `"true"` / `1` / `"1"`，其余返回 [fallback]。
+bool asBool(dynamic value, {bool fallback = false}) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  final text = value?.toString().trim().toLowerCase();
+  if (text == 'true' || text == '1') return true;
+  if (text == 'false' || text == '0') return false;
+  return fallback;
+}
+
 /// 转成两位小数的金额字符串；非法值与 null 返回 `'0.00'`。
 ///
 /// 保留两位小数是为了让接口返回的数字 `89` 展示成 `89.00`，

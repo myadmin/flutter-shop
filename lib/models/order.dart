@@ -1,3 +1,5 @@
+import 'package:hm_shop/models/parsers.dart';
+
 // 立即购买结算信息（/member/order/pre/now 接口返回的 result 数据）
 class PreOrderResult {
   List<OrderAddress> userAddresses;
@@ -12,18 +14,10 @@ class PreOrderResult {
 
   factory PreOrderResult.fromJson(Map<String, dynamic> json) {
     return PreOrderResult(
-      userAddresses: json['userAddresses'] == null
-          ? []
-          : (json['userAddresses'] as List)
-                .map((e) => OrderAddress.fromJson(e as Map<String, dynamic>))
-                .toList(),
-      goods: json['goods'] == null
-          ? []
-          : (json['goods'] as List)
-                .map((e) => PreOrderGoods.fromJson(e as Map<String, dynamic>))
-                .toList(),
+      userAddresses: asList(json['userAddresses'], OrderAddress.fromJson),
+      goods: asList(json['goods'], PreOrderGoods.fromJson),
       summary: OrderSummary.fromJson(
-        json['summary'] as Map<String, dynamic>? ?? {},
+        json['summary'] as Map<String, dynamic>? ?? const {},
       ),
     );
   }
@@ -59,12 +53,12 @@ class OrderAddress {
 
   factory OrderAddress.fromJson(Map<String, dynamic> json) {
     return OrderAddress(
-      id: json['id']?.toString() ?? '',
-      receiver: json['receiver']?.toString() ?? '',
-      contact: json['contact']?.toString() ?? '',
-      fullLocation: json['fullLocation']?.toString() ?? '',
-      address: json['address']?.toString() ?? '',
-      isDefault: int.tryParse(json['isDefault']?.toString() ?? '') ?? 0,
+      id: asString(json['id']),
+      receiver: asString(json['receiver']),
+      contact: asString(json['contact']),
+      fullLocation: asString(json['fullLocation']),
+      address: asString(json['address']),
+      isDefault: asInt(json['isDefault']),
     );
   }
 
@@ -94,13 +88,13 @@ class PreOrderGoods {
 
   factory PreOrderGoods.fromJson(Map<String, dynamic> json) {
     return PreOrderGoods(
-      id: json['id']?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
-      picture: json['picture']?.toString() ?? '',
-      count: int.tryParse(json['count']?.toString() ?? '') ?? 1,
-      attrsText: json['attrsText']?.toString() ?? '',
-      price: _formatAmount(json['price']),
-      totalPayPrice: _formatAmount(json['totalPayPrice']),
+      id: asString(json['id']),
+      name: asString(json['name']),
+      picture: asString(json['picture']),
+      count: asInt(json['count'], fallback: 1),
+      attrsText: asString(json['attrsText']),
+      price: asAmount(json['price']),
+      totalPayPrice: asAmount(json['totalPayPrice']),
     );
   }
 }
@@ -123,17 +117,11 @@ class OrderSummary {
 
   factory OrderSummary.fromJson(Map<String, dynamic> json) {
     return OrderSummary(
-      goodsCount: int.tryParse(json['goodsCount']?.toString() ?? '') ?? 0,
-      totalPrice: _formatAmount(json['totalPrice']),
-      totalPayPrice: _formatAmount(json['totalPayPrice']),
-      postFee: _formatAmount(json['postFee']),
-      discountPrice: _formatAmount(json['discountPrice']),
+      goodsCount: asInt(json['goodsCount']),
+      totalPrice: asAmount(json['totalPrice']),
+      totalPayPrice: asAmount(json['totalPayPrice']),
+      postFee: asAmount(json['postFee']),
+      discountPrice: asAmount(json['discountPrice']),
     );
   }
-}
-
-// 金额统一保留两位小数，避免数字类型的 89.0 直接展示
-String _formatAmount(dynamic value) {
-  final amount = double.tryParse(value?.toString() ?? '');
-  return amount?.toStringAsFixed(2) ?? '0.00';
 }

@@ -1,48 +1,87 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
   <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
+    如果应用部署在非根路径，下面的 base href 需指向该路径。
+    构建时由 `flutter build web --base-href` 覆盖占位符。
   -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="美荟商城 —— 基于 Flutter 构建的商城示例应用，包含首页推荐、商品详情与订单结算。">
   <!-- 预先声明 viewport，避免引擎启动时插入该标签触发缩放变化（flutter#196861） -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="hm_shop">
+  <meta name="apple-mobile-web-app-title" content="美荟商城">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>hm_shop</title>
+  <title>美荟商城</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    /* 引擎与字库下载期间的首屏占位，避免纯白屏。
+       第一帧渲染完成后由 flutter-first-frame 事件移除。 */
+    #app-loading {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      background: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      color: #999999;
+      font-size: 14px;
+      transition: opacity 200ms ease;
+    }
+
+    #app-loading.is-hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .app-loading__spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid #f0f0f0;
+      border-top-color: #f47d62;
+      border-radius: 50%;
+      animation: app-loading-spin 800ms linear infinite;
+    }
+
+    @keyframes app-loading-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <div id="app-loading">
+    <div class="app-loading__spinner"></div>
+    <p>正在加载美荟商城…</p>
+  </div>
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
   <script src="flutter_bootstrap.js" async></script>
+  <script>
+    // Flutter 渲染出首帧后会在 window 上派发 flutter-first-frame
+    window.addEventListener('flutter-first-frame', function () {
+      var loading = document.getElementById('app-loading');
+      if (!loading) return;
+      loading.classList.add('is-hidden');
+      setTimeout(function () {
+        loading.remove();
+      }, 220);
+    });
+  </script>
 </body>
 </html>

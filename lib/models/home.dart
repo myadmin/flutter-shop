@@ -1,3 +1,5 @@
+import 'package:hm_shop/models/parsers.dart';
+
 class BannerItem {
   String id;
   String imageUrl;
@@ -6,8 +8,8 @@ class BannerItem {
 
   factory BannerItem.fromJson(Map<String, dynamic> json) {
     return BannerItem(
-      id: json['id']?.toString() ?? '',
-      imageUrl: json['imgUrl']?.toString() ?? '',
+      id: asString(json['id']),
+      imageUrl: asString(json['imgUrl']),
     );
   }
 }
@@ -29,19 +31,15 @@ class CategoryItem {
 
   factory CategoryItem.fromJson(Map<String, dynamic> json) {
     return CategoryItem(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      picture: json['picture'] ?? '',
+      id: asString(json['id']),
+      name: asString(json['name']),
+      picture: asString(json['picture']),
       children: json['children'] == null
           ? null
-          : (json['children'] as List)
-                .map((e) => CategoryItem.fromJson(e as Map<String, dynamic>))
-                .toList(),
+          : asList(json['children'], CategoryItem.fromJson),
       goods: json['goods'] == null
           ? null
-          : (json['goods'] as List)
-                .map((e) => CategoryItem.fromJson(e as Map<String, dynamic>))
-                .toList(),
+          : asList(json['goods'], CategoryItem.fromJson),
     );
   }
 }
@@ -60,13 +58,9 @@ class SpecialRecommendResult {
 
   factory SpecialRecommendResult.fromJson(Map<String, dynamic> json) {
     return SpecialRecommendResult(
-      id: json['id'] ?? '',
-      title: json['title'] ?? '',
-      subTypes: json['subTypes'] == null
-          ? []
-          : (json['subTypes'] as List)
-                .map((e) => SubType.fromJson(e as Map<String, dynamic>))
-                .toList(),
+      id: asString(json['id']),
+      title: asString(json['title']),
+      subTypes: asList(json['subTypes'], SubType.fromJson),
     );
   }
 }
@@ -81,10 +75,10 @@ class SubType {
 
   factory SubType.fromJson(Map<String, dynamic> json) {
     return SubType(
-      id: json['id'] ?? '',
-      title: json['title'] ?? '',
+      id: asString(json['id']),
+      title: asString(json['title']),
       goodsItems: GoodsItems.fromJson(
-        json['goodsItems'] as Map<String, dynamic>? ?? {},
+        json['goodsItems'] as Map<String, dynamic>? ?? const {},
       ),
     );
   }
@@ -108,15 +102,11 @@ class GoodsItems {
 
   factory GoodsItems.fromJson(Map<String, dynamic> json) {
     return GoodsItems(
-      counts: json['counts'] ?? 0,
-      pageSize: json['pageSize'] ?? 0,
-      pages: json['pages'] ?? 0,
-      page: json['page'] ?? 0,
-      items: json['items'] == null
-          ? []
-          : (json['items'] as List)
-                .map((e) => GoodsItem.fromJson(e as Map<String, dynamic>))
-                .toList(),
+      counts: asInt(json['counts']),
+      pageSize: asInt(json['pageSize']),
+      pages: asInt(json['pages']),
+      page: asInt(json['page']),
+      items: asList(json['items'], GoodsItem.fromJson),
     );
   }
 }
@@ -141,18 +131,18 @@ class GoodsItem {
 
   factory GoodsItem.fromJson(Map<String, dynamic> json) {
     return GoodsItem(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      desc: json['desc'],
-      price: json['price'] ?? '',
-      picture: json['picture'] ?? '',
-      orderNum: json['orderNum'] ?? 0,
+      id: asString(json['id']),
+      name: asString(json['name']),
+      desc: json['desc'] == null ? null : asString(json['desc']),
+      price: asAmount(json['price']),
+      picture: asString(json['picture']),
+      orderNum: asInt(json['orderNum']),
     );
   }
 }
 
 class GoodDetailItem extends GoodsItem {
-  int payCount = 0;
+  int payCount;
 
   GoodDetailItem({
     required super.id,
@@ -165,13 +155,13 @@ class GoodDetailItem extends GoodsItem {
 
   factory GoodDetailItem.fromJson(Map<String, dynamic> json) {
     return GoodDetailItem(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      // 接口返回的 price 可能是数字（如 69.9），统一转成字符串，避免类型转换异常
-      price: json['price']?.toString() ?? '',
-      picture: json['picture'] ?? '',
-      orderNum: int.tryParse(json["orderNum"]?.toString() ?? "0") ?? 0,
-      payCount: int.tryParse(json["payCount"]?.toString() ?? "0") ?? 0,
+      id: asString(json['id']),
+      name: asString(json['name']),
+      // 接口返回的 price 可能是数字（如 69.9），统一转成金额字符串
+      price: asAmount(json['price']),
+      picture: asString(json['picture']),
+      orderNum: asInt(json['orderNum']),
+      payCount: asInt(json['payCount']),
     );
   }
 }
@@ -193,15 +183,11 @@ class GoodsDetailsItems {
 
   factory GoodsDetailsItems.fromJson(Map<String, dynamic> json) {
     return GoodsDetailsItems(
-      counts: json['counts'] ?? 0,
-      pageSize: json['pageSize'] ?? 0,
-      pages: json['pages'] ?? 0,
-      page: json['page'] ?? 0,
-      items: json['items'] == null
-          ? []
-          : (json['items'] as List)
-                .map((e) => GoodDetailItem.fromJson(e as Map<String, dynamic>))
-                .toList(),
+      counts: asInt(json['counts']),
+      pageSize: asInt(json['pageSize']),
+      pages: asInt(json['pages']),
+      page: asInt(json['page']),
+      items: asList(json['items'], GoodDetailItem.fromJson),
     );
   }
 }

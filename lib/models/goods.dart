@@ -1,3 +1,5 @@
+import 'package:hm_shop/models/parsers.dart';
+
 // 商品详情（/goods 接口返回的 result 数据）
 class GoodsDetail {
   String id;
@@ -39,35 +41,23 @@ class GoodsDetail {
   }
 
   factory GoodsDetail.fromJson(Map<String, dynamic> json) {
-    final details = json['details'] as Map<String, dynamic>? ?? {};
+    final details = json['details'] as Map<String, dynamic>? ?? const {};
     return GoodsDetail(
-      id: json['id']?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
-      desc: json['desc']?.toString() ?? '',
-      // 接口返回的 price / oldPrice 可能是数字（如 69.9），统一转成字符串展示
-      price: json['price']?.toString() ?? '',
-      oldPrice: json['oldPrice']?.toString() ?? '',
-      mainPictures: json['mainPictures'] == null
-          ? []
-          : (json['mainPictures'] as List).map((e) => e.toString()).toList(),
-      salesCount: int.tryParse(json['salesCount']?.toString() ?? '') ?? 0,
-      commentCount: int.tryParse(json['commentCount']?.toString() ?? '') ?? 0,
+      id: asString(json['id']),
+      name: asString(json['name']),
+      desc: asString(json['desc']),
+      // 接口返回的 price / oldPrice 可能是数字（如 69.9），统一转成两位小数金额
+      price: asAmount(json['price']),
+      oldPrice: asAmount(json['oldPrice']),
+      mainPictures: asStringList(json['mainPictures']),
+      salesCount: asInt(json['salesCount']),
+      commentCount: asInt(json['commentCount']),
       brand: json['brand'] == null
           ? null
           : GoodsBrand.fromJson(json['brand'] as Map<String, dynamic>),
-      properties: details['properties'] == null
-          ? []
-          : (details['properties'] as List)
-                .map((e) => GoodsProperty.fromJson(e as Map<String, dynamic>))
-                .toList(),
-      detailPictures: details['pictures'] == null
-          ? []
-          : (details['pictures'] as List).map((e) => e.toString()).toList(),
-      skus: json['skus'] == null
-          ? []
-          : (json['skus'] as List)
-                .map((e) => GoodsSku.fromJson(e as Map<String, dynamic>))
-                .toList(),
+      properties: asList(details['properties'], GoodsProperty.fromJson),
+      detailPictures: asStringList(details['pictures']),
+      skus: asList(json['skus'], GoodsSku.fromJson),
     );
   }
 }
@@ -82,9 +72,9 @@ class GoodsBrand {
 
   factory GoodsBrand.fromJson(Map<String, dynamic> json) {
     return GoodsBrand(
-      id: json['id']?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
-      logo: json['logo']?.toString() ?? '',
+      id: asString(json['id']),
+      name: asString(json['name']),
+      logo: asString(json['logo']),
     );
   }
 }
@@ -98,8 +88,8 @@ class GoodsProperty {
 
   factory GoodsProperty.fromJson(Map<String, dynamic> json) {
     return GoodsProperty(
-      name: json['name']?.toString() ?? '',
-      value: json['value']?.toString() ?? '',
+      name: asString(json['name']),
+      value: asString(json['value']),
     );
   }
 }
@@ -122,15 +112,11 @@ class GoodsSku {
 
   factory GoodsSku.fromJson(Map<String, dynamic> json) {
     return GoodsSku(
-      id: json['id']?.toString() ?? '',
-      price: json['price']?.toString() ?? '',
-      inventory: int.tryParse(json['inventory']?.toString() ?? '') ?? 0,
-      picture: json['picture']?.toString() ?? '',
-      specs: json['specs'] == null
-          ? []
-          : (json['specs'] as List)
-                .map((e) => GoodsSkuSpec.fromJson(e as Map<String, dynamic>))
-                .toList(),
+      id: asString(json['id']),
+      price: asAmount(json['price']),
+      inventory: asInt(json['inventory']),
+      picture: asString(json['picture']),
+      specs: asList(json['specs'], GoodsSkuSpec.fromJson),
     );
   }
 
@@ -148,8 +134,8 @@ class GoodsSkuSpec {
 
   factory GoodsSkuSpec.fromJson(Map<String, dynamic> json) {
     return GoodsSkuSpec(
-      name: json['name']?.toString() ?? '',
-      valueName: json['valueName']?.toString() ?? '',
+      name: asString(json['name']),
+      valueName: asString(json['valueName']),
     );
   }
 }

@@ -1,7 +1,17 @@
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hm_shop/components/GoodsDetail/hm_action_bar.dart';
+import 'package:hm_shop/components/GoodsDetail/hm_goods_gallery.dart';
+import 'package:hm_shop/components/GoodsDetail/hm_goods_price_info.dart';
 import 'package:hm_shop/components/Home/hm_hot.dart';
+import 'package:hm_shop/components/OrderConfirm/hm_order_address.dart';
+import 'package:hm_shop/components/OrderConfirm/hm_order_card.dart';
+import 'package:hm_shop/components/OrderConfirm/hm_order_goods.dart';
+import 'package:hm_shop/components/OrderConfirm/hm_order_summary.dart';
+import 'package:hm_shop/components/common/app_network_image.dart';
+import 'package:hm_shop/components/common/hm_bottom_bar.dart';
+import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/goods.dart';
 import 'package:hm_shop/models/home.dart';
 import 'package:hm_shop/models/order.dart';
@@ -211,6 +221,183 @@ void main() {
         expect(find.text('加入购物车'), findsOneWidget);
         expect(find.text('立即购买'), findsOneWidget);
       }
+    });
+    testWidgets('HmOrderAddress 优先展示姓名电话与完整地址', (WidgetTester tester) async {
+      final address = OrderAddress(
+        id: '1',
+        receiver: '张三',
+        contact: '13800138000',
+        fullLocation: '北京市 东城区',
+        address: '23号',
+        isDefault: 1,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: HmOrderAddress(address: address)),
+        ),
+      );
+
+      expect(find.text('张三'), findsOneWidget);
+      expect(find.text('13800138000'), findsOneWidget);
+      // fullAddress 由 fullLocation 与 address 拼接而成
+      expect(find.text('北京市 东城区23号'), findsOneWidget);
+    });
+
+    testWidgets('HmOrderAddress 在无地址时展示占位文案', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: HmOrderAddress(address: null))),
+      );
+
+      expect(find.text('暂无收货地址'), findsOneWidget);
+      expect(find.byType(OrderCard), findsOneWidget);
+    });
+
+    testWidgets('HmOrderGoods 展示名称规格与购买数量', (WidgetTester tester) async {
+      final goods = PreOrderGoods(
+        id: '1',
+        name: '测试商品',
+        picture: '',
+        count: 3,
+        attrsText: '颜色：白色',
+        price: '99.00',
+        totalPayPrice: '297.00',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: HmOrderGoods(goods: goods)),
+        ),
+      );
+
+      expect(find.text('测试商品'), findsOneWidget);
+      expect(find.text('颜色：白色'), findsOneWidget);
+      expect(find.text('￥99.00'), findsOneWidget);
+      expect(find.text('x3'), findsOneWidget);
+    });
+
+    testWidgets('HmOrderSummary 突出展示应付金额', (WidgetTester tester) async {
+      final summary = OrderSummary(
+        goodsCount: 2,
+        totalPrice: '200.00',
+        totalPayPrice: '190.00',
+        postFee: '0.00',
+        discountPrice: '10.00',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: HmOrderSummary(summary: summary)),
+        ),
+      );
+
+      expect(find.text('商品件数'), findsOneWidget);
+      expect(find.text('2件'), findsOneWidget);
+      expect(find.text('运费'), findsOneWidget);
+      expect(find.text('￥190.00'), findsOneWidget);
+
+      // 应付金额使用主色加粗，与其它汇总行区分
+      final payText = tester.widget<Text>(find.text('￥190.00'));
+      expect(payText.style?.fontWeight, FontWeight.w800);
+      expect(payText.style?.color, AppColors.primary);
+    });
+
+    testWidgets('HmGoodsGallery 无主图时使用占位图', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: HmGoodsGallery(
+              pictures: const [],
+              currentIndex: 0,
+              onIndexChanged: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      // 无主图时不应创建轮播，避免空列表异常
+      expect(find.byType(CarouselSlider), findsNothing);
+      expect(find.byType(AppNetworkImage), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('HmGoodsPriceInfo 仅在划线价与售价不同时展示划线价', (
+      WidgetTester tester,
+    ) async {
+      Future<void> pumpWithPrices(String price, String oldPrice) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: HmGoodsPriceInfo(
+                detail: GoodsDetail(
+                  id: '1',
+                  name: '测试商品',
+                  desc: '',
+                  price: price,
+                  oldPrice: oldPrice,
+                  mainPictures: const [],
+                  salesCount: 0,
+                  commentCount: 0,
+                  properties: const [],
+                  detailPictures: const [],
+                  skus: const [],
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+
+      // 划线价与售价相同时不展示，避免冗余
+      await pumpWithPrices('99.00', '99.00');
+      expect(find.text('￥99.00'), findsOneWidget);
+
+      await pumpWithPrices('99.00', '199.00');
+      expect(find.text('￥199.00'), findsOneWidget);
+
+      final oldPriceText = tester.widget<Text>(find.text('￥199.00'));
+      expect(oldPriceText.style?.decoration, TextDecoration.lineThrough);
+    });
+
+    testWidgets('HmBottomBarButton 在主色模式下使用禁用底色', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(body: HmBottomBarButton(text: '提交订单', primary: true)),
+        ),
+      );
+
+      final button = tester.widget<ElevatedButton>(find.byType(ElevatedButton));
+      expect(button.onPressed, isNull);
+      expect(
+        button.style?.backgroundColor?.resolve(<WidgetState>{}),
+        AppColors.primary,
+      );
+      expect(
+        button.style?.backgroundColor?.resolve(<WidgetState>{
+          WidgetState.disabled,
+        }),
+        AppColors.primaryDisabled,
+      );
+    });
+
+    testWidgets('HmBottomBarButton 使用自定义 child 覆盖文案', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: HmBottomBarButton(
+              text: '提交订单',
+              primary: true,
+              child: SizedBox(width: 18, height: 18, child: Placeholder()),
+            ),
+          ),
+        ),
+      );
+
+      // 加载态下用指示器替代文案，避免按钮宽度跳动
+      expect(find.text('提交订单'), findsNothing);
+      expect(find.byType(Placeholder), findsOneWidget);
     });
   });
 }

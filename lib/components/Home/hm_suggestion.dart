@@ -5,11 +5,14 @@ class HmSuggestion extends StatelessWidget {
   // 声明特惠推荐组件，继承无状态组件
   // 特惠推荐结果
   final SpecialRecommendResult specialRecommendResult; // 保存接口返回的特惠推荐数据
+  // 商品点击回调
+  final ValueChanged<GoodsItem>? onGoodsTap;
 
   const HmSuggestion({
     super.key,
     required this.specialRecommendResult,
-  }); // 构造函数，接收必填的特惠推荐数据
+    this.onGoodsTap,
+  }); // 构造函数，接收必填的特惠推荐数据与可选的点击回调
 
   // 商品图片的宽高比，宽度随可用空间自适应，避免固定宽度在窄屏下被挤压
   static const double _imageAspectRatio = 100 / 140;
@@ -93,62 +96,66 @@ class HmSuggestion extends StatelessWidget {
     List<GoodsItem> list = _getDisplayItems(); // 获取需要展示的商品数据
     return List.generate(list.length, (int index) {
       // 按商品数量循环生成组件
-      return Column(
-        // 每个商品使用纵向布局
-        children: [
-          // 商品内部子组件列表开始
-          ClipRRect(
-            // 用圆角裁剪包裹商品图片
-            borderRadius: BorderRadius.circular(8), // 设置 8 的圆角
-            child: AspectRatio(
-              // 宽度跟随外层分配，高度按比例自动计算
-              aspectRatio: _imageAspectRatio, // 保持 100:140 的原始比例
-              child: Container(
-                // 商品图片外层容器
-                color: Colors.white, // 设置白色背景，避免透明图片露出底色
-                child: Image.network(
-                  // 加载商品网络图片
-                  errorBuilder: (context, error, stackTrace) {
-                    // 图片加载失败时的回调
-                    return Image.asset(
-                      // 加载加载失败时的本地占位图
-                      'lib/assets/home_cmd_inner.png', // 本地占位图路径
-                      fit: BoxFit.cover, // 占位图等比裁剪铺满
-                    ); // 结束占位图组件
-                  }, // 结束图片加载失败回调
-                  list[index].picture, // 当前商品的图片地址
-                  fit: BoxFit.cover, // 商品图片等比裁剪铺满
-                ), // 结束商品网络图片组件
-              ), // 结束商品图片外层容器
-            ), // 结束 AspectRatio
-          ), // 结束 ClipRRect
-          SizedBox(height: 10), // 商品图片与价格标签之间留 10 的间距
-          Container(
-            // 价格标签容器
-            padding: EdgeInsets.symmetric(
-              horizontal: 6,
-              vertical: 3,
-            ), // 左右内边距 6、上下内边距 3
-            decoration: BoxDecoration(
-              // 价格标签装饰配置开始
-              color: const Color.fromARGB(255, 244, 125, 98), // 设置橙红色背景
-              borderRadius: BorderRadius.circular(10), // 设置 10 的圆角
-            ), // 结束价格标签装饰配置
-            child: FittedBox(
-              // 价格过长时等比缩小，避免文字换行或溢出
-              fit: BoxFit.scaleDown,
-              child: Text(
-                // 价格文字组件
-                "￥${list[index].price}元", // 拼接当前商品的价格文字
-                maxLines: 1, // 价格固定单行展示
-                style: TextStyle(
-                  color: Color.fromARGB(255, 255, 255, 255),
-                ), // 设置白色文字
-              ), // 结束价格文字组件
-            ), // 结束 FittedBox
-          ), // 结束价格标签容器
-        ], // 结束商品内部子组件列表
-      ); // 结束每个商品的 Column
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onGoodsTap == null ? null : () => onGoodsTap!(list[index]),
+        child: Column(
+          // 每个商品使用纵向布局
+          children: [
+            // 商品内部子组件列表开始
+            ClipRRect(
+              // 用圆角裁剪包裹商品图片
+              borderRadius: BorderRadius.circular(8), // 设置 8 的圆角
+              child: AspectRatio(
+                // 宽度跟随外层分配，高度按比例自动计算
+                aspectRatio: _imageAspectRatio, // 保持 100:140 的原始比例
+                child: Container(
+                  // 商品图片外层容器
+                  color: Colors.white, // 设置白色背景，避免透明图片露出底色
+                  child: Image.network(
+                    // 加载商品网络图片
+                    errorBuilder: (context, error, stackTrace) {
+                      // 图片加载失败时的回调
+                      return Image.asset(
+                        // 加载加载失败时的本地占位图
+                        'lib/assets/home_cmd_inner.png', // 本地占位图路径
+                        fit: BoxFit.cover, // 占位图等比裁剪铺满
+                      ); // 结束占位图组件
+                    }, // 结束图片加载失败回调
+                    list[index].picture, // 当前商品的图片地址
+                    fit: BoxFit.cover, // 商品图片等比裁剪铺满
+                  ), // 结束商品网络图片组件
+                ), // 结束商品图片外层容器
+              ), // 结束 AspectRatio
+            ), // 结束 ClipRRect
+            SizedBox(height: 10), // 商品图片与价格标签之间留 10 的间距
+            Container(
+              // 价格标签容器
+              padding: EdgeInsets.symmetric(
+                horizontal: 6,
+                vertical: 3,
+              ), // 左右内边距 6、上下内边距 3
+              decoration: BoxDecoration(
+                // 价格标签装饰配置开始
+                color: const Color.fromARGB(255, 244, 125, 98), // 设置橙红色背景
+                borderRadius: BorderRadius.circular(10), // 设置 10 的圆角
+              ), // 结束价格标签装饰配置
+              child: FittedBox(
+                // 价格过长时等比缩小，避免文字换行或溢出
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  // 价格文字组件
+                  "￥${list[index].price}元", // 拼接当前商品的价格文字
+                  maxLines: 1, // 价格固定单行展示
+                  style: TextStyle(
+                    color: Color.fromARGB(255, 255, 255, 255),
+                  ), // 设置白色文字
+                ), // 结束价格文字组件
+              ), // 结束 FittedBox
+            ), // 结束价格标签容器
+          ], // 结束商品内部子组件列表
+        ), // 结束每个商品的 Column
+      ); // 结束商品点击区域
     }); // 结束 List.generate 循环
   } // 结束 _getChildrenList 方法
 
@@ -180,7 +187,8 @@ class HmSuggestion extends StatelessWidget {
             SizedBox(height: 10), // 标题与下方内容之间留 10 的间距
             Row(
               // 横向排列左侧活动图和右侧商品
-              crossAxisAlignment: CrossAxisAlignment.start, // 顶部对齐，避免左侧图片被垂直居中下移
+              crossAxisAlignment:
+                  CrossAxisAlignment.start, // 顶部对齐，避免左侧图片被垂直居中下移
               spacing: 8, // 各图片之间留 8 的间距，避免贴在一起
               children: [
                 // Row 子组件列表开始

@@ -98,8 +98,8 @@ class _MineViewState extends State<MineView> {
                     child: Text(
                       _userController.user.value.isLoggedIn
                           ? (_userController.user.value.nickname.isNotEmpty
-                              ? _userController.user.value.nickname
-                              : _userController.user.value.account)
+                                ? _userController.user.value.nickname
+                                : _userController.user.value.account)
                           : "立即登录",
                       style: const TextStyle(
                         fontSize: 18,
@@ -284,6 +284,11 @@ class _MineViewState extends State<MineView> {
     super.dispose();
   }
 
+  // 点击商品跳转商品详情页
+  void _onGoodsTap(GoodDetailItem goods) {
+    Navigator.pushNamed(context, '/goods', arguments: goods.id);
+  }
+
   final ScrollController _controller = ScrollController();
 
   void _registerEvent() {
@@ -307,7 +312,10 @@ class _MineViewState extends State<MineView> {
         SliverToBoxAdapter(child: _buildOrderModule()),
         SliverPersistentHeader(pinned: true, delegate: HmGuess()),
         // 猜你喜欢
-        HmMoreList(recommendList: _list), // 上拉加载
+        HmMoreList(
+          recommendList: _list,
+          onItemTap: _onGoodsTap, // 点击商品跳转详情
+        ), // 上拉加载
       ],
     );
   }

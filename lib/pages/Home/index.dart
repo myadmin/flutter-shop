@@ -81,6 +81,7 @@ class _HomeViewState extends State<HomeView> {
         // 特惠推荐模块容器
         child: HmSuggestion(
           specialRecommendResult: _specialRecommendResult,
+          onGoodsTap: _onGoodsTap, // 点击商品跳转详情
         ), // 传入特惠推荐数据
       ),
       // 间隔
@@ -103,6 +104,7 @@ class _HomeViewState extends State<HomeView> {
                   // 爆款推荐组件
                   config: HmHotConfig.inVogue, // 指定为爆款推荐场景
                   result: _inVogueRecommendResult, // 传入爆款推荐数据
+                  onGoodsTap: _onGoodsTap, // 点击商品跳转详情
                 ),
               ),
               SizedBox(width: 10), // 两个模块之间的水平间距
@@ -113,6 +115,7 @@ class _HomeViewState extends State<HomeView> {
                   // 一站全买组件
                   config: HmHotConfig.oneStop, // 指定为一站全买场景
                   result: _oneStopRecommendResult, // 传入一站全买数据
+                  onGoodsTap: _onGoodsTap, // 点击商品跳转详情
                 ),
               ),
             ],
@@ -122,7 +125,10 @@ class _HomeViewState extends State<HomeView> {
       // 间隔
       SliverToBoxAdapter(child: SizedBox(height: 10)), // 爆款推荐与商品列表之间的间距
       // 无限滚动列表
-      HmMoreList(recommendList: _recommendList), // 商品无限滚动列表模块
+      HmMoreList(
+        recommendList: _recommendList,
+        onItemTap: _onGoodsTap, // 点击商品跳转详情
+      ), // 商品无限滚动列表模块
     ]; // sliver 列表结束
   } // _getScrollChildren 方法结束
 
@@ -139,6 +145,11 @@ class _HomeViewState extends State<HomeView> {
   void dispose() {
     _scrollController.dispose(); // 释放滚动控制器，防止内存泄漏
     super.dispose();
+  }
+
+  // 点击商品跳转商品详情页
+  void _onGoodsTap(GoodsItem goods) {
+    Navigator.pushNamed(context, '/goods', arguments: goods.id);
   }
 
   // 加载首页全部数据，全部完成后关闭骨架屏
@@ -256,9 +267,7 @@ class _HomeViewState extends State<HomeView> {
     }
     int limit = _page * 10;
     try {
-      final recommendList = await getRecommendListAPI({
-        "limit": limit,
-      });
+      final recommendList = await getRecommendListAPI({"limit": limit});
       if (!mounted) return;
       setState(() {
         _recommendList = recommendList;

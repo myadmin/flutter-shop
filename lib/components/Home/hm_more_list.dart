@@ -4,8 +4,10 @@ import 'package:hm_shop/models/home.dart';
 class HmMoreList extends StatelessWidget {
   // 推荐列表数据
   final List<GoodDetailItem> recommendList;
-  // 构造函数，透传推荐列表数据
-  const HmMoreList({super.key, required this.recommendList});
+  // 商品点击回调
+  final ValueChanged<GoodDetailItem>? onItemTap;
+  // 构造函数，透传推荐列表数据与点击回调
+  const HmMoreList({super.key, required this.recommendList, this.onItemTap});
 
   // 获取推荐列表项
   Widget _getChildren(int index) {
@@ -69,7 +71,10 @@ class HmMoreList extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6), // 金额与付款人数之间的间距
-              Text('${item.payCount}人付款', style: const TextStyle(color: Colors.grey)),
+              Text(
+                '${item.payCount}人付款',
+                style: const TextStyle(color: Colors.grey),
+              ),
             ],
           ),
         ),
@@ -90,7 +95,13 @@ class HmMoreList extends StatelessWidget {
       itemBuilder: (BuildContext context, int index) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: _getChildren(index),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onItemTap == null
+                ? null
+                : () => onItemTap!(recommendList[index]),
+            child: _getChildren(index),
+          ),
         );
       },
     );

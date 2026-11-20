@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hm_shop/components/common/app_network_image.dart';
+import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/home.dart';
 
 /// 通用商品聚合模块配置。
@@ -33,7 +35,7 @@ class HmHotConfig {
     required this.title,
     required this.subtitle,
     required this.backgroundColor,
-    this.accentColor = const Color(0xFFF47D62),
+    this.accentColor = AppColors.primary,
     this.maxCount = 2,
     this.imageHeight = 100,
     this.subTypeIndex = 0,
@@ -44,7 +46,7 @@ class HmHotConfig {
     moduleId: 'hot',
     title: '爆款推荐',
     subtitle: '最受欢迎',
-    backgroundColor: Color(0xFFDDEBF7),
+    backgroundColor: AppColors.hotBackground,
     maxCount: 2,
   );
 
@@ -53,7 +55,7 @@ class HmHotConfig {
     moduleId: 'oneStop',
     title: '一站全买',
     subtitle: '精心优选',
-    backgroundColor: Color(0xFFFDF3D8),
+    backgroundColor: AppColors.oneStopBackground,
     maxCount: 2,
   );
 }
@@ -96,7 +98,7 @@ class HmHot extends StatelessWidget {
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Color.fromARGB(255, 86, 24, 20),
+            color: AppColors.darkBrown,
           ),
         ),
         const SizedBox(width: 6),
@@ -105,10 +107,7 @@ class HmHot extends StatelessWidget {
             config.subtitle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Color.fromARGB(255, 124, 63, 58),
-            ),
+            style: const TextStyle(fontSize: 11, color: AppColors.lightBrown),
           ),
         ),
       ],
@@ -123,23 +122,15 @@ class HmHot extends StatelessWidget {
       child: Column(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.image),
             child: Container(
               width: double.infinity,
               height: config.imageHeight,
               color: Colors.white,
-              child: Image.network(
-                goods.picture,
+              child: AppNetworkImage(
+                url: goods.picture,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Center(
-                    child: Icon(
-                      Icons.image_outlined,
-                      color: Colors.grey.shade300,
-                      size: 28,
-                    ),
-                  );
-                },
+                placeholderIconSize: 28,
               ),
             ),
           ),

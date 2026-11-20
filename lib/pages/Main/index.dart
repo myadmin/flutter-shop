@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hm_shop/api/user.dart';
-import 'package:hm_shop/models/user.dart';
 import 'package:hm_shop/pages/Cart/index.dart';
 import 'package:hm_shop/pages/Category/index.dart';
 import 'package:hm_shop/pages/Home/index.dart';
 import 'package:hm_shop/pages/Mine/index.dart';
 import 'package:hm_shop/stores/token_manager.dart';
 import 'package:hm_shop/stores/user_controller.dart';
+import 'package:hm_shop/utils/dio_request.dart';
+import 'package:hm_shop/utils/toast_utils.dart';
 
 // 定义 tabbar 数据
 final List<Map<String, String>> _tabList = [
@@ -41,7 +42,8 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  final UserController _userController = Get.put(UserController());
+  // 全局用户态在 main() 中统一注册，这里只取用，不负责创建
+  final UserController _userController = Get.find<UserController>();
 
   // 底部渲染的tabbar items
   List<BottomNavigationBarItem> _getTabBarWidgets() {
@@ -70,8 +72,24 @@ class _MainPageState extends State<MainPage> {
   @override
   void initState() {
     super.initState();
+    // 网络层发现登录态失效时，统一在这里清理用户信息并跳转登录页
+    DioRequest.onUnauthorized = _handleUnauthorized;
     // 初始化用户
     _initUser();
+  }
+
+  @override
+  void dispose() {
+    DioRequest.onUnauthorized = null;
+    super.dispose();
+  }
+
+  // 登录态失效：清空用户信息并跳转登录页
+  void _handleUnauthorized() {
+    _userController.clearUserInfo();
+    if (!mounted) return;
+    ToastUtils.showToast(context, '登录已过期，请重新登录');
+    Navigator.pushNamed(context, '/login');
   }
 
   // 初始化用户
@@ -84,7 +102,7 @@ class _MainPageState extends State<MainPage> {
       } catch (e) {
         debugPrint('恢复登录态失败，清除本地失效token: $e');
         await tokenManager.removeToken();
-        _userController.updateUserInfo(UserInfo.fromJson({}));
+        _userController.clearUserInfo();
       }
     }
   }

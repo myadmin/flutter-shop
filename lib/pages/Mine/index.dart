@@ -1,12 +1,14 @@
 import 'package:get/get.dart';
+import 'package:flutter/material.dart';
 import 'package:hm_shop/api/mine.dart';
 import 'package:hm_shop/components/Home/hm_more_list.dart';
+import 'package:hm_shop/components/Mine/hm_entry_item.dart';
 import 'package:hm_shop/components/Mine/hm_guess.dart';
-import 'package:flutter/material.dart';
+import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/home.dart';
-import 'package:hm_shop/models/user.dart';
 import 'package:hm_shop/stores/token_manager.dart';
 import 'package:hm_shop/stores/user_controller.dart';
+import 'package:hm_shop/utils/toast_utils.dart';
 
 class MineView extends StatefulWidget {
   const MineView({super.key});
@@ -22,25 +24,25 @@ class _MineViewState extends State<MineView> {
     return _userController.user.value.isLoggedIn
         ? GestureDetector(
             onTap: () {
-              showDialog(
+              showDialog<void>(
                 context: context,
-                builder: (context) {
+                builder: (dialogContext) {
                   return AlertDialog(
                     title: const Text("确认退出登录吗？"),
                     content: const Text("退出登录后将无法继续使用"),
                     actions: [
                       TextButton(
                         onPressed: () {
-                          Navigator.pop(context);
+                          Navigator.pop(dialogContext);
                         },
                         child: const Text("取消"),
                       ),
                       TextButton(
                         onPressed: () async {
-                          // 清除Getx
-                          Navigator.pop(context);
+                          // 先关闭确认弹窗，再清除本地 token 与内存登录态
+                          Navigator.pop(dialogContext);
                           await tokenManager.removeToken();
-                          _userController.updateUserInfo(UserInfo.fromJson({}));
+                          _userController.clearUserInfo();
                         },
                         child: const Text("确认"),
                       ),
@@ -59,7 +61,12 @@ class _MineViewState extends State<MineView> {
               ),
             ),
           )
-        : const Text("");
+        : const SizedBox.shrink();
+  }
+
+  /// 尚未开放的功能统一给出提示，避免点击后毫无反馈。
+  void _showComingSoon(String feature) {
+    ToastUtils.showToast(context, '$feature功能开发中，敬请期待');
   }
 
   Widget _buildHeader() {
@@ -68,7 +75,7 @@ class _MineViewState extends State<MineView> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFFFF2E8), Color(0xFFFDF6F1)],
+          colors: [AppColors.primarySurface, AppColors.headerGradientEnd],
         ),
       ),
       padding: const EdgeInsets.only(left: 20, right: 40, top: 40, bottom: 20),
@@ -123,7 +130,7 @@ class _MineViewState extends State<MineView> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: const BoxDecoration(
-          color: Color.fromARGB(255, 240, 192, 155),
+          color: AppColors.vipBackground,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(10),
             topRight: Radius.circular(10),
@@ -143,15 +150,15 @@ class _MineViewState extends State<MineView> {
                   maxLines: 1,
                   style: TextStyle(
                     fontSize: 14,
-                    color: Color.fromRGBO(126, 43, 26, 1),
+                    color: AppColors.vipForeground,
                   ),
                 ),
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () => _showComingSoon('会员开通'),
               style: TextButton.styleFrom(
-                backgroundColor: const Color.fromRGBO(126, 43, 26, 1),
+                backgroundColor: AppColors.vipForeground,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 shape: RoundedRectangleBorder(
@@ -167,17 +174,6 @@ class _MineViewState extends State<MineView> {
   }
 
   Widget _buildQuickActions() {
-    Widget item(String pic, String label) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Image.asset(pic, width: 30, height: 30, fit: BoxFit.cover),
-          const SizedBox(height: 6),
-          Text(label, style: const TextStyle(fontSize: 12)),
-        ],
-      );
-    }
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Container(
@@ -189,9 +185,21 @@ class _MineViewState extends State<MineView> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            item("lib/assets/ic_user_collect.png", "我的收藏"),
-            item("lib/assets/ic_user_history.png", "我的足迹"),
-            item("lib/assets/ic_user_service.png", "我的客服"),
+            HmEntryItem(
+              icon: "lib/assets/ic_user_collect.png",
+              label: "我的收藏",
+              onTap: () => _showComingSoon('我的收藏'),
+            ),
+            HmEntryItem(
+              icon: "lib/assets/ic_user_history.png",
+              label: "我的足迹",
+              onTap: () => _showComingSoon('我的足迹'),
+            ),
+            HmEntryItem(
+              icon: "lib/assets/ic_user_service.png",
+              label: "我的客服",
+              onTap: () => _showComingSoon('我的客服'),
+            ),
           ],
         ),
       ),
@@ -199,20 +207,6 @@ class _MineViewState extends State<MineView> {
   }
 
   Widget _buildOrderModule() {
-    Widget orderItem(String pic, String label) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Image.asset(pic, width: 30, height: 30, fit: BoxFit.cover),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12, color: Colors.black),
-          ),
-        ],
-      );
-    }
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Card(
@@ -235,11 +229,31 @@ class _MineViewState extends State<MineView> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  orderItem("lib/assets/ic_user_order.png", "我的订单"),
-                  orderItem("lib/assets/ic_user_obligation.png", "待付款"),
-                  orderItem("lib/assets/ic_user_unshipped.png", "待发货"),
-                  orderItem("lib/assets/ic_user_unreceived.png", "待收货"),
-                  orderItem("lib/assets/ic_user_unevaluated.png", "待评价"),
+                  HmEntryItem(
+                    icon: "lib/assets/ic_user_order.png",
+                    label: "我的订单",
+                    onTap: () => _showComingSoon('我的订单'),
+                  ),
+                  HmEntryItem(
+                    icon: "lib/assets/ic_user_obligation.png",
+                    label: "待付款",
+                    onTap: () => _showComingSoon('待付款'),
+                  ),
+                  HmEntryItem(
+                    icon: "lib/assets/ic_user_unshipped.png",
+                    label: "待发货",
+                    onTap: () => _showComingSoon('待发货'),
+                  ),
+                  HmEntryItem(
+                    icon: "lib/assets/ic_user_unreceived.png",
+                    label: "待收货",
+                    onTap: () => _showComingSoon('待收货'),
+                  ),
+                  HmEntryItem(
+                    icon: "lib/assets/ic_user_unevaluated.png",
+                    label: "待评价",
+                    onTap: () => _showComingSoon('待评价'),
+                  ),
                 ],
               ),
             ],
@@ -265,13 +279,15 @@ class _MineViewState extends State<MineView> {
     try {
       final res = await getGuessListAPI({'page': _page, 'pageSize': _pageSize});
       if (!mounted) return;
-      _list.addAll(res.items); // 合并数据
-      if (_page >= res.pages) {
-        _hasMore = false;
-      } else {
-        _page++;
-      }
-      setState(() {});
+      // 列表与分页状态都在 setState 内更新，保证一帧内完成并触发重建
+      setState(() {
+        _list.addAll(res.items);
+        if (_page >= res.pages) {
+          _hasMore = false;
+        } else {
+          _page++;
+        }
+      });
     } catch (e) {
       debugPrint('获取猜你喜欢列表失败: $e');
     } finally {
@@ -318,12 +334,11 @@ class _MineViewState extends State<MineView> {
         SliverToBoxAdapter(child: _buildVipCard()),
         SliverToBoxAdapter(child: _buildQuickActions()),
         SliverToBoxAdapter(child: _buildOrderModule()),
-        SliverPersistentHeader(pinned: true, delegate: HmGuess()),
-        // 猜你喜欢
+        const SliverPersistentHeader(pinned: true, delegate: HmGuess()), // 猜你喜欢
         HmMoreList(
           recommendList: _list,
           onItemTap: _onGoodsTap, // 点击商品跳转详情
-        ), // 上拉加载
+        ),
       ],
     );
   }

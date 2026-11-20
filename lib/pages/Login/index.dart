@@ -1,9 +1,10 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hm_shop/api/user.dart';
+import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/stores/token_manager.dart';
 import 'package:hm_shop/stores/user_controller.dart';
+import 'package:hm_shop/utils/api_exception.dart';
 import 'package:hm_shop/utils/loading_dialog.dart';
 import 'package:hm_shop/utils/toast_utils.dart';
 
@@ -38,6 +39,24 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  /// 账号、密码两个输入框共用的装饰：灰底、圆角 28、无边框线。
+  InputDecoration _inputDecoration(String hintText) {
+    const border = OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(AppRadius.pill)),
+      borderSide: BorderSide.none,
+    );
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: const TextStyle(color: Colors.grey),
+      filled: true,
+      fillColor: AppColors.inputFill,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      border: border,
+      enabledBorder: border,
+      focusedBorder: border,
+    );
+  }
+
   Widget _buildPhoneTextField() {
     return TextFormField(
       validator: (value) {
@@ -51,28 +70,7 @@ class _LoginPageState extends State<LoginPage> {
         return null;
       },
       controller: _phoneController,
-      decoration: InputDecoration(
-        hintText: '请输入账号',
-        hintStyle: const TextStyle(color: Colors.grey),
-        filled: true,
-        fillColor: const Color(0xFFF5F5F5),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 16,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(28),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(28),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(28),
-          borderSide: BorderSide.none,
-        ),
-      ),
+      decoration: _inputDecoration('请输入账号'),
     );
   }
 
@@ -90,28 +88,7 @@ class _LoginPageState extends State<LoginPage> {
       },
       controller: _codeController,
       obscureText: true,
-      decoration: InputDecoration(
-        hintText: '请输入密码',
-        hintStyle: const TextStyle(color: Colors.grey),
-        filled: true,
-        fillColor: const Color(0xFFF5F5F5),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 16,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(28),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(28),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(28),
-          borderSide: BorderSide.none,
-        ),
-      ),
+      decoration: _inputDecoration('请输入密码'),
     );
   }
 
@@ -145,12 +122,12 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 TextSpan(
                   text: '《隐私条款》',
-                  style: TextStyle(color: Color(0xFF1E88E5)),
+                  style: TextStyle(color: AppColors.link),
                 ),
                 TextSpan(text: '和'),
                 TextSpan(
                   text: '《用户协议》',
-                  style: TextStyle(color: Color(0xFF1E88E5)),
+                  style: TextStyle(color: AppColors.link),
                 ),
               ],
             ),
@@ -183,9 +160,7 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) {
         return;
       }
-      final errorMsg = e is DioException
-          ? (e.message ?? '登录失败')
-          : '网络或服务异常，请稍后重试';
+      final errorMsg = resolveErrorMessage(e, fallback: '登录失败');
       ToastUtils.showToast(context, errorMsg);
     }
   }

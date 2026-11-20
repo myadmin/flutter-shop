@@ -1,6 +1,9 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:hm_shop/components/common/app_network_image.dart';
+import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/home.dart';
+import 'package:hm_shop/utils/toast_utils.dart';
 
 class HmSlider extends StatefulWidget {
   final List<BannerItem> bannerList;
@@ -17,34 +20,19 @@ class _HmSliderState extends State<HmSlider> {
   int _currentIndex = 0;
 
   Widget _getSlider() {
-    final double screenWidth = MediaQuery.of(context).size.width;
-
     return CarouselSlider(
       carouselController: _controller,
       items: List.generate(widget.bannerList.length, (int index) {
-        return Image.network(
-          widget.bannerList[index].imageUrl,
+        return AppNetworkImage(
+          url: widget.bannerList[index].imageUrl,
           fit: BoxFit.cover,
-          width: screenWidth,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              color: Colors.grey.shade200,
-              width: screenWidth,
-              height: 300,
-              alignment: Alignment.center,
-              child: const Icon(
-                Icons.broken_image_outlined,
-                size: 48,
-                color: Colors.grey,
-              ),
-            );
-          },
+          decodeWidth: MediaQuery.sizeOf(context).width,
         );
       }),
       options: CarouselOptions(
         viewportFraction: 1.0,
         autoPlay: true,
-        // autoPlayInterval: Duration(seconds: 2),
+        autoPlayInterval: const Duration(seconds: 4),
         height: 300,
         onPageChanged: (index, reason) {
           setState(() {
@@ -55,6 +43,7 @@ class _HmSliderState extends State<HmSlider> {
     );
   }
 
+  /// 搜索框目前是纯展示：点击后给出「功能未开放」提示，避免静默无响应。
   Widget _getSearch() {
     return Positioned(
       top: 10,
@@ -62,17 +51,29 @@ class _HmSliderState extends State<HmSlider> {
       right: 0,
       child: Padding(
         padding: const EdgeInsets.all(10),
-        child: Container(
-          alignment: Alignment.centerLeft,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          height: 50,
-          decoration: BoxDecoration(
-            color: const Color.fromRGBO(0, 0, 0, 0.4),
-            borderRadius: BorderRadius.circular(25),
-          ),
-          child: const Text(
-            '搜索...',
-            style: TextStyle(color: Colors.white, fontSize: 20),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            ToastUtils.showToast(context, '搜索功能开发中，敬请期待');
+          },
+          child: Container(
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            height: 50,
+            decoration: BoxDecoration(
+              color: AppColors.searchOverlay,
+              borderRadius: BorderRadius.circular(25),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.search, color: Colors.white, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  '搜索...',
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -1,12 +1,34 @@
 // 路由配置
 import 'package:flutter/material.dart';
+import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/pages/GoodsDetail/index.dart';
 import 'package:hm_shop/pages/Main/index.dart';
 import 'package:hm_shop/pages/Login/index.dart';
 import 'package:hm_shop/pages/OrderConfirm/index.dart';
 
 Widget getRootWidget() {
-  return MaterialApp(initialRoute: '/', routes: getRootRoutes());
+  return MaterialApp(
+    title: '美荟商城',
+    debugShowCheckedModeBanner: false,
+    initialRoute: '/',
+    routes: getRootRoutes(),
+    theme: buildAppTheme(),
+  );
+}
+
+/// 应用主题：把设计令牌里的颜色映射到 Material 主题，
+/// 让未显式指定颜色的组件（SnackBar、Dialog、按钮等）也保持统一观感。
+ThemeData buildAppTheme() {
+  final colorScheme = ColorScheme.fromSeed(
+    seedColor: AppColors.primary,
+    primary: AppColors.primary,
+  );
+  return ThemeData(
+    useMaterial3: true,
+    colorScheme: colorScheme,
+    scaffoldBackgroundColor: Colors.white,
+    splashFactory: InkSparkle.splashFactory,
+  );
 }
 
 Map<String, Widget Function(BuildContext)> getRootRoutes() {

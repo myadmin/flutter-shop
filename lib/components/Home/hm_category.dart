@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hm_shop/components/common/app_network_image.dart';
+import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/home.dart';
 
 class HmCategory extends StatelessWidget {
@@ -20,23 +22,18 @@ class HmCategory extends StatelessWidget {
             height: 100,
             margin: const EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 235, 234, 234),
+              color: AppColors.categoryTile,
               borderRadius: BorderRadius.circular(40),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.network(
-                  category.picture,
+                AppNetworkImage(
+                  url: category.picture,
                   width: 40,
                   height: 40,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Icon(
-                      Icons.category_outlined,
-                      size: 32,
-                      color: Colors.grey,
-                    );
-                  },
+                  decodeWidth: 40,
+                  placeholderIconSize: 32,
                 ),
                 Text(
                   category.name,

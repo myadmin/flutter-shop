@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hm_shop/components/common/app_network_image.dart';
+import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/home.dart';
 
 class HmMoreList extends StatelessWidget {
@@ -19,18 +21,11 @@ class HmMoreList extends StatelessWidget {
         // 避免窄屏（如 iPhone 12）下固定正方形图片把价格行挤出卡片造成溢出
         Expanded(
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(8), // 图片圆角
-            child: Image.network(
-              item.picture, // 商品图片地址
+            borderRadius: BorderRadius.circular(AppRadius.image), // 图片圆角
+            child: AppNetworkImage(
+              url: item.picture, // 商品图片地址
               width: double.infinity,
               fit: BoxFit.cover, // 等比裁剪铺满
-              errorBuilder: (context, error, stackTrace) {
-                // 图片加载失败时展示本地占位图
-                return Image.asset(
-                  'lib/assets/home_cmd_inner.png',
-                  fit: BoxFit.cover,
-                );
-              },
             ),
           ),
         ),

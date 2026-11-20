@@ -1,208 +1,147 @@
-import 'package:flutter/material.dart'; // 引入 Flutter 的 Material UI 组件库
-import 'package:hm_shop/models/home.dart'; // 引入首页数据模型（特惠推荐相关类）
+import 'package:flutter/material.dart';
+import 'package:hm_shop/components/common/app_network_image.dart';
+import 'package:hm_shop/constants/app_theme.dart';
+import 'package:hm_shop/models/home.dart';
 
+/// 特惠推荐区
+///
+/// 左侧为本地活动图，右侧展示接口返回的前 3 个商品。
 class HmSuggestion extends StatelessWidget {
-  // 声明特惠推荐组件，继承无状态组件
-  // 特惠推荐结果
-  final SpecialRecommendResult specialRecommendResult; // 保存接口返回的特惠推荐数据
-  // 商品点击回调
+  final SpecialRecommendResult specialRecommendResult;
   final ValueChanged<GoodsItem>? onGoodsTap;
 
   const HmSuggestion({
     super.key,
     required this.specialRecommendResult,
     this.onGoodsTap,
-  }); // 构造函数，接收必填的特惠推荐数据与可选的点击回调
+  });
 
-  // 商品图片的宽高比，宽度随可用空间自适应，避免固定宽度在窄屏下被挤压
+  /// 商品图片宽高比，宽度随可用空间自适应，避免固定宽度在窄屏下被挤压
   static const double _imageAspectRatio = 100 / 140;
 
   List<GoodsItem> _getDisplayItems() {
-    // 定义获取待展示商品的方法
     if (specialRecommendResult.subTypes.isEmpty) {
-      // 判断子类型列表是否为空
-      return []; // 为空时返回空列表
-    } // 结束空数据判断
-
-    return specialRecommendResult
-        .subTypes
-        .first
-        .goodsItems
-        .items // 取第一个子类型的商品列表
-        .take(3) // 只取前 3 个商品
-        .toList(); // 转换为列表返回
-  } // 结束 _getDisplayItems 方法
+      return const [];
+    }
+    return specialRecommendResult.subTypes.first.goodsItems.items
+        .take(3)
+        .toList();
+  }
 
   Widget _buildHeader() {
-    // 定义构建顶部标题区域的方法
     return const Padding(
-      // 给标题区域添加内边距
-      padding: EdgeInsets.symmetric(horizontal: 10), // 左右各留 10 的内边距
+      padding: EdgeInsets.symmetric(horizontal: 10),
       child: Row(
-        // 标题内容横向排列
         children: [
-          // 标题子组件列表开始
           Text(
-            // 主标题文字组件
-            '特惠推荐', // 主标题内容
+            '特惠推荐',
             style: TextStyle(
-              // 主标题文字样式
-              fontSize: 18, // 字号 18
-              fontWeight: FontWeight.bold, // 文字加粗
-              color: Color.fromARGB(255, 86, 24, 20), // 深棕色文字颜色
-            ), // 结束主标题样式
-          ), // 结束主标题组件
-          SizedBox(width: 10), // 主标题与副标题之间留 10 的间距
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.darkBrown,
+            ),
+          ),
+          SizedBox(width: 10),
           Text(
-            // 副标题文字组件
-            '精选省攻略', // 副标题内容
-            style: TextStyle(
-              // 副标题文字样式
-              fontSize: 12, // 字号 12
-              color: Color.fromARGB(255, 124, 63, 58), // 浅棕色文字颜色
-            ), // 结束副标题样式
-          ), // 结束副标题组件
-        ], // 结束标题子组件列表
-      ), // 结束标题 Row
-    ); // 结束标题 Padding
-  } // 结束 _buildHeader 方法
+            '精选省攻略',
+            style: TextStyle(fontSize: 12, color: AppColors.lightBrown),
+          ),
+        ],
+      ),
+    );
+  }
 
-  // 左侧结构
   Widget _buildLeft() {
-    // 定义构建左侧活动图片的方法
+    // 按外层分配的宽度等比撑满，避免固定尺寸被挤压变形
     return ClipRRect(
-      // 按外层分配的宽度等比撑满，避免固定尺寸被挤压变形
-      borderRadius: BorderRadius.circular(8), // 设置 8 的圆角
+      borderRadius: BorderRadius.circular(AppRadius.image),
       child: AspectRatio(
-        // 用宽高比代替固定宽高，图片宽度由 Expanded 分配
-        aspectRatio: _imageAspectRatio, // 保持 100:140 的原始比例
+        aspectRatio: _imageAspectRatio,
         child: Container(
-          // 左侧活动图片容器
           decoration: const BoxDecoration(
-            // 容器装饰配置开始
             image: DecorationImage(
-              // 设置容器背景图片
-              image: AssetImage('lib/assets/home_cmd_inner.png'), // 加载本地活动图片资源
-              fit: BoxFit.cover, // 图片等比裁剪并铺满容器
-            ), // 结束背景图片配置
-          ), // 结束容器装饰配置
-        ), // 结束左侧活动图片容器
-      ), // 结束 AspectRatio
-    ); // 结束 ClipRRect
-  } // 结束 _buildLeft 方法
+              image: AssetImage('lib/assets/home_cmd_inner.png'),
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   List<Widget> _getChildrenList() {
-    // 定义构建右侧商品列表的方法
-    final List<GoodsItem> list = _getDisplayItems(); // 获取需要展示的商品数据
-    return List.generate(list.length, (int index) {
-      // 按商品数量循环生成组件
+    final list = _getDisplayItems();
+    return List.generate(list.length, (index) {
+      final goods = list[index];
       return GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: onGoodsTap == null ? null : () => onGoodsTap!(list[index]),
+        onTap: onGoodsTap == null ? null : () => onGoodsTap!(goods),
         child: Column(
-          // 每个商品使用纵向布局
           children: [
-            // 商品内部子组件列表开始
             ClipRRect(
-              // 用圆角裁剪包裹商品图片
-              borderRadius: BorderRadius.circular(8), // 设置 8 的圆角
+              borderRadius: BorderRadius.circular(AppRadius.image),
               child: AspectRatio(
-                // 宽度跟随外层分配，高度按比例自动计算
-                aspectRatio: _imageAspectRatio, // 保持 100:140 的原始比例
+                aspectRatio: _imageAspectRatio,
                 child: Container(
-                  // 商品图片外层容器
-                  color: Colors.white, // 设置白色背景，避免透明图片露出底色
-                  child: Image.network(
-                    // 加载商品网络图片
-                    errorBuilder: (context, error, stackTrace) {
-                      // 图片加载失败时的回调
-                      return Image.asset(
-                        // 加载加载失败时的本地占位图
-                        'lib/assets/home_cmd_inner.png', // 本地占位图路径
-                        fit: BoxFit.cover, // 占位图等比裁剪铺满
-                      ); // 结束占位图组件
-                    }, // 结束图片加载失败回调
-                    list[index].picture, // 当前商品的图片地址
-                    fit: BoxFit.cover, // 商品图片等比裁剪铺满
-                  ), // 结束商品网络图片组件
-                ), // 结束商品图片外层容器
-              ), // 结束 AspectRatio
-            ), // 结束 ClipRRect
-            const SizedBox(height: 10), // 商品图片与价格标签之间留 10 的间距
+                  // 白色底避免透明图片露出下层背景
+                  color: Colors.white,
+                  child: AppNetworkImage(url: goods.picture, fit: BoxFit.cover),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
             Container(
-              // 价格标签容器
-              padding: const EdgeInsets.symmetric(
-                horizontal: 6,
-                vertical: 3,
-              ), // 左右内边距 6、上下内边距 3
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
               decoration: BoxDecoration(
-                // 价格标签装饰配置开始
-                color: const Color.fromARGB(255, 244, 125, 98), // 设置橙红色背景
-                borderRadius: BorderRadius.circular(10), // 设置 10 的圆角
-              ), // 结束价格标签装饰配置
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              // 价格过长时等比缩小，避免换行或溢出
               child: FittedBox(
-                // 价格过长时等比缩小，避免文字换行或溢出
                 fit: BoxFit.scaleDown,
                 child: Text(
-                  // 价格文字组件
-                  "￥${list[index].price}元", // 拼接当前商品的价格文字
-                  maxLines: 1, // 价格固定单行展示
-                  style: const TextStyle(
-                    color: Color.fromARGB(255, 255, 255, 255),
-                  ), // 设置白色文字
-                ), // 结束价格文字组件
-              ), // 结束 FittedBox
-            ), // 结束价格标签容器
-          ], // 结束商品内部子组件列表
-        ), // 结束每个商品的 Column
-      ); // 结束商品点击区域
-    }); // 结束 List.generate 循环
-  } // 结束 _getChildrenList 方法
+                  '￥${goods.price}',
+                  maxLines: 1,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
 
-  @override // 重写父类构建界面的方法
+  @override
   Widget build(BuildContext context) {
-    // 根据状态构建组件界面
     return Padding(
-      // 给整个特惠推荐区域添加内边距
-      padding: const EdgeInsets.symmetric(horizontal: 10), // 左右各留 10 的外边距
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Container(
-        // 特惠推荐卡片容器
-        alignment: Alignment.center, // 卡片内容居中对齐
-        padding: const EdgeInsets.all(12), // 卡片四周内边距 12
+        alignment: Alignment.center,
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          // 卡片装饰配置开始
-          borderRadius: BorderRadius.circular(12), // 设置 12 的圆角
+          borderRadius: BorderRadius.circular(12),
           image: const DecorationImage(
-            // 设置卡片背景图片
-            image: AssetImage('lib/assets/home_cmd_sm.png'), // 加载本地卡片背景图
-            fit: BoxFit.cover, // 背景图等比裁剪铺满卡片
-          ), // 结束卡片背景图片配置
-        ), // 结束卡片装饰配置
+            image: AssetImage('lib/assets/home_cmd_sm.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
         child: Column(
-          // 卡片内容纵向排列
           children: [
-            // 卡片子组件列表开始
-            // 顶部内容
-            _buildHeader(), // 构建顶部标题区域
-            const SizedBox(height: 10), // 标题与下方内容之间留 10 的间距
+            _buildHeader(),
+            const SizedBox(height: 10),
             Row(
-              // 横向排列左侧活动图和右侧商品
-              crossAxisAlignment:
-                  CrossAxisAlignment.start, // 顶部对齐，避免左侧图片被垂直居中下移
-              spacing: 8, // 各图片之间留 8 的间距，避免贴在一起
+              // 顶部对齐，避免左侧活动图被垂直居中下移
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 8,
               children: [
-                // Row 子组件列表开始
-                // 左侧图片与右侧商品均分空间，保证左右及中间间距一致
-                Expanded(child: _buildLeft()), // 左侧活动图占一份空间
-                ..._getChildrenList().map(
-                  // 将右侧商品组件展开到当前子组件列表中
-                  (child) => Expanded(child: child), // 每个商品占一份空间
-                ), // 结束右侧商品组件的展开
-              ], // 结束 Row 子组件列表
-            ), // 结束 Row
-          ], // 结束卡片子组件列表
-        ), // 结束卡片 Column
-      ), // 结束特惠推荐卡片容器
-    ); // 结束外层 Padding
-  } // 结束 build 方法
-} // 结束 HmSuggestion 类
+                Expanded(child: _buildLeft()),
+                ..._getChildrenList().map((child) => Expanded(child: child)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hm_shop/api/user.dart';
+import 'package:hm_shop/constants/app_assets.dart';
 import 'package:hm_shop/pages/Cart/index.dart';
 import 'package:hm_shop/pages/Category/index.dart';
 import 'package:hm_shop/pages/Home/index.dart';
@@ -10,28 +11,28 @@ import 'package:hm_shop/stores/user_controller.dart';
 import 'package:hm_shop/utils/dio_request.dart';
 import 'package:hm_shop/utils/toast_utils.dart';
 
-// 定义 tabbar 数据
-final List<Map<String, String>> _tabList = [
-  {
-    'icon': 'lib/assets/ic_public_home_normal.png',
-    'activeIcon': 'lib/assets/ic_public_home_active.png',
-    'title': '首页',
-  },
-  {
-    'icon': 'lib/assets/ic_public_pro_normal.png',
-    'activeIcon': 'lib/assets/ic_public_pro_active.png',
-    'title': '分类',
-  },
-  {
-    'icon': 'lib/assets/ic_public_cart_normal.png',
-    'activeIcon': 'lib/assets/ic_public_cart_active.png',
-    'title': '购物车',
-  },
-  {
-    'icon': 'lib/assets/ic_public_my_normal.png',
-    'activeIcon': 'lib/assets/ic_public_my_active.png',
-    'title': '我的',
-  },
+// 底部 tab 定义：用 record 而非 Map，避免字符串 key 取值时的空断言
+final List<({String icon, String activeIcon, String label})> _tabList = [
+  (
+    icon: AppAssets.icPublicHomeNormal,
+    activeIcon: AppAssets.icPublicHomeActive,
+    label: '首页',
+  ),
+  (
+    icon: AppAssets.icPublicProNormal,
+    activeIcon: AppAssets.icPublicProActive,
+    label: '分类',
+  ),
+  (
+    icon: AppAssets.icPublicCartNormal,
+    activeIcon: AppAssets.icPublicCartActive,
+    label: '购物车',
+  ),
+  (
+    icon: AppAssets.icPublicMyNormal,
+    activeIcon: AppAssets.icPublicMyActive,
+    label: '我的',
+  ),
 ];
 
 class MainPage extends StatefulWidget {
@@ -45,20 +46,16 @@ class _MainPageState extends State<MainPage> {
   // 全局用户态在 main() 中统一注册，这里只取用，不负责创建
   final UserController _userController = Get.find<UserController>();
 
-  // 底部渲染的tabbar items
-  List<BottomNavigationBarItem> _getTabBarWidgets() {
-    return List.generate(_tabList.length, (index) {
-      return BottomNavigationBarItem(
-        icon: Image.asset(_tabList[index]['icon']!, width: 30, height: 30),
-        activeIcon: Image.asset(
-          _tabList[index]['activeIcon']!,
-          width: 30,
-          height: 30,
+  // 底部 tab 项与文案固定不变，构建一次后复用，避免每帧重建 Image 组件
+  late final List<BottomNavigationBarItem> _tabItems = _tabList
+      .map(
+        (tab) => BottomNavigationBarItem(
+          icon: Image.asset(tab.icon, width: 30, height: 30),
+          activeIcon: Image.asset(tab.activeIcon, width: 30, height: 30),
+          label: tab.label,
         ),
-        label: _tabList[index]['title']!,
-      );
-    });
-  }
+      )
+      .toList();
 
   int _currentIndex = 0;
 
@@ -124,7 +121,7 @@ class _MainPageState extends State<MainPage> {
             _currentIndex = index;
           });
         },
-        items: _getTabBarWidgets(),
+        items: _tabItems,
       ),
     );
   }

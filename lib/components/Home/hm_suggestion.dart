@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hm_shop/components/common/app_network_image.dart';
+import 'package:hm_shop/constants/app_assets.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/home.dart';
 
@@ -60,7 +61,7 @@ class HmSuggestion extends StatelessWidget {
         child: Container(
           decoration: const BoxDecoration(
             image: DecorationImage(
-              image: AssetImage('lib/assets/home_cmd_inner.png'),
+              image: AssetImage(AppAssets.homeCmdInner),
               fit: BoxFit.cover,
             ),
           ),
@@ -122,7 +123,7 @@ class HmSuggestion extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           image: const DecorationImage(
-            image: AssetImage('lib/assets/home_cmd_sm.png'),
+            image: AssetImage(AppAssets.homeCmdSm),
             fit: BoxFit.cover,
           ),
         ),

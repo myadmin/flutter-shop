@@ -69,13 +69,13 @@ class _HomeViewState extends State<HomeView> {
       // 轮播图
       SliverToBoxAdapter(child: HmSlider(bannerList: _bannerList)), // 轮播图模块
       // 间隔
-      SliverToBoxAdapter(child: SizedBox(height: 10)), // 轮播图与分类之间的间距
+      const SliverToBoxAdapter(child: SizedBox(height: 10)), // 轮播图与分类之间的间距
       // 分类
       SliverToBoxAdapter(
         child: HmCategory(categoryList: _categoryList),
       ), // 分类入口模块
       // 间隔
-      SliverToBoxAdapter(child: SizedBox(height: 10)), // 分类与推荐之间的间距
+      const SliverToBoxAdapter(child: SizedBox(height: 10)), // 分类与推荐之间的间距
       // 推荐
       SliverToBoxAdapter(
         // 特惠推荐模块容器
@@ -85,13 +85,13 @@ class _HomeViewState extends State<HomeView> {
         ), // 传入特惠推荐数据
       ),
       // 间隔
-      SliverToBoxAdapter(child: SizedBox(height: 10)), // 推荐与爆款推荐之间的间距
+      const SliverToBoxAdapter(child: SizedBox(height: 10)), // 推荐与爆款推荐之间的间距
       // 爆款推荐
       SliverToBoxAdapter(
         // 爆款推荐区域容器
         child: Padding(
           // 外层内边距容器
-          padding: EdgeInsets.symmetric(horizontal: 10), // 左右各留 10 的边距
+          padding: const EdgeInsets.symmetric(horizontal: 10), // 左右各留 10 的边距
           child: Row(
             // 横向排列两个推荐模块
             crossAxisAlignment: CrossAxisAlignment.start, // 子项顶部对齐
@@ -107,7 +107,7 @@ class _HomeViewState extends State<HomeView> {
                   onGoodsTap: _onGoodsTap, // 点击商品跳转详情
                 ),
               ),
-              SizedBox(width: 10), // 两个模块之间的水平间距
+              const SizedBox(width: 10), // 两个模块之间的水平间距
               // 一站全买场景
               Expanded(
                 // 占据另一半宽度
@@ -123,7 +123,7 @@ class _HomeViewState extends State<HomeView> {
         ),
       ),
       // 间隔
-      SliverToBoxAdapter(child: SizedBox(height: 10)), // 爆款推荐与商品列表之间的间距
+      const SliverToBoxAdapter(child: SizedBox(height: 10)), // 爆款推荐与商品列表之间的间距
       // 无限滚动列表
       HmMoreList(
         recommendList: _recommendList,

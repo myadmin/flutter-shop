@@ -28,7 +28,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildHeader() {
-    return Text(
+    return const Text(
       '账号密码登录',
       style: TextStyle(
         fontSize: 20,
@@ -137,20 +137,20 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
         const SizedBox(width: 4),
-        Expanded(
+        const Expanded(
           child: Text.rich(
             TextSpan(
               text: '查看并同意',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(fontSize: 12, color: Colors.grey),
               children: [
                 TextSpan(
                   text: '《隐私条款》',
-                  style: const TextStyle(color: Color(0xFF1E88E5)),
+                  style: TextStyle(color: Color(0xFF1E88E5)),
                 ),
-                const TextSpan(text: '和'),
+                TextSpan(text: '和'),
                 TextSpan(
                   text: '《用户协议》',
-                  style: const TextStyle(color: Color(0xFF1E88E5)),
+                  style: TextStyle(color: Color(0xFF1E88E5)),
                 ),
               ],
             ),
@@ -244,7 +244,7 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               _buildHeader(),
               const SizedBox(height: 20),
               _buildPhoneTextField(),

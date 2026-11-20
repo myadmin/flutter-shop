@@ -35,7 +35,7 @@ class HmSuggestion extends StatelessWidget {
 
   Widget _buildHeader() {
     // 定义构建顶部标题区域的方法
-    return Padding(
+    return const Padding(
       // 给标题区域添加内边距
       padding: EdgeInsets.symmetric(horizontal: 10), // 左右各留 10 的内边距
       child: Row(
@@ -78,7 +78,7 @@ class HmSuggestion extends StatelessWidget {
         aspectRatio: _imageAspectRatio, // 保持 100:140 的原始比例
         child: Container(
           // 左侧活动图片容器
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             // 容器装饰配置开始
             image: DecorationImage(
               // 设置容器背景图片
@@ -93,7 +93,7 @@ class HmSuggestion extends StatelessWidget {
 
   List<Widget> _getChildrenList() {
     // 定义构建右侧商品列表的方法
-    List<GoodsItem> list = _getDisplayItems(); // 获取需要展示的商品数据
+    final List<GoodsItem> list = _getDisplayItems(); // 获取需要展示的商品数据
     return List.generate(list.length, (int index) {
       // 按商品数量循环生成组件
       return GestureDetector(
@@ -128,10 +128,10 @@ class HmSuggestion extends StatelessWidget {
                 ), // 结束商品图片外层容器
               ), // 结束 AspectRatio
             ), // 结束 ClipRRect
-            SizedBox(height: 10), // 商品图片与价格标签之间留 10 的间距
+            const SizedBox(height: 10), // 商品图片与价格标签之间留 10 的间距
             Container(
               // 价格标签容器
-              padding: EdgeInsets.symmetric(
+              padding: const EdgeInsets.symmetric(
                 horizontal: 6,
                 vertical: 3,
               ), // 左右内边距 6、上下内边距 3
@@ -147,7 +147,7 @@ class HmSuggestion extends StatelessWidget {
                   // 价格文字组件
                   "￥${list[index].price}元", // 拼接当前商品的价格文字
                   maxLines: 1, // 价格固定单行展示
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Color.fromARGB(255, 255, 255, 255),
                   ), // 设置白色文字
                 ), // 结束价格文字组件
@@ -164,15 +164,15 @@ class HmSuggestion extends StatelessWidget {
     // 根据状态构建组件界面
     return Padding(
       // 给整个特惠推荐区域添加内边距
-      padding: EdgeInsets.symmetric(horizontal: 10), // 左右各留 10 的外边距
+      padding: const EdgeInsets.symmetric(horizontal: 10), // 左右各留 10 的外边距
       child: Container(
         // 特惠推荐卡片容器
         alignment: Alignment.center, // 卡片内容居中对齐
-        padding: EdgeInsets.all(12), // 卡片四周内边距 12
+        padding: const EdgeInsets.all(12), // 卡片四周内边距 12
         decoration: BoxDecoration(
           // 卡片装饰配置开始
           borderRadius: BorderRadius.circular(12), // 设置 12 的圆角
-          image: DecorationImage(
+          image: const DecorationImage(
             // 设置卡片背景图片
             image: AssetImage('lib/assets/home_cmd_sm.png'), // 加载本地卡片背景图
             fit: BoxFit.cover, // 背景图等比裁剪铺满卡片
@@ -184,7 +184,7 @@ class HmSuggestion extends StatelessWidget {
             // 卡片子组件列表开始
             // 顶部内容
             _buildHeader(), // 构建顶部标题区域
-            SizedBox(height: 10), // 标题与下方内容之间留 10 的间距
+            const SizedBox(height: 10), // 标题与下方内容之间留 10 的间距
             Row(
               // 横向排列左侧活动图和右侧商品
               crossAxisAlignment:

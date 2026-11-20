@@ -61,10 +61,29 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
+  # 逐个声明资源文件，避免整目录声明把未使用的图片一起打进产物。
+  # 新增图片时请在这里补一行。
   assets:
-    - lib/assets/
-  #   - images/a_dot_ham.jpeg
+    - lib/assets/goods_avatar.png
+    - lib/assets/home_cmd_inner.png
+    - lib/assets/home_cmd_sm.png
+    - lib/assets/ic_public_cart_active.png
+    - lib/assets/ic_public_cart_normal.png
+    - lib/assets/ic_public_home_active.png
+    - lib/assets/ic_public_home_normal.png
+    - lib/assets/ic_public_my_active.png
+    - lib/assets/ic_public_my_normal.png
+    - lib/assets/ic_public_pro_active.png
+    - lib/assets/ic_public_pro_normal.png
+    - lib/assets/ic_user_collect.png
+    - lib/assets/ic_user_history.png
+    - lib/assets/ic_user_obligation.png
+    - lib/assets/ic_user_order.png
+    - lib/assets/ic_user_service.png
+    - lib/assets/ic_user_unevaluated.png
+    - lib/assets/ic_user_unreceived.png
+    - lib/assets/ic_user_unshipped.png
+    - lib/assets/ic_user_vip.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

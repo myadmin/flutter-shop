@@ -11,9 +11,9 @@ class DioRequest {
   DioRequest._internal() {
     _dio.options
       ..baseUrl = GlobalConstants.baseUrl
-      ..connectTimeout = Duration(seconds: GlobalConstants.timeout)
-      ..sendTimeout = Duration(seconds: GlobalConstants.timeout)
-      ..receiveTimeout = Duration(seconds: GlobalConstants.timeout);
+      ..connectTimeout = const Duration(seconds: GlobalConstants.timeout)
+      ..sendTimeout = const Duration(seconds: GlobalConstants.timeout)
+      ..receiveTimeout = const Duration(seconds: GlobalConstants.timeout);
 
     _addInterceptor();
   }
@@ -40,7 +40,9 @@ class DioRequest {
               error.type == DioExceptionType.receiveTimeout) {
             message = '网络请求超时，请稍后重试';
           } else if (error.response?.data is Map) {
-            message = error.response?.data['msg']?.toString() ?? message;
+            // 显式转型后再取值，避免对 dynamic 做属性访问。
+            final responseData = error.response?.data as Map;
+            message = responseData['msg']?.toString() ?? message;
           }
           return handler.reject(
             DioException(
@@ -69,7 +71,7 @@ class DioRequest {
   // 处理响应数据
   Future<dynamic> _handleResponse(Future<Response<dynamic>> task) async {
     try {
-      Response<dynamic> res = await task;
+      final Response<dynamic> res = await task;
       if (res.data is Map) {
         final data = res.data as Map;
         if (data['code']?.toString() == GlobalConstants.successCode) {

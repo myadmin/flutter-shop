@@ -61,16 +61,16 @@ class _HmSliderState extends State<HmSlider> {
       left: 0,
       right: 0,
       child: Padding(
-        padding: EdgeInsets.all(10),
+        padding: const EdgeInsets.all(10),
         child: Container(
           alignment: Alignment.centerLeft,
-          padding: EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           height: 50,
           decoration: BoxDecoration(
             color: const Color.fromRGBO(0, 0, 0, 0.4),
             borderRadius: BorderRadius.circular(25),
           ),
-          child: Text(
+          child: const Text(
             '搜索...',
             style: TextStyle(color: Colors.white, fontSize: 20),
           ),
@@ -95,10 +95,10 @@ class _HmSliderState extends State<HmSlider> {
                 _controller.animateToPage(index);
               },
               child: AnimatedContainer(
-                duration: Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 300),
                 width: index == _currentIndex ? 40 : 20,
                 height: 6,
-                margin: EdgeInsets.symmetric(horizontal: 10),
+                margin: const EdgeInsets.symmetric(horizontal: 10),
                 decoration: BoxDecoration(
                   color: index == _currentIndex
                       ? Colors.white

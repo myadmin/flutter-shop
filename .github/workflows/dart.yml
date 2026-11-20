@@ -26,11 +26,12 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Analyze project source
-        # 项目当前存在 info 级别的 lint 提示，暂不让其导致 CI 失败
-        run: flutter analyze --no-fatal-infos
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed lib test
 
-      # 当前 test/widget_test.dart 仍是未适配的模板测试（见 README），
-      # 修复后再启用测试步骤。
-      # - name: Run tests
-      #   run: flutter test
+      - name: Analyze project source
+        # info 级别提示同样视为失败，保持 lint 零告警
+        run: flutter analyze --fatal-infos
+
+      - name: Run tests
+        run: flutter test

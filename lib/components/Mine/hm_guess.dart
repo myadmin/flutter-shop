@@ -13,10 +13,7 @@ class HmGuess extends SliverPersistentHeaderDelegate {
       color: Colors.white,
       child: const Text(
         "猜你喜欢",
-        style: TextStyle(
-          fontSize: 20,
-          color: Colors.black,
-        ),
+        style: TextStyle(fontSize: 20, color: Colors.black),
       ),
     );
   }

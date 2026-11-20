@@ -59,7 +59,7 @@ class _MineViewState extends State<MineView> {
               ),
             ),
           )
-        : Text("");
+        : const Text("");
   }
 
   Widget _buildHeader() {
@@ -79,7 +79,7 @@ class _MineViewState extends State<MineView> {
               radius: 26,
               backgroundImage: _userController.user.value.avatar.isNotEmpty
                   ? NetworkImage(_userController.user.value.avatar)
-                  : AssetImage("lib/assets/goods_avatar.png"),
+                  : const AssetImage("lib/assets/goods_avatar.png"),
               backgroundColor: Colors.white,
             );
           }),
@@ -250,7 +250,9 @@ class _MineViewState extends State<MineView> {
   }
 
   final List<GoodDetailItem> _list = [];
-  final Map<String, dynamic> _params = {'page': 1, 'pageSize': 10};
+  // 用强类型字段保存分页下标，避免对 Map 取值做 dynamic 比较。
+  int _page = 1;
+  static const int _pageSize = 10;
   // 阀门控制
   bool _isLoading = false;
   bool _hasMore = true;
@@ -261,13 +263,13 @@ class _MineViewState extends State<MineView> {
     }
     _isLoading = true;
     try {
-      final res = await getGuessListAPI(_params);
+      final res = await getGuessListAPI({'page': _page, 'pageSize': _pageSize});
       if (!mounted) return;
       _list.addAll(res.items); // 合并数据
-      if (_params['page'] >= res.pages) {
+      if (_page >= res.pages) {
         _hasMore = false;
       } else {
-        _params['page']++;
+        _page++;
       }
       setState(() {});
     } catch (e) {

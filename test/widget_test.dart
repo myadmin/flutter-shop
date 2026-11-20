@@ -197,10 +197,10 @@ void main() {
         tester.view.physicalSize = size;
         tester.view.devicePixelRatio = 1.0;
         await tester.pumpWidget(
-          MaterialApp(
+          const MaterialApp(
             home: Scaffold(
-              body: const SizedBox.expand(),
-              bottomNavigationBar: const HmActionBar(price: '3103.00'),
+              body: SizedBox.expand(),
+              bottomNavigationBar: HmActionBar(price: '3103.00'),
             ),
           ),
         );

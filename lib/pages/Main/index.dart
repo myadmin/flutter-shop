@@ -61,10 +61,10 @@ class _MainPageState extends State<MainPage> {
   int _currentIndex = 0;
 
   late final List<Widget> _children = [
-    HomeView(),
-    CategoryView(),
-    CartView(),
-    MineView(),
+    const HomeView(),
+    const CategoryView(),
+    const CartView(),
+    const MineView(),
   ];
 
   @override

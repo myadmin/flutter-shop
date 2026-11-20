@@ -31,8 +31,21 @@ linter:
   # `// ignore_for_file: name_of_lint` syntax on the line or in the file
   # producing the lint.
   rules:
-    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
-    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+    # 未 await 的 Future：能抓住"调用异步方法却没等结果"的隐患
+    # （例如 SharedPreferences 写入未落盘就返回）。
+    - unawaited_futures
+    # 可用 const 的地方一律 const，减少重建开销。
+    - prefer_const_constructors
+    - prefer_const_declarations
+    # 局部变量优先 final。
+    - prefer_final_locals
+    # 避免对 dynamic 直接调用方法，强制显式转型，
+    # 减少运行时才暴露的 NoSuchMethodError。
+    - avoid_dynamic_calls
+    # 资源释放：StreamSubscription 等未取消会造成泄漏。
+    - cancel_subscriptions
+    # 构造函数透传 key 时使用 super.key 简写。
+    - use_super_parameters
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

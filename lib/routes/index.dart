@@ -11,8 +11,8 @@ Widget getRootWidget() {
 
 Map<String, Widget Function(BuildContext)> getRootRoutes() {
   return {
-    '/': (context) => MainPage(), // 主页路由
-    '/login': (context) => LoginPage(), // 登录路由
+    '/': (context) => const MainPage(), // 主页路由
+    '/login': (context) => const LoginPage(), // 登录路由
     '/goods': (context) {
       // 商品详情路由，商品 id 由列表项点击时通过 arguments 传入
       final arguments = ModalRoute.of(context)?.settings.arguments;

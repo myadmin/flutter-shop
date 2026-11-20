@@ -1,6 +1,6 @@
 # hm_shop
 
-基于 Flutter 的商城类 App 示例项目，采用「页面 / 组件 / API / 模型 / 状态」分层组织代码。已接入黑马 meikou 接口，完成首页（轮播图、分类、特惠推荐、爆款推荐、一站全买、推荐列表分页）、登录（token 持久化与请求鉴权）、商品详情、订单确认与「我的」页面；分类、购物车仍为占位页面。
+基于 Flutter 的商城类 App 示例项目，采用「页面 / 组件 / API / 模型 / 状态」分层组织代码。已接入黑马 meikou 接口，完成首页（轮播图、分类、特惠推荐、爆款推荐、一站全买、推荐列表分页）、分类（一级导航 + 二级宫格 + 推荐）、登录（token 持久化与请求鉴权）、商品详情、订单确认与「我的」页面；购物车仍为占位页面。
 
 ## 功能概览
 
@@ -17,6 +17,14 @@
 - **爆款推荐 / 一站全买**：`/hot/inVogue`、`/hot/oneStop` 获取数据，左右两栏布局，复用 `HmHot` 组件，通过 `HmHotConfig` 区分场景样式
 - **推荐列表**：`/home/recommend` 获取数据，`HmMoreList` 以 `SliverGrid` 双列展示，滚动到底部时递增 `limit` 加载更多
 - **生命周期安全**：滚动监听器单次绑定，并在组件销毁时及时释放 `ScrollController`
+
+### 分类
+
+- **左侧一级分类导航**：`HmCategoryRail` 展示 `/home/category/head` 返回的 7 个一级分类，选中项白底、主色左边条、文字加粗，与右侧面板的白底连成一体
+- **右侧二级分类宫格**：`HmCategoryPanel` 按可用宽度自适应列数（手机 3 列、Web 宽屏最多 6 列），图片固定为正方形并按实际显示尺寸解码，文字区高度固定避免溢出
+- **切换与滚动**：切换一级分类后右侧面板自动回到顶部；二级分类点击提示「商品列表开发中」（接口侧没有按分类取商品的接口，详见接口说明）
+- **底部猜你喜欢**：`HmCategoryRecommend` 复用 `/home/goods/guessLike` 与 `HmGoodsCard`，补齐分类项较少时的留白，并提供一条进入商品详情的路径；该区块加载失败时静默降级，不影响分类展示
+- **状态与容错**：加载中展示进度指示器，分类接口失败时展示 `AppErrorView` 与「重新加载」按钮
 
 ### 商品详情
 
@@ -61,7 +69,7 @@
 - **图片统一**：所有网络图片经 `AppNetworkImage` 加载，列表项按 `decodeWidth` 设置 `cacheWidth`，降低解码内存占用
 - **加载弹窗**：`LoadingDialog` 持有 `DialogRoute` 引用，`hide()` 精确移除自身路由，不会误弹页面
 - **Toast 工具**：`ToastUtils` 基于 `SnackBar`，宽度随文案自适应，并做重复弹出节流
-- **自动化测试**：48 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、全局用户态、骨架屏、商品聚合组件、订单组件与「我的」页面组件
+- **自动化测试**：59 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、全局用户态、骨架屏、商品聚合组件、订单组件、「我的」页面组件与分类页组件
 - **代码规范**：`dart format`、`flutter analyze --fatal-infos`、`flutter test` 三项在 CI 中全部强制通过
 
 ## 技术栈
@@ -92,6 +100,7 @@ lib/
 ├── components/
 │   ├── common/                 # 跨页面通用组件
 │   │   ├── hm_bottom_bar.dart  # 底部操作栏容器 / 价格 / 按钮
+│   │   ├── hm_goods_card.dart  # 商品卡片（图片 / 标题 / 价格 / 付款人数）
 │   │   ├── app_network_image.dart # 统一网络图片（带解码尺寸与占位）
 │   │   └── app_error_view.dart # 统一错误态 + 重试
 │   ├── Home/                   # 首页业务组件
@@ -100,6 +109,11 @@ lib/
 │   │   ├── hm_suggestion.dart  # 特惠推荐区
 │   │   ├── hm_hot.dart         # 爆款推荐 / 一站全买通用组件
 │   │   └── hm_more_list.dart   # 双列商品网格（首页推荐 / 猜你喜欢共用）
+│   ├── Category/               # 分类页组件
+│   │   ├── hm_category_search.dart    # 顶部搜索入口
+│   │   ├── hm_category_rail.dart      # 左侧一级分类导航
+│   │   ├── hm_category_panel.dart     # 右侧二级分类宫格
+│   │   └── hm_category_recommend.dart # 底部猜你喜欢
 │   ├── GoodsDetail/            # 商品详情页组件
 │   │   ├── hm_goods_gallery.dart    # 主图轮播
 │   │   ├── hm_goods_price_info.dart # 价格 / 销量 / 标题
@@ -136,7 +150,7 @@ lib/
 │   │   └── skeleton.dart       # 首页骨架屏
 │   ├── GoodsDetail/index.dart  # 商品详情页
 │   ├── OrderConfirm/index.dart # 订单确认页
-│   ├── Category/index.dart     # 分类（占位）
+│   ├── Category/index.dart     # 分类页：一级导航 + 二级宫格 + 推荐
 │   ├── Cart/index.dart         # 购物车（占位）
 │   ├── Mine/index.dart         # 我的：用户信息、会员卡、订单、猜你喜欢
 │   └── Login/index.dart        # 登录页
@@ -173,7 +187,7 @@ lib/
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | GET | `/home/banner` | 首页轮播图列表，映射为 `BannerItem` |
-| GET | `/home/category/head` | 首页分类快捷入口，映射为 `CategoryItem` |
+| GET | `/home/category/head` | 分类树（一级分类含 `children` 二级分类），首页分类快捷入口与分类页共用，映射为 `CategoryItem` |
 | GET | `/hot/preference` | 特惠推荐，映射为 `SpecialRecommendResult` |
 | GET | `/hot/inVogue` | 爆款推荐，映射为 `SpecialRecommendResult` |
 | GET | `/hot/oneStop` | 一站全买，映射为 `SpecialRecommendResult` |
@@ -211,7 +225,7 @@ flutter test
 
 ## 当前状态与已知问题
 
-- 分类、购物车页面仅为占位文本，功能尚未开发。
+- 购物车页面仅为占位文本，功能尚未开发。
 - 顶部搜索框、会员卡开通、快捷入口与订单管理入口均为静态占位，点击提示「功能开发中」。
-- 商品列表页（分类 / 搜索结果）尚未开发，商品详情仅能从首页推荐与猜你喜欢进入。
+- 接口侧没有「按分类取商品」的接口（`/category/goods`、`/category/list`、`/category/tree` 等路径均返回 4xx/5xx），因此二级分类点击只提示「商品列表开发中」；分类页的「猜你喜欢」用的是 `/home/goods/guessLike`。
 - 购物车接口已接入（加入购物车），但购物车页面与结算流程尚未联通。

@@ -61,7 +61,7 @@
 - **图片统一**：所有网络图片经 `AppNetworkImage` 加载，列表项按 `decodeWidth` 设置 `cacheWidth`，降低解码内存占用
 - **加载弹窗**：`LoadingDialog` 持有 `DialogRoute` 引用，`hide()` 精确移除自身路由，不会误弹页面
 - **Toast 工具**：`ToastUtils` 基于 `SnackBar`，宽度随文案自适应，并做重复弹出节流
-- **自动化测试**：40 个用例，覆盖网络层拦截与业务码、模型反序列化容错、全局用户态、骨架屏、商品聚合组件与订单组件
+- **自动化测试**：48 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、全局用户态、骨架屏、商品聚合组件、订单组件与「我的」页面组件
 - **代码规范**：`dart format`、`flutter analyze --fatal-infos`、`flutter test` 三项在 CI 中全部强制通过
 
 ## 技术栈
@@ -112,13 +112,19 @@ lib/
 │   │   ├── hm_order_goods.dart     # 商品行
 │   │   └── hm_order_summary.dart   # 金额汇总
 │   └── Mine/
+│       ├── hm_mine_header.dart      # 头像 / 昵称 / 登录与退出入口
+│       ├── hm_mine_vip_card.dart    # 会员卡
+│       ├── hm_mine_quick_actions.dart # 收藏 / 足迹 / 客服
+│       ├── hm_mine_order_module.dart # 订单管理入口
 │       ├── hm_entry_item.dart  # 快捷入口 / 订单入口通用项
 │       └── hm_guess.dart       # 「猜你喜欢」吸顶标题
 ├── constants/
 │   ├── index.dart              # 全局常量、接口地址
+│   ├── app_assets.dart         # 图片资源路径常量
 │   └── app_theme.dart          # 设计令牌（颜色 / 圆角 / 间距）
 ├── models/
-│   ├── parsers.dart            # 反序列化取值工具（asString / asInt / asAmount / asList）
+│   ├── parsers.dart            #  反序列化取值工具（asString / asInt / asAmount / asList
+│   │                           #  以及结构校验版 asMap / asModelList / asMapOrEmpty）
 │   ├── home.dart               # 首页数据模型
 │   ├── goods.dart              # 商品详情模型
 │   ├── order.dart              # 结算与订单模型
@@ -162,6 +168,7 @@ lib/
 - 超时时间：10 秒（连接 / 发送 / 接收）
 - 成功判定：响应 `code == '1'`，取 `result` 字段返回
 - 业务失败抛 `ApiException`（携带 `msg` 与 `code`）；网络异常、超时、401 抛 `NetworkException`
+- 最外层结构由 `asMap` / `asModelList` 校验，契约被破坏时抛 `FormatException`，页面提示「数据格式异常，请稍后重试」而不是展示空数据
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |

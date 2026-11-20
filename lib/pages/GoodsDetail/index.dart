@@ -7,6 +7,7 @@ import 'package:hm_shop/components/GoodsDetail/hm_goods_brand.dart';
 import 'package:hm_shop/components/GoodsDetail/hm_goods_gallery.dart';
 import 'package:hm_shop/components/GoodsDetail/hm_goods_price_info.dart';
 import 'package:hm_shop/components/GoodsDetail/hm_goods_properties.dart';
+import 'package:hm_shop/components/GoodsDetail/hm_sku_selector.dart';
 import 'package:hm_shop/components/common/app_error_view.dart';
 import 'package:hm_shop/components/common/app_network_image.dart';
 import 'package:hm_shop/models/goods.dart';
@@ -97,26 +98,28 @@ class _GoodsDetailPageState extends State<GoodsDetailPage> {
     return false;
   }
 
-  /// 取出可用的默认 SKU；规格缺失时给出提示并返回 null。
-  /// 加入购物车与立即购买共用这段前置校验。
-  GoodsSku? _requireDefaultSku(String emptyTip) {
-    final sku = _detail?.defaultSku;
-    if (sku == null) {
-      ToastUtils.showToast(context, emptyTip);
+  /// 打开规格选择弹层
+  ///
+  /// 商品没有可用规格时直接提示并返回 null，不进入弹层。
+  Future<SkuSelection?> _selectSku(String confirmText) async {
+    final detail = _detail;
+    if (detail == null || detail.skus.isEmpty) {
+      ToastUtils.showToast(context, '商品规格信息缺失，暂无法购买');
       return null;
     }
-    return sku;
+    return showSkuSelector(context, detail: detail, confirmText: confirmText);
   }
 
-  // 加入购物车
+  // 加入购物车：先选规格与数量，再带上登录态校验
   Future<void> _onAddCart() async {
-    final sku = _requireDefaultSku('商品规格信息缺失，暂无法加入购物车');
-    if (sku == null || !_checkLogin()) {
+    final selection = await _selectSku('加入购物车');
+    if (!mounted || selection == null) return;
+    if (!_checkLogin()) {
       return;
     }
     LoadingDialog.show(context, message: '正在加入购物车');
     try {
-      await addCartAPI(sku.id, 1);
+      await addCartAPI(selection.sku.id, selection.count);
       LoadingDialog.hide();
       if (!mounted) return;
       // 同步底部 tab 的购物车角标
@@ -131,16 +134,17 @@ class _GoodsDetailPageState extends State<GoodsDetailPage> {
     }
   }
 
-  // 立即购买，携带默认规格进入订单确认页
-  void _onBuyNow() {
-    final sku = _requireDefaultSku('商品规格信息缺失，暂无法购买');
-    if (sku == null || !_checkLogin()) {
+  // 立即购买：携带选中的规格与数量进入订单确认页
+  Future<void> _onBuyNow() async {
+    final selection = await _selectSku('立即购买');
+    if (!mounted || selection == null) return;
+    if (!_checkLogin()) {
       return;
     }
     Navigator.pushNamed(
       context,
       '/order/confirm',
-      arguments: {'skuId': sku.id, 'count': 1},
+      arguments: {'skuId': selection.sku.id, 'count': selection.count},
     );
   }
 

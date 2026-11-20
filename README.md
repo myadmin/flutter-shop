@@ -33,7 +33,8 @@
 - **品牌与参数**：`HmGoodsBrand`、`HmGoodsProperties` 分别展示品牌信息与商品参数
 - **详情长图**：`SliverList.builder` 按需构建详情图，避免一次性解码全部长图
 - **底部操作栏**：`HmActionBar` 展示价格与「加入购物车 / 立即购买」，固定在视口底部且不遮挡内容
-- **前置校验**：加购与购买共用 `_requireDefaultSku`（规格缺失提示）与 `_checkLogin`（未登录跳转登录页）
+- **规格与数量选择**：加购与购买都会弹出 `HmSkuSelector` 底部弹层，按 `skus[].specs` 反推「颜色 / 尺寸」等规格组；不可选的规格值置灰禁用，切换规格后价格、库存、已选文案与数量上限实时联动（数量收敛到 `1~库存`）
+- **前置校验**：`_selectSku` 处理规格缺失提示，`_checkLogin` 处理未登录跳转登录页
 
 ### 订单确认
 
@@ -55,6 +56,7 @@
 ### 登录
 
 - **账号密码表单**：手机号与密码正则校验，密码为 6-16 位字母、数字、下划线，输入控制器在 `dispose` 中释放
+- **输入体验**：手机号框 `keyboardType.phone` 且「下一项」跳到密码框，密码框支持「完成」直接提交，并提供明文 / 密文切换按钮（`AutofillGroup` 支持系统级账号密码填充）
 - **协议勾选**：未勾选隐私条款 / 用户协议时拦截登录并 Toast 提示
 - **登录状态与弹窗控制**：请求期间展示 `LoadingDialog`，成功路径先关闭 Loading 再退出登录页，确保任何分支都不会残留加载弹窗
 
@@ -71,17 +73,18 @@
 
 ### 其他
 
-- **底部导航**：首页 / 分类 / 购物车 / 我的，使用 `IndexedStack` 保持各页面状态；购物车 tab 带件数角标
+- **底部导航**：首页 / 分类 / 购物车 / 我的，使用 `IndexedStack` 保持各页面状态；购物车 tab 带件数角标；`PopScope` 让 Android 返回键在非首页 tab 时先回到首页，而不是直接退出
 - **状态管理分工**：跨页面共享的用户态与购物车件数放在 GetX 控制器（`UserController` / `CartController`，页面通过 `Obx` 响应式刷新），且仅在 `main()` 中注册一次；页面私有的列表数据、加载态与错误文案用 `State` + `setState`
 - **登录态管理**：`TokenManager` 基于 `shared_preferences` 持久化 token（写盘 `await` 落盘完成）；启动时若已登录则请求 `/member/profile` 恢复用户信息，失效时自动清理并降级
 - **网络层**：Dio 单例封装，统一超时与请求头注入；异常被翻译为 `ApiException`（业务错误，带 `code`）或 `NetworkException`（网络 / 超时 / 401），页面统一用 `resolveErrorMessage` 提取可展示文案
 - **登录态失效**：拦截器识别 HTTP 401，自动清理 token 并触发 `DioRequest.onUnauthorized`，由 `MainPage` 统一跳转登录页
 - **设计令牌**：颜色、圆角、间距集中在 `lib/constants/app_theme.dart`（`AppColors` / `AppRadius` / `AppSpacing`），页面不再散落颜色字面量
-- **图片统一**：所有网络图片经 `AppNetworkImage` 加载，列表项按 `decodeWidth` 设置 `cacheWidth`，降低解码内存占用
+- **图片统一**：所有网络图片经 `AppNetworkImage` 加载，列表项按 `decodeWidth`（或 `LayoutBuilder` 实测宽度）设置 `cacheWidth`，降低解码内存占用；首页两张装饰图改用 WebP，体积从 287 KB 降到 18 KB
+- **并发与容错**：购物车件数与购物车列表请求都做了在途去重（同一时刻只发一次）；401 跳转登录页带重入保护；滚动触发的加载在本地吞掉异常，不会冒泡成未捕获异步错误；`PlatformDispatcher.onError` 兜底记录漏网的异步异常
 - **加载弹窗**：`LoadingDialog` 持有 `DialogRoute` 引用，`hide()` 精确移除自身路由，不会误弹页面
 - **Toast 工具**：`ToastUtils` 基于 `SnackBar`，宽度随文案自适应，并做重复弹出节流
-- **自动化测试**：75 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、全局用户态与购物车件数、骨架屏、商品聚合组件、订单组件、「我的」页面组件、分类页组件与购物车组件
-- **代码规范**：`dart format`、`flutter analyze --fatal-infos`、`flutter test` 三项在 CI 中全部强制通过
+- **自动化测试**：90 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、全局用户态与购物车件数、骨架屏、商品聚合组件、规格选择弹层、订单组件、「我的」页面组件、分类页组件、购物车组件，以及购物车 / 登录 / 分类三个页面的页面级交互（用 `MockAdapter` 替换 Dio 适配器，不发真实请求）
+- **代码规范**：`dart format`、`flutter analyze --fatal-infos`（已开启 `strict-casts` / `strict-inference` / `strict-raw-types`）、`flutter test` 三项在 CI 中全部强制通过
 
 ## 技术栈
 
@@ -94,7 +97,7 @@
 | 轮播组件 | [carousel_slider](https://pub.dev/packages/carousel_slider) `^5.1.2` |
 | 网络请求 | [dio](https://pub.dev/packages/dio) `^5.11.1` |
 | 测试框架 | `flutter_test`（单元测试与 Widget 测试） |
-| 代码规范 | `flutter_lints` `^6.0.0` + 自定义规则（`unawaited_futures`、`prefer_const_constructors`、`avoid_dynamic_calls` 等） |
+| 代码规范 | `flutter_lints` `^6.0.0` + 自定义规则（`unawaited_futures`、`prefer_const_constructors`、`avoid_dynamic_calls` 等），并开启 `strict-casts` / `strict-inference` / `strict-raw-types` |
 | 运行平台 | Web（主要）、Android、iOS、macOS、Linux、Windows |
 
 ## 目录结构
@@ -130,6 +133,7 @@ lib/
 │   │   ├── hm_goods_price_info.dart # 价格 / 销量 / 标题
 │   │   ├── hm_goods_brand.dart      # 品牌信息
 │   │   ├── hm_goods_properties.dart # 商品参数 / 详情分隔标题
+│   │   ├── hm_sku_selector.dart     # 规格与数量选择底部弹层
 │   │   └── hm_action_bar.dart       # 底部加购 / 购买操作栏
 │   ├── OrderConfirm/           # 订单确认页组件
 │   │   ├── hm_order_card.dart      # 卡片容器
@@ -181,8 +185,22 @@ lib/
 │   ├── api_exception.dart      # ApiException / NetworkException / resolveErrorMessage
 │   ├── loading_dialog.dart     # 统一加载中对话框
 │   └── toast_utils.dart        # 自适应宽度 Toast
-├── assets/                     # 底部导航图标、我的页图标、首页活动图等资源
-└── main.dart                   # 程序入口（注册全局状态）
+├── assets/                     # 底部导航图标、我的页图标、首页装饰图（WebP）等资源
+└── main.dart                   # 程序入口（注册全局状态、兜底未捕获异步异常）
+```
+
+```text
+test/
+├── helpers/mock_http.dart      # MockAdapter 与响应 / 数据构造工具
+├── dio_request_test.dart       # 网络层：业务码、超时、401、鉴权头
+├── models_test.dart            # 反序列化工具与模型容错
+├── user_controller_test.dart   # 全局用户态
+├── sku_selector_test.dart      # 规格选择弹层
+├── category_components_test.dart # 分类页组件
+├── mine_components_test.dart   # 「我的」页面组件
+├── cart_test.dart              # 购物车模型 / 组件 / 全局件数
+├── pages_test.dart             # 页面级交互（购物车 / 登录 / 分类）
+└── widget_test.dart            # 首页骨架屏、订单组件、商品聚合组件
 ```
 
 ## 路由
@@ -251,3 +269,5 @@ flutter test
 - 接口侧没有「按分类取商品」的接口（`/category/goods`、`/category/list`、`/category/tree` 等路径均返回 4xx/5xx），因此二级分类点击只提示「商品列表开发中」；分类页的「猜你喜欢」用的是 `/home/goods/guessLike`。
 - 购物车结算复用「立即购买」链路（`/member/order/pre/now` + `/member/order`），**接口只支持单件商品结算**，因此多选时点击「结算」会提示只勾选一件。
 - 接口没有「全选 / 批量勾选」的接口（`PUT /member/cart` 与 `PUT /member/cart/checked` 均不存在），「全选」是逐条 `PUT /member/cart/{skuId}` 串行完成的，条目很多时会较慢。
+- Web 端仍使用默认的 hash 路由（`#/goods`），未启用 `usePathUrlStrategy`，也还没有 `onUnknownRoute` 兜底页，直接分享深链的能力有限。
+- 商品**列表页**（分类 → 商品列表）尚未开发，是当前最后一个占位场景。

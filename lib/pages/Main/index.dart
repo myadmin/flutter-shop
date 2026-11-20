@@ -77,12 +77,21 @@ class _MainPageState extends State<MainPage> {
     super.dispose();
   }
 
+  /// 是否已因登录态失效跳往登录页
+  ///
+  /// 多个请求同时返回 401 时，只处理第一次，避免把登录页叠加多层。
+  bool _redirectingToLogin = false;
+
   // 登录态失效：清空用户信息并跳转登录页
   void _handleUnauthorized() {
     _userController.clearUserInfo();
-    if (!mounted) return;
+    if (!mounted || _redirectingToLogin) return;
+    _redirectingToLogin = true;
     ToastUtils.showToast(context, '登录已过期，请重新登录');
-    Navigator.pushNamed(context, '/login');
+    Navigator.pushNamed(
+      context,
+      '/login',
+    ).whenComplete(() => _redirectingToLogin = false);
   }
 
   // 初始化用户
@@ -133,33 +142,45 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: IndexedStack(
-          index: _currentIndex,
-          children: [
-            const HomeView(),
-            const CategoryView(),
-            CartView(
-              isActive: _currentIndex == _cartTabIndex,
-              onGoShopping: () => setState(() => _currentIndex = 0),
-            ),
-            const MineView(),
-          ],
+    return PopScope(
+      // 停在非首页 tab 时，返回键先回到首页，再按一次才退出
+      canPop: _currentIndex == 0,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        if (didPop) {
+          return;
+        }
+        setState(() {
+          _currentIndex = 0;
+        });
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: IndexedStack(
+            index: _currentIndex,
+            children: [
+              const HomeView(),
+              const CategoryView(),
+              CartView(
+                isActive: _currentIndex == _cartTabIndex,
+                onGoShopping: () => setState(() => _currentIndex = 0),
+              ),
+              const MineView(),
+            ],
+          ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        showUnselectedLabels: true,
-        unselectedItemColor: Colors.black,
-        selectedItemColor: Colors.black,
-        type: BottomNavigationBarType.fixed,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        items: _buildTabItems(),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          showUnselectedLabels: true,
+          unselectedItemColor: Colors.black,
+          selectedItemColor: Colors.black,
+          type: BottomNavigationBarType.fixed,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          items: _buildTabItems(),
+        ),
       ),
     );
   }

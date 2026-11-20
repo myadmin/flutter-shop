@@ -53,6 +53,9 @@ class _CartViewState extends State<CartView> {
   /// 全选/批量操作在途
   bool _allBusy = false;
 
+  /// 在途的列表请求，用于合并并发调用
+  Future<void>? _loadingFuture;
+
   late final Worker _userWatcher;
 
   @override
@@ -100,7 +103,17 @@ class _CartViewState extends State<CartView> {
   /// 购物车商品总件数
   int get _totalCount => _items.fold<int>(0, (sum, item) => sum + item.count);
 
-  Future<void> _loadCart() async {
+  /// 拉取购物车列表
+  ///
+  /// 初始化、切回购物车 tab、登录态变化都会触发；并发时复用同一个在途请求，
+  /// 避免同时对 `/member/cart` 发车。
+  Future<void> _loadCart() {
+    return _loadingFuture ??= _doLoadCart().whenComplete(() {
+      _loadingFuture = null;
+    });
+  }
+
+  Future<void> _doLoadCart() async {
     if (!_userController.isLoggedIn) {
       if (!mounted) return;
       setState(() {

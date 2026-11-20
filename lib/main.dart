@@ -1,3 +1,5 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hm_shop/routes/index.dart';
@@ -11,6 +13,13 @@ void main(List<String> args) {
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
     debugPrint('[FlutterError] ${details.exceptionAsString()}');
+  };
+  // 兜住「没有 await 的 Future 抛出的异常」：FlutterError.onError 只处理
+  // 框架内的同步异常，异步链路里的错误会走到这里。返回 true 表示已记录，
+  // 不再向平台抛，避免 release 下整段错误无声消失。
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    debugPrint('[未捕获异步异常] $error\n$stack');
+    return true;
   };
   // 全局共享状态在此统一注册，页面只通过 Get.find 取用。
   // 注册放在启动阶段，避免依赖某个页面何时被创建。

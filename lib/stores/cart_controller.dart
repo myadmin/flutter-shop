@@ -15,8 +15,20 @@ class CartController extends GetxController {
   /// 购物车商品件数，供 `Obx` 读取
   final count = 0.obs;
 
+  /// 在途的件数请求，用于合并并发调用
+  Future<void>? _refreshing;
+
   /// 拉取件数；未登录时直接归零，不发起请求
-  Future<void> refreshCount() async {
+  ///
+  /// 启动阶段「恢复登录态」和「监听用户态变化」会几乎同时触发本方法，
+  /// 这里复用同一个在途请求，避免对 `/member/cart/count` 重复发车。
+  Future<void> refreshCount() {
+    return _refreshing ??= _doRefreshCount().whenComplete(() {
+      _refreshing = null;
+    });
+  }
+
+  Future<void> _doRefreshCount() async {
     if (tokenManager.getToken().isEmpty) {
       count.value = 0;
       return;

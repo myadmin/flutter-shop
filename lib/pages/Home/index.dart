@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:hm_shop/api/home.dart';
 import 'package:hm_shop/components/common/app_error_view.dart';
@@ -159,7 +161,14 @@ class _HomeViewState extends State<HomeView> {
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >=
           _scrollController.position.maxScrollExtent - 50) {
-        _getRecommendList();
+        // 滚动触发的加载没有调用方 await 它，必须在这里吞掉异常：
+        // _getRecommendList 失败时会 rethrow 给首屏并发的调用方，
+        // 而这条路径没人接，否则会变成未捕获的异步错误。
+        unawaited(
+          _getRecommendList().catchError((Object error) {
+            debugPrint('加载更多推荐失败: $error');
+          }),
+        );
       }
     });
   }

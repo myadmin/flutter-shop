@@ -17,14 +17,18 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _agreed = false;
+
+  /// 密码是否以明文展示
+  bool _obscurePassword = true;
+
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _codeController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   final UserController _userController = Get.find<UserController>();
 
   @override
   void dispose() {
     _phoneController.dispose();
-    _codeController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -40,7 +44,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   /// 账号、密码两个输入框共用的装饰：灰底、圆角 28、无边框线。
-  InputDecoration _inputDecoration(String hintText) {
+  InputDecoration _inputDecoration(String hintText, {Widget? suffixIcon}) {
     const border = OutlineInputBorder(
       borderRadius: BorderRadius.all(Radius.circular(AppRadius.pill)),
       borderSide: BorderSide.none,
@@ -54,6 +58,7 @@ class _LoginPageState extends State<LoginPage> {
       border: border,
       enabledBorder: border,
       focusedBorder: border,
+      suffixIcon: suffixIcon,
     );
   }
 
@@ -70,11 +75,15 @@ class _LoginPageState extends State<LoginPage> {
         return null;
       },
       controller: _phoneController,
+      keyboardType: TextInputType.phone,
+      textInputAction: TextInputAction.next,
+      autofillHints: const [AutofillHints.username],
+      enableSuggestions: false,
       decoration: _inputDecoration('请输入账号'),
     );
   }
 
-  Widget _buildCodeTextField() {
+  Widget _buildPasswordTextField() {
     return TextFormField(
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -86,9 +95,30 @@ class _LoginPageState extends State<LoginPage> {
         }
         return null;
       },
-      controller: _codeController,
-      obscureText: true,
-      decoration: _inputDecoration('请输入密码'),
+      controller: _passwordController,
+      obscureText: _obscurePassword,
+      textInputAction: TextInputAction.done,
+      autofillHints: const [AutofillHints.password],
+      // 手机上按「完成」直接提交，省掉一次点击
+      onFieldSubmitted: (_) => _submit(),
+      decoration: _inputDecoration(
+        '请输入密码',
+        suffixIcon: IconButton(
+          onPressed: () {
+            setState(() {
+              _obscurePassword = !_obscurePassword;
+            });
+          },
+          icon: Icon(
+            _obscurePassword
+                ? Icons.visibility_off_outlined
+                : Icons.visibility_outlined,
+            size: 20,
+            color: AppColors.textSecondary,
+          ),
+          tooltip: _obscurePassword ? '显示密码' : '隐藏密码',
+        ),
+      ),
     );
   }
 
@@ -143,7 +173,7 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final res = await loginAPI({
         'account': _phoneController.text.trim(),
-        'password': _codeController.text,
+        'password': _passwordController.text,
       });
       _userController.updateUserInfo(res);
       await tokenManager.setToken(res.token);
@@ -165,21 +195,24 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  /// 校验表单与协议勾选后发起登录；回车提交与点击按钮共用
+  void _submit() {
+    if (_formKey.currentState?.validate() != true) {
+      return;
+    }
+    if (!_agreed) {
+      ToastUtils.showToast(context, '请勾选隐私条款和用户协议');
+      return;
+    }
+    _login();
+  }
+
   Widget _buildLoginButton() {
     return SizedBox(
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: () {
-          if (_formKey.currentState?.validate() == true) {
-            // 登录逻辑，需要判断勾选框逻辑
-            if (!_agreed) {
-              ToastUtils.showToast(context, '请勾选隐私条款和用户协议');
-            } else {
-              _login();
-            }
-          }
-        },
+        onPressed: _submit,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.black,
           foregroundColor: Colors.white,
@@ -211,27 +244,32 @@ class _LoginPageState extends State<LoginPage> {
         foregroundColor: Colors.black,
         elevation: 0,
       ),
-      body: Form(
-        key: _formKey,
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          color: Colors.white,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              _buildHeader(),
-              const SizedBox(height: 20),
-              _buildPhoneTextField(),
-              const SizedBox(height: 20),
-              _buildCodeTextField(),
-              const SizedBox(height: 20),
-              // 隐私条款 / 用户协议
-              _buildCheckBox(),
-              const SizedBox(height: 20),
-              // 登录按钮
-              _buildLoginButton(),
-            ],
+      body: AutofillGroup(
+        child: Form(
+          key: _formKey,
+          // 键盘弹出后内容可滚动，避免小屏被顶到溢出
+          child: SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              color: Colors.white,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
+                  _buildHeader(),
+                  const SizedBox(height: 20),
+                  _buildPhoneTextField(),
+                  const SizedBox(height: 20),
+                  _buildPasswordTextField(),
+                  const SizedBox(height: 20),
+                  // 隐私条款 / 用户协议
+                  _buildCheckBox(),
+                  const SizedBox(height: 20),
+                  // 登录按钮
+                  _buildLoginButton(),
+                ],
+              ),
+            ),
           ),
         ),
       ),

@@ -18,6 +18,13 @@ analyzer:
     - windows/**
     - macos/**
     - linux/**
+  language:
+    # 接口返回值一律显式转型：禁止隐式 downcast，避免把 dynamic 一路带进 UI 层
+    strict-casts: true
+    # 禁止无法推断出类型的表达式，逼出所有被 dynamic / 泛型推导掩盖的模糊处
+    strict-inference: true
+    # 禁止裸泛型（List / Map 不写类型参数）
+    strict-raw-types: true
 
 linter:
   # The lint rules applied to this project can be customized in the

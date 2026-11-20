@@ -47,7 +47,7 @@ List<T> asList<T>(
 ) {
   if (value is! List) return const [];
   return value
-      .whereType<Map>()
+      .whereType<Map<Object?, Object?>>()
       .map((item) => fromJson(item.cast<String, dynamic>()))
       .toList();
 }
@@ -80,7 +80,7 @@ List<T> asModelList<T>(
     throw FormatException('期望接口返回数组，实际为 ${value.runtimeType}');
   }
   return value
-      .whereType<Map>()
+      .whereType<Map<Object?, Object?>>()
       .map((item) => fromJson(item.cast<String, dynamic>()))
       .toList();
 }

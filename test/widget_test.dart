@@ -123,7 +123,7 @@ void main() {
           {'id': '1', 'receiver': '张三', 'isDefault': 0},
           {'id': '2', 'receiver': '李四', 'isDefault': 1},
         ],
-        'goods': [],
+        'goods': <dynamic>[],
         'summary': {'goodsCount': 0, 'totalPayPrice': 90.0},
       });
 

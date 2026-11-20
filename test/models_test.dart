@@ -41,7 +41,7 @@ void main() {
       expect(asList<int>(<int>[1, 2], (json) => 0), isEmpty);
 
       expect(asStringList(null), isEmpty);
-      expect(asStringList(<Map>[]), isEmpty);
+      expect(asStringList(<Map<Object?, Object?>>[]), isEmpty);
       expect(asStringList(<dynamic>['a', 1, null]), <String>['a', '1']);
     });
   });

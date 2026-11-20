@@ -191,7 +191,7 @@ class _MineViewState extends State<MineView> {
           children: [
             item("lib/assets/ic_user_collect.png", "我的收藏"),
             item("lib/assets/ic_user_history.png", "我的足迹"),
-            item("lib/assets/ic_user_unevaluated.png", "我的客服"),
+            item("lib/assets/ic_user_service.png", "我的客服"),
           ],
         ),
       ),
@@ -237,8 +237,8 @@ class _MineViewState extends State<MineView> {
                 children: [
                   orderItem("lib/assets/ic_user_order.png", "我的订单"),
                   orderItem("lib/assets/ic_user_obligation.png", "待付款"),
-                  orderItem("lib/assets/ic_user_unreceived.png", "待发货"),
-                  orderItem("lib/assets/ic_user_unshipped.png", "待收货"),
+                  orderItem("lib/assets/ic_user_unshipped.png", "待发货"),
+                  orderItem("lib/assets/ic_user_unreceived.png", "待收货"),
                   orderItem("lib/assets/ic_user_unevaluated.png", "待评价"),
                 ],
               ),

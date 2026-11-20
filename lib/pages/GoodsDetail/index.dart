@@ -102,12 +102,12 @@ class _GoodsDetailPageState extends State<GoodsDetailPage> {
     LoadingDialog.show(context, message: '正在加入购物车');
     try {
       await addCartAPI(sku.id, 1);
+      LoadingDialog.hide();
       if (!mounted) return;
-      LoadingDialog.hide(context);
       ToastUtils.showToast(context, '已加入购物车');
     } catch (e) {
+      LoadingDialog.hide();
       if (!mounted) return;
-      LoadingDialog.hide(context);
       final errorMsg = e is DioException
           ? (e.message ?? '加入购物车失败')
           : '网络或服务异常，请稍后重试';

@@ -168,22 +168,21 @@ class _LoginPageState extends State<LoginPage> {
         'account': _phoneController.text.trim(),
         'password': _codeController.text,
       });
-      if (!mounted) {
-        return;
-      }
       _userController.updateUserInfo(res);
       await tokenManager.setToken(res.token);
+      // 先关闭加载弹窗，再判断页面是否已卸载，避免弹窗滞留。
+      LoadingDialog.hide();
       if (!mounted) {
         return;
       }
-      LoadingDialog.hide(context); // 先关闭加载对话框
       ToastUtils.showToast(context, '登录成功，欢迎 ${res.nickname}');
-      Navigator.pop(context); // 再返回上一页
+      Navigator.pop(context); // 返回上一页
     } catch (e) {
+      // 失败路径同样先关弹窗，再做 mounted 判断。
+      LoadingDialog.hide();
       if (!mounted) {
         return;
       }
-      LoadingDialog.hide(context); // 登录失败时仅关闭加载弹窗，保留在登录页
       final errorMsg = e is DioException
           ? (e.message ?? '登录失败')
           : '网络或服务异常，请稍后重试';

@@ -101,19 +101,25 @@ class _OrderConfirmPageState extends State<OrderConfirmPage> {
         'payType': 1,
         'payChannel': 1,
       });
+      LoadingDialog.hide();
       if (!mounted) return;
-      LoadingDialog.hide(context);
       ToastUtils.showToast(context, '订单提交成功');
       Navigator.pop(context);
     } catch (e) {
+      LoadingDialog.hide();
       if (!mounted) return;
-      LoadingDialog.hide(context);
       final errorMsg = e is DioException
           ? (e.message ?? '订单提交失败')
           : '网络或服务异常，请稍后重试';
       ToastUtils.showToast(context, errorMsg);
     } finally {
-      _isSubmitting = false;
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      } else {
+        _isSubmitting = false;
+      }
     }
   }
 
@@ -409,7 +415,16 @@ class _OrderConfirmPageState extends State<OrderConfirmPage> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      child: const Text('提交订单', maxLines: 1),
+                      child: _isSubmitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('提交订单', maxLines: 1),
                     ),
                   ),
                 ],

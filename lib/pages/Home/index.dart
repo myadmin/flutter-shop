@@ -154,7 +154,6 @@ class _HomeViewState extends State<HomeView> {
 
   // 加载首页全部数据，全部完成后关闭骨架屏
   Future<void> _loadHomeData() async {
-    _paddingTop = 100; // 初始顶部内边距为 100，模拟骨架屏效果
     // 异步加载首页所有模块数据
     try {
       // 并行请求各模块数据，每个子模块独立捕获异常
@@ -172,7 +171,6 @@ class _HomeViewState extends State<HomeView> {
       if (mounted) {
         setState(() {
           _isLoading = false; // 关闭骨架屏
-          _paddingTop = 0; // 顶部内边距恢复为 0，显示真实内容
         });
       }
     }
@@ -256,6 +254,10 @@ class _HomeViewState extends State<HomeView> {
   } // _getOneStopRecommendList 方法结束
 
   // 获取推荐列表
+  //
+  // 后端 /home/recommend 只支持 limit（不支持 page/pageSize）：
+  // 返回始终是全量结果的前 limit 条，顺序稳定。因此这里用递增 limit 的方式
+  // 拉取，等价于"每次多取一页"。当返回条数少于请求的 limit 时说明已经到底。
   Future<void> _getRecommendList({bool isRefresh = false}) async {
     if (_loading || (!_hasMore && !isRefresh)) {
       return;
@@ -265,7 +267,8 @@ class _HomeViewState extends State<HomeView> {
       _page = 1;
       _hasMore = true;
     }
-    int limit = _page * 10;
+    const int pageSize = 10;
+    final int limit = _page * pageSize;
     try {
       final recommendList = await getRecommendListAPI({"limit": limit});
       if (!mounted) return;
@@ -273,7 +276,9 @@ class _HomeViewState extends State<HomeView> {
         _recommendList = recommendList;
         _hasMore = recommendList.length >= limit;
       });
-      _page++;
+      if (_hasMore) {
+        _page++;
+      }
     } catch (e) {
       debugPrint('获取推荐列表失败: $e');
     } finally {
@@ -286,26 +291,18 @@ class _HomeViewState extends State<HomeView> {
   final GlobalKey<RefreshIndicatorState> _key =
       GlobalKey<RefreshIndicatorState>(); // 刷新指示器键值对
 
-  double _paddingTop = 0; // 初始顶部内边距
-
   @override // 重写构建方法
   Widget build(BuildContext context) {
-    // 构建页面内容
     // 数据加载期间展示骨架屏，避免页面空白
     if (_isLoading) {
-      // 仍在加载中
       return const HomeSkeleton(); // 展示骨架屏占位
     }
     return RefreshIndicator(
       key: _key, // 刷新指示器键值对
       onRefresh: _loadHomeData, // 刷新数据
-      child: AnimatedContainer(
-        padding: EdgeInsets.only(top: _paddingTop),
-        duration: const Duration(milliseconds: 300),
-        child: CustomScrollView(
-          controller: _scrollController, // 滚动控制器
-          slivers: _getScrollChildren(),
-        ),
+      child: CustomScrollView(
+        controller: _scrollController, // 滚动控制器
+        slivers: _getScrollChildren(),
       ),
     ); // 加载完成，渲染真实内容
   } // build 方法结束

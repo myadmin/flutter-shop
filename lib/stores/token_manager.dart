@@ -16,8 +16,9 @@ class TokenManager {
   // 设置 token
   Future<void> setToken(String token) async {
     final prefs = await _getInstance();
-    prefs.setString(GlobalConstants.tokenKey, token);
     _token = token;
+    // 必须 await，否则方法返回时 token 尚未落盘，进程被杀会丢失登录态。
+    await prefs.setString(GlobalConstants.tokenKey, token);
   }
 
   // 获取 token
@@ -28,8 +29,8 @@ class TokenManager {
   // 清除 token
   Future<void> removeToken() async {
     final prefs = await _getInstance();
-    prefs.remove(GlobalConstants.tokenKey);
     _token = '';
+    await prefs.remove(GlobalConstants.tokenKey);
   }
 }
 

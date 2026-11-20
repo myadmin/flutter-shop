@@ -41,7 +41,8 @@ class GoodsDetail {
   }
 
   factory GoodsDetail.fromJson(Map<String, dynamic> json) {
-    final details = json['details'] as Map<String, dynamic>? ?? const {};
+    final details = asMapOrEmpty(json['details']);
+    final brand = asMapOrNull(json['brand']);
     return GoodsDetail(
       id: asString(json['id']),
       name: asString(json['name']),
@@ -52,9 +53,7 @@ class GoodsDetail {
       mainPictures: asStringList(json['mainPictures']),
       salesCount: asInt(json['salesCount']),
       commentCount: asInt(json['commentCount']),
-      brand: json['brand'] == null
-          ? null
-          : GoodsBrand.fromJson(json['brand'] as Map<String, dynamic>),
+      brand: brand == null ? null : GoodsBrand.fromJson(brand),
       properties: asList(details['properties'], GoodsProperty.fromJson),
       detailPictures: asStringList(details['pictures']),
       skus: asList(json['skus'], GoodsSku.fromJson),

@@ -3,6 +3,7 @@ import 'package:hm_shop/models/goods.dart';
 import 'package:hm_shop/models/home.dart';
 import 'package:hm_shop/models/order.dart';
 import 'package:hm_shop/models/parsers.dart';
+import 'package:hm_shop/utils/api_exception.dart';
 
 void main() {
   group('模型反序列化取值工具', () {
@@ -155,6 +156,50 @@ void main() {
       expect(result.defaultAddress, isNull);
       expect(result.summary.goodsCount, 2);
       expect(result.summary.totalPayPrice, '190.00');
+    });
+  });
+
+  group('接口最外层结构的严格校验', () {
+    test('asMap 收窄对象，结构不符时抛 FormatException', () {
+      expect(asMap(<String, dynamic>{'id': '1'}), <String, dynamic>{'id': '1'});
+      // 泛型未擦除的 Map 也能收窄
+      expect(asMap(<dynamic, dynamic>{'id': 2}), <String, dynamic>{'id': 2});
+
+      expect(() => asMap(<dynamic>[]), throwsFormatException);
+      expect(() => asMap(null), throwsFormatException);
+      expect(() => asMap('文本'), throwsFormatException);
+    });
+
+    test('asModelList 收窄数组，结构不符时抛 FormatException', () {
+      final list = asModelList(<dynamic>[
+        <String, dynamic>{'imgUrl': 'a.png'},
+        '脏数据',
+        <String, dynamic>{'imgUrl': 'b.png'},
+      ], BannerItem.fromJson);
+
+      // 非 Map 元素被跳过，不会中断整个列表
+      expect(list.map((item) => item.imageUrl), <String>['a.png', 'b.png']);
+
+      expect(
+        () => asModelList(<String, dynamic>{}, BannerItem.fromJson),
+        throwsFormatException,
+      );
+      expect(
+        () => asModelList(null, BannerItem.fromJson),
+        throwsFormatException,
+      );
+    });
+
+    test('resolveErrorMessage 对结构异常给出可读文案', () {
+      expect(
+        resolveErrorMessage(const FormatException('期望接口返回数组')),
+        '数据格式异常，请稍后重试',
+      );
+      expect(resolveErrorMessage(StateError('x')), '网络或服务异常，请稍后重试');
+      expect(
+        resolveErrorMessage(StateError('x'), fallback: '首页加载失败'),
+        '首页加载失败',
+      );
     });
   });
 }

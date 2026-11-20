@@ -16,9 +16,7 @@ class PreOrderResult {
     return PreOrderResult(
       userAddresses: asList(json['userAddresses'], OrderAddress.fromJson),
       goods: asList(json['goods'], PreOrderGoods.fromJson),
-      summary: OrderSummary.fromJson(
-        json['summary'] as Map<String, dynamic>? ?? const {},
-      ),
+      summary: OrderSummary.fromJson(asMapOrEmpty(json['summary'])),
     );
   }
 

@@ -1,15 +1,18 @@
 import 'package:hm_shop/constants/index.dart';
+import 'package:hm_shop/models/parsers.dart';
 import 'package:hm_shop/models/user.dart';
 import 'package:hm_shop/utils/dio_request.dart';
 
-// 登录
+/// 手机号密码登录
 Future<UserInfo> loginAPI(Map<String, dynamic> data) async {
   return UserInfo.fromJson(
-    await dioRequest.post(HttpConstants.login, data: data),
+    asMap(await dioRequest.post(HttpConstants.login, data: data)),
   );
 }
 
-// 用户信息
+/// 当前登录用户信息
 Future<UserInfo> getUserInfoAPI() async {
-  return UserInfo.fromJson(await dioRequest.get(HttpConstants.userProfile));
+  return UserInfo.fromJson(
+    asMap(await dioRequest.get(HttpConstants.userProfile)),
+  );
 }

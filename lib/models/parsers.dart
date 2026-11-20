@@ -50,3 +50,44 @@ List<String> asStringList(dynamic value) {
       .map((item) => item.toString())
       .toList();
 }
+
+/// 把接口返回值收窄成对象；结构不符时抛 [FormatException]。
+///
+/// 与 [asList] 的「宽容」策略不同：接口最外层的结构约定一旦被破坏，
+/// 说明前后端契约出了问题，应当让调用方看到错误而不是展示空数据。
+Map<String, dynamic> asMap(dynamic value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return value.cast<String, dynamic>();
+  throw FormatException('期望接口返回对象，实际为 ${value.runtimeType}');
+}
+
+/// 把接口返回的数组收窄成模型列表；结构不符时抛 [FormatException]。
+List<T> asModelList<T>(
+  dynamic value,
+  T Function(Map<String, dynamic> json) fromJson,
+) {
+  if (value is! List) {
+    throw FormatException('期望接口返回数组，实际为 ${value.runtimeType}');
+  }
+  return value
+      .whereType<Map>()
+      .map((item) => fromJson(item.cast<String, dynamic>()))
+      .toList();
+}
+
+/// 把可选嵌套对象安全转成 Map；null 与非对象返回空 Map。
+///
+/// 用于「字段可缺省、缺失时按空对象处理」的场景，避免写
+/// `json['x'] as Map<String, dynamic>? ?? const {}`（遇到非 Map 会抛 TypeError）。
+Map<String, dynamic> asMapOrEmpty(dynamic value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return value.cast<String, dynamic>();
+  return const {};
+}
+
+/// 把可选嵌套对象安全转成 Map；null 与非对象返回 null。
+Map<String, dynamic>? asMapOrNull(dynamic value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return value.cast<String, dynamic>();
+  return null;
+}

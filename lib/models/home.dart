@@ -77,9 +77,7 @@ class SubType {
     return SubType(
       id: asString(json['id']),
       title: asString(json['title']),
-      goodsItems: GoodsItems.fromJson(
-        json['goodsItems'] as Map<String, dynamic>? ?? const {},
-      ),
+      goodsItems: GoodsItems.fromJson(asMapOrEmpty(json['goodsItems'])),
     );
   }
 }

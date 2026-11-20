@@ -32,5 +32,7 @@ class NetworkException implements Exception {
 String resolveErrorMessage(Object error, {String? fallback}) {
   if (error is ApiException) return error.message;
   if (error is NetworkException) return error.message;
+  // 接口返回结构与模型约定不符（字段类型突变等）
+  if (error is FormatException) return '数据格式异常，请稍后重试';
   return fallback ?? '网络或服务异常，请稍后重试';
 }

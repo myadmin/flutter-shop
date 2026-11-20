@@ -134,11 +134,17 @@ class _MineViewState extends State<MineView> {
             Image.asset("lib/assets/ic_user_vip.png", width: 30, height: 30),
             const SizedBox(width: 10),
             const Expanded(
-              child: Text(
-                '升级美荟商城会员，尊享无限免邮',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color.fromRGBO(126, 43, 26, 1),
+              // 按可用宽度等比缩小，保证各类机型下文案都只占一行
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '升级美荟商城会员，尊享无限免邮',
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color.fromRGBO(126, 43, 26, 1),
+                  ),
                 ),
               ),
             ),

@@ -25,13 +25,19 @@ class HmGoodsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.image),
-              child: AppNetworkImage(
-                url: item.picture,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
+            // 按实际可用宽度解码，避免手机网格里按原图尺寸解码白占内存
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.image),
+                  child: AppNetworkImage(
+                    url: item.picture,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    decodeWidth: constraints.maxWidth,
+                  ),
+                );
+              },
             ),
           ),
           const SizedBox(height: AppSpacing.small),

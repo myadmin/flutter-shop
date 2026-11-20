@@ -30,8 +30,8 @@ flutter:
   # 新增图片时请在这里补一行。
   assets:
     - lib/assets/goods_avatar.png
-    - lib/assets/home_cmd_inner.png
-    - lib/assets/home_cmd_sm.png
+    - lib/assets/home_cmd_inner.webp
+    - lib/assets/home_cmd_sm.webp
     - lib/assets/ic_public_cart_active.png
     - lib/assets/ic_public_cart_normal.png
     - lib/assets/ic_public_home_active.png

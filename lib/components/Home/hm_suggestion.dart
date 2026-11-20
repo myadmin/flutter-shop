@@ -83,10 +83,19 @@ class HmSuggestion extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.image),
               child: AspectRatio(
                 aspectRatio: _imageAspectRatio,
-                child: Container(
-                  // 白色底避免透明图片露出下层背景
-                  color: Colors.white,
-                  child: AppNetworkImage(url: goods.picture, fit: BoxFit.cover),
+                // 按格子实际宽度解码，避免小图按原图尺寸解码
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return Container(
+                      // 白色底避免透明图片露出下层背景
+                      color: Colors.white,
+                      child: AppNetworkImage(
+                        url: goods.picture,
+                        fit: BoxFit.cover,
+                        decodeWidth: constraints.maxWidth,
+                      ),
+                    );
+                  },
                 ),
               ),
             ),

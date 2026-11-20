@@ -123,15 +123,21 @@ class HmHot extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.image),
-            child: Container(
-              width: double.infinity,
-              height: config.imageHeight,
-              color: Colors.white,
-              child: AppNetworkImage(
-                url: goods.picture,
-                fit: BoxFit.cover,
-                placeholderIconSize: 28,
-              ),
+            // 按卡片实际宽度解码，避免小图按原图尺寸解码
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return Container(
+                  width: double.infinity,
+                  height: config.imageHeight,
+                  color: Colors.white,
+                  child: AppNetworkImage(
+                    url: goods.picture,
+                    fit: BoxFit.cover,
+                    placeholderIconSize: 28,
+                    decodeWidth: constraints.maxWidth,
+                  ),
+                );
+              },
             ),
           ),
           const SizedBox(height: 10),
@@ -144,7 +150,7 @@ class HmHot extends StatelessWidget {
             child: FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
-                '￥${goods.price}元',
+                '￥${goods.price}',
                 maxLines: 1,
                 style: const TextStyle(fontSize: 11, color: Colors.white),
               ),

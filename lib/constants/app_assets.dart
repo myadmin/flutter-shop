@@ -10,11 +10,12 @@ class AppAssets {
   static const String goodsAvatar = 'lib/assets/goods_avatar.png';
 
   // ---- 首页活动图 ----
+  // 两张装饰图原为 PNG（合计 287 KB），改用 WebP 后合计约 18 KB
   /// 特惠推荐左侧活动图
-  static const String homeCmdInner = 'lib/assets/home_cmd_inner.png';
+  static const String homeCmdInner = 'lib/assets/home_cmd_inner.webp';
 
   /// 特惠推荐卡片背景图
-  static const String homeCmdSm = 'lib/assets/home_cmd_sm.png';
+  static const String homeCmdSm = 'lib/assets/home_cmd_sm.webp';
 
   // ---- 底部导航 ----
   static const String icPublicHomeNormal =

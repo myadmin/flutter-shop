@@ -25,7 +25,12 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          # 固定 SDK 版本，避免 CI 跟着 stable 漂移导致「代码没改、CI 突然红」。
+          # 具体原因：Flutter 3.48 起 `package:flutter/material.dart` 被标记废弃，
+          # 要求迁移到 `package:material_ui/material_ui.dart`，在 --fatal-infos 下
+          # 这一条会变成 56 个失败项。升级 Flutter 时应当连同这次迁移一起做，
+          # 而不是让流水线自动升上去。
+          flutter-version: '3.47.9'
           cache: true
 
       - name: Install dependencies
@@ -43,7 +48,7 @@ jobs:
 
       - name: Check coverage threshold
         # 覆盖率下限，防止后续改动把整体覆盖率悄悄拉低。
-        # 分母是 lcov 收录的可执行行（即被测试真正加载过的文件），当前约 83%。
+        # 分母是 lcov 收录的可执行行（即被测试真正加载过的文件），当前约 86%。
         run: |
           covered=$(awk -F'[:,]' '/^DA:/ && $3+0 > 0 { c++ } END { print c+0 }' coverage/lcov.info)
           total=$(awk -F'[:,]' '/^DA:/ { t++ } END { print t+0 }' coverage/lcov.info)

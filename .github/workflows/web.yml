@@ -32,7 +32,9 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          # 与 dart.yml 保持一致：固定 SDK 版本，避免 stable 漂移
+          # （3.48 起 `package:flutter/material.dart` 废弃，见 dart.yml 的说明）
+          flutter-version: '3.47.9'
           cache: true
 
       - name: Install dependencies

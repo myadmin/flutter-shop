@@ -91,7 +91,7 @@
 
 | 类别 | 说明 |
 | --- | --- |
-| 框架 | Flutter（stable channel），Dart SDK `^3.13.7` |
+| 框架 | Flutter `3.47.9`（stable），Dart SDK `^3.13.7`；CI 固定同一版本，不跟随 stable 漂移 |
 | 路由 | `MaterialApp` 命名路由 + 深链（`usePathUrlStrategy` / `onUnknownRoute`）+ 主题（`buildAppTheme`） |
 | 状态管理 | [get](https://pub.dev/packages/get) `^4.7.3`（仅用于全局用户态） |
 | 本地存储 | [shared_preferences](https://pub.dev/packages/shared_preferences) `^2.5.6` |
@@ -284,6 +284,12 @@ flutter test --coverage
 5. `flutter build web --release` 构建冒烟 —— 资源路径、条件导入这类问题 analyze 与 test 都发现不了
 
 同一分支连续推送时，`concurrency` 会取消上一次仍在跑的检查，避免队列堆积。`.github/workflows/web.yml` 另行构建 Web 产物并通过 GitHub Pages 部署。
+
+### 关于 SDK 版本
+
+两个 workflow 都固定 `flutter-version: '3.47.9'`，而不是跟着 `channel: stable` 走。
+
+原因是 Flutter 3.48 起给 `package:flutter/material.dart` 加了 `@Deprecated`，官方要求改用 `package:material_ui/material_ui.dart`。本项目所有源文件仍从 `package:flutter/material.dart` 引入，在 `--fatal-infos` 下这会让 CI 直接失败（实测 56 条 info）。暂时不迁移的理由是：`material_ui` 目前是独立实现，而 `get`、`carousel_slider` 仍从 `package:flutter/material.dart` 取类型，两边混用会出现同名但不同源的 `ThemeData`、`MaterialApp` 等类型。等依赖跟进后再一次性升级 SDK、替换全库 import，并重新跑一遍深链与规格弹层的浏览器验证。
 
 ### 关于 `--wasm`
 

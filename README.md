@@ -84,7 +84,7 @@
 - **并发与容错**：购物车件数与购物车列表请求都做了在途去重（同一时刻只发一次）；首页整页刷新期间不接受滚动加载（`_refreshing`），避免与首屏请求抢 `limit`；401 跳转登录页带重入保护；滚动触发的加载在本地吞掉异常，不会冒泡成未捕获异步错误；`PlatformDispatcher.onError` 兜底记录漏网的异步异常
 - **加载弹窗**：`LoadingDialog` 持有 `DialogRoute` 引用，`hide()` 精确移除自身路由，不会误弹页面
 - **Toast 工具**：`ToastUtils` 基于 `SnackBar`，宽度随文案自适应；只有**相同文案**在 2 秒内重复时才节流，不同提示不会被吞掉，新提示会顶掉正在展示的旧提示
-- **自动化测试**：95 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、金额整数累加、全局用户态与购物车件数、骨架屏、商品聚合组件、规格选择弹层、订单组件、「我的」页面组件、分类页组件、购物车组件，以及首页 / 购物车 / 登录 / 分类四个页面的页面级交互（用 `MockAdapter` 替换 Dio 适配器，不发真实请求）
+- **自动化测试**：109 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、金额整数累加、全局用户态与购物车件数、骨架屏、商品聚合组件、规格选择弹层、订单组件、「我的」页面组件、分类页组件、购物车组件、未知路由兜底与深链解析，以及首页 / 购物车 / 登录 / 分类四个页面的页面级交互（用 `MockAdapter` 替换 Dio 适配器，不发真实请求）
 - **代码规范与 CI**：`dart format`、`flutter analyze --fatal-infos`（已开启 `strict-casts` / `strict-inference` / `strict-raw-types`）、`flutter test --coverage`（覆盖率低于 80% 直接失败）、`flutter build web --release`（构建冒烟）在 CI 中全部强制通过
 
 ## 技术栈
@@ -92,7 +92,7 @@
 | 类别 | 说明 |
 | --- | --- |
 | 框架 | Flutter（stable channel），Dart SDK `^3.13.7` |
-| 路由 | `MaterialApp` 命名路由 + 主题（`buildAppTheme`） |
+| 路由 | `MaterialApp` 命名路由 + 深链（`usePathUrlStrategy` / `onUnknownRoute`）+ 主题（`buildAppTheme`） |
 | 状态管理 | [get](https://pub.dev/packages/get) `^4.7.3`（仅用于全局用户态） |
 | 本地存储 | [shared_preferences](https://pub.dev/packages/shared_preferences) `^2.5.6` |
 | 轮播组件 | [carousel_slider](https://pub.dev/packages/carousel_slider) `^5.1.2` |
@@ -175,8 +175,11 @@ lib/
 │   ├── Category/index.dart     # 分类页：一级导航 + 二级宫格 + 推荐
 │   ├── Cart/index.dart         # 购物车：清单、勾选、改数量、删除、结算入口
 │   ├── Mine/index.dart         # 我的：用户信息、会员卡、订单、猜你喜欢
-│   └── Login/index.dart        # 登录页
-├── routes/index.dart           # 路由、根 Widget 与主题
+│   ├── Login/index.dart        # 登录页
+│   └── Unknown/index.dart      # 未知路由兜底页
+├── routes/
+│   ├── app_routes.dart         # 路由名与带参跳转地址的统一构造
+│   └── index.dart              # 路由表、深链解析、根 Widget 与主题
 ├── stores/
 │   ├── token_manager.dart      # token 本地持久化
 │   ├── user_controller.dart    # GetX 全局用户态
@@ -186,6 +189,7 @@ lib/
 │   ├── api_exception.dart      # ApiException / NetworkException / resolveErrorMessage
 │   ├── money.dart              # 金额按「分」整数累加（parseCents / formatCents）
 │   ├── loading_dialog.dart     # 统一加载中对话框
+│   ├── web_url_strategy.dart   # Web 真实路径策略的跨平台门面（条件导入）
 │   └── toast_utils.dart        # 自适应宽度 Toast
 ├── assets/                     # 底部导航图标、我的页图标、首页装饰图（WebP）等资源
 └── main.dart                   # 程序入口（注册全局状态、兜底未捕获异步异常）
@@ -203,17 +207,24 @@ test/
 ├── cart_test.dart              # 购物车模型 / 组件 / 全局件数
 ├── pages_test.dart             # 页面级交互（购物车 / 登录 / 分类）
 ├── home_page_test.dart         # 首页并发加载、部分失败降级、整页错误重试
+├── unknown_route_test.dart     # 未知路由兜底、深链解析、地址构造
 └── widget_test.dart            # 首页骨架屏、订单组件、商品聚合组件
 ```
 
 ## 路由
 
-| 路径 | 页面 | 参数 |
+Web 端启用了 `usePathUrlStrategy`，地址栏是真实路径（`/goods?id=4026450`）而不是 hash（`#/goods`），因此地址可以直接分享、刷新后能还原到同一页面。参数统一以查询串出现在地址里，跳转地址由 `AppRoutes` 构造，避免各处手拼字符串。
+
+| 路径 | 页面 | 参数（查询串） |
 | --- | --- | --- |
 | `/` | `MainPage` | 无 |
 | `/login` | `LoginPage` | 无 |
-| `/goods` | `GoodsDetailPage` | 商品 `id`（`String`） |
-| `/order/confirm` | `OrderConfirmPage` | `{'skuId': String, 'count': int}` |
+| `/goods?id=<商品 id>` | `GoodsDetailPage` | `id` |
+| `/order/confirm?skuId=<sku>&count=<数量>` | `OrderConfirmPage` | `skuId`、`count` |
+
+解析规则在 `buildRoute` 里：查询串会转成 `RouteSettings.arguments` 传给页面，站内 `pushNamed` 传入的 `arguments` 优先级更高；匹配不到的路由交给 `onUnknownRoute`，渲染 `UnknownRoutePage`（而不是白屏）。
+
+> 真实路径策略要求静态服务器支持「深链回退到 index.html」。部署到 GitHub Pages 时由 `.github/workflows/web.yml` 额外生成一份 `404.html`（内容与 `index.html` 相同）兜底；本地调试可用任意 SPA 回退的静态服务。
 
 ## 接口说明
 
@@ -274,13 +285,20 @@ flutter test --coverage
 
 同一分支连续推送时，`concurrency` 会取消上一次仍在跑的检查，避免队列堆积。`.github/workflows/web.yml` 另行构建 Web 产物并通过 GitHub Pages 部署。
 
+### 关于 `--wasm`
+
+试过 `flutter build web --release --wasm`，Chrome 150 下可以正常渲染、无控制台报错，体积也确实更小：`main.dart.wasm` 2392 KB，对比 `main.dart.js` 2832 KB（-15%）；首屏实测 6 个请求 / 2448 KB，对比 JS 版 9 个请求 / 2928 KB（禁用缓存）。
+
+但默认构建仍然保留 JS，原因是：skwasm 要多线程渲染需要 `Cross-Origin-Opener-Policy` + `Cross-Origin-Embedder-Policy` 两个响应头，而 GitHub Pages 不支持自定义响应头；同时 wasm 产物会把 canvaskit 的各套变体和 JS 兜底一起带上，目录体积反而从 40.29 MB 涨到 42.65 MB。等换成支持自定义头部的托管再切，命令只需给 CI 的构建步骤加上 `--wasm`。
+
 ## 当前状态与已知问题
 
 - 顶部搜索框、会员卡开通、快捷入口与订单管理入口均为静态占位，点击提示「功能开发中」。
 - 接口侧没有「按分类取商品」的接口（`/category/goods`、`/category/list`、`/category/tree` 等路径均返回 4xx/5xx），因此二级分类点击只提示「商品列表开发中」；分类页的「猜你喜欢」用的是 `/home/goods/guessLike`。
 - 购物车结算复用「立即购买」链路（`/member/order/pre/now` + `/member/order`），**接口只支持单件商品结算**，因此多选时点击「结算」会提示只勾选一件。
 - 接口没有「全选 / 批量勾选」的接口（`PUT /member/cart` 与 `PUT /member/cart/checked` 均不存在），「全选」是逐条 `PUT /member/cart/{skuId}` 串行完成的，条目很多时会较慢。
-- Web 端仍使用默认的 hash 路由（`#/goods`），未启用 `usePathUrlStrategy`，也还没有 `onUnknownRoute` 兜底页，直接分享深链的能力有限。
+- Web 端已启用真实路径与未知路由兜底：`/goods?id=...` 这类深链可以直接访问、刷新后仍停在同一页；但深链只携带查询串，像 `/order/confirm` 这种强依赖 `skuId` 的页面在参数缺失时会落到页面的错误态，而不是给出「链接参数缺失」的专门提示。
+- GitHub Pages 用 `404.html` 实现深链回退，代价是「不存在的路径」也返回 HTTP 200，对 SEO 不友好；这是静态托管的通用取舍，不是代码问题。
 - 商品**列表页**（分类 → 商品列表）尚未开发，是当前最后一个占位场景。
 - 覆盖率只统计「被测试真正加载过」的文件（lcov 的统计口径），首页轮播、首页装饰区块、我的会员卡、商品详情品牌/参数等纯展示组件仍未被测试加载；CI 的 80% 阈值只约束已纳入统计的部分。
 - `cupertino_icons` 在代码里没有被直接引用，但 GetX 内部组件引用其字体，删除后 `flutter build web` 会告警缺字体，因此保留（tree-shaking 后仅 1.4 KB）。

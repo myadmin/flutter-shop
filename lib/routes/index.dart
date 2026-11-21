@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/pages/GoodsDetail/index.dart';
+import 'package:hm_shop/pages/GoodsList/index.dart';
 import 'package:hm_shop/pages/Main/index.dart';
 import 'package:hm_shop/pages/Login/index.dart';
 import 'package:hm_shop/pages/OrderConfirm/index.dart';
@@ -12,7 +13,8 @@ Widget getRootWidget() {
   return MaterialApp(
     title: '美荟商城',
     debugShowCheckedModeBanner: false,
-    initialRoute: '/',
+    // 不写死 initialRoute：交给平台默认路由（Web 上是地址栏里的
+    // `/goods/list?...`，原生上是 '/'），这样分享出去的深链能直接打开对应页面
     routes: getRootRoutes(),
     // 深链（/goods?id=42）的名字带查询串，routes 表里查不到，交给 buildRoute 拆解
     onGenerateRoute: buildRoute,
@@ -92,6 +94,15 @@ Map<String, Widget Function(BuildContext)> getRootRoutes() {
           : '';
       return GoodsDetailPage(goodsId: goodsId);
     }, // 商品详情路由
+    AppRoutes.goodsListPath: (context) {
+      // 分类商品列表：分类 id 与分类名都来自查询串
+      final arguments = ModalRoute.of(context)?.settings.arguments;
+      final params = arguments is Map ? arguments : <String, dynamic>{};
+      return GoodsListPage(
+        categoryId: params['categoryId']?.toString() ?? '',
+        title: params['title']?.toString() ?? '商品列表',
+      );
+    }, // 分类商品列表路由
     AppRoutes.orderConfirmPath: (context) {
       // 订单确认：skuId 与购买数量同样来自查询串
       final arguments = ModalRoute.of(context)?.settings.arguments;

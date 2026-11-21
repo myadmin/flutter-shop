@@ -113,7 +113,7 @@ class _CategoryViewState extends State<CategoryView> {
   }
 
   void _onSubCategoryTap(CategoryItem child) {
-    ToastUtils.showToast(context, '「${child.name}」商品列表开发中，敬请期待');
+    Navigator.pushNamed(context, AppRoutes.goodsList(child.id, child.name));
   }
 
   @override

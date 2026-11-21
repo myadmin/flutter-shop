@@ -137,6 +137,12 @@ class GoodsItem {
       orderNum: asInt(json['orderNum']),
     );
   }
+
+  /// 商品卡片上展示的销量
+  ///
+  /// 不同接口给的字段不一样：分类商品接口给 `orderNum`，
+  /// 猜你喜欢给 `payCount`，子类据此覆写。
+  int get soldCount => orderNum;
 }
 
 class GoodDetailItem extends GoodsItem {
@@ -162,6 +168,9 @@ class GoodDetailItem extends GoodsItem {
       payCount: asInt(json['payCount']),
     );
   }
+
+  @override
+  int get soldCount => payCount;
 }
 
 class GoodsDetailsItems {

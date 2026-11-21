@@ -10,8 +10,8 @@ import 'package:hm_shop/models/home.dart';
 class HmGoodsCard extends StatelessWidget {
   const HmGoodsCard({super.key, required this.item, this.onTap});
 
-  /// 商品数据
-  final GoodDetailItem item;
+  /// 商品数据；首页推荐、分类推荐、分类商品列表共用
+  final GoodsItem item;
 
   /// 点击整张卡片
   final VoidCallback? onTap;
@@ -75,7 +75,7 @@ class HmGoodsCard extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.small),
                 Text(
-                  '${item.payCount}人付款',
+                  '${item.soldCount}人付款',
                   style: const TextStyle(color: Colors.grey),
                 ),
               ],

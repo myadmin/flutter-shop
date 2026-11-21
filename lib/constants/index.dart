@@ -12,6 +12,8 @@ class HttpConstants {
   static const String bannerList = '/home/banner';
   // 分类
   static const String categoryList = '/home/category/head';
+  // 分类下的商品（`/category/sub/filter?id=<分类 id>`）
+  static const String categoryGoods = '/category/sub/filter';
   // 特惠推荐
   static const String productList = '/hot/preference';
   // 爆款推荐

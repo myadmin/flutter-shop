@@ -205,3 +205,32 @@ Map<String, dynamic> preOrderJson({
     },
   };
 }
+
+/// 分类商品列表（结构对齐 `/category/sub/filter` 接口的 result）
+Map<String, dynamic> categoryGoodsJson({
+  String id = 'sub-1',
+  String name = '子分类一',
+  String parentName = '测试分类',
+  List<Map<String, dynamic>>? goods,
+  List<Map<String, dynamic>>? siblings,
+}) {
+  return {
+    'id': id,
+    'name': name,
+    'picture': '',
+    'parentId': 'c1',
+    'parentName': parentName,
+    'goods':
+        goods ??
+        [
+          goodsItemJson(id: 'goods-1', name: '分类商品一', price: '10.00'),
+          goodsItemJson(id: 'goods-2', name: '分类商品二', price: '20.00'),
+        ],
+    'categories':
+        siblings ??
+        [
+          {'id': 'sub-1', 'name': '子分类一'},
+          {'id': 'sub-2', 'name': '子分类二'},
+        ],
+  };
+}

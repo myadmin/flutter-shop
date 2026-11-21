@@ -10,6 +10,11 @@ on:
   pull_request:
     branches: [ "master" ]
 
+# 同一分支的新提交推送后，取消仍在跑的上一次检查，避免队列堆积浪费额度
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -33,5 +38,20 @@ jobs:
         # info 级别提示同样视为失败，保持 lint 零告警
         run: flutter analyze --fatal-infos
 
-      - name: Run tests
-        run: flutter test
+      - name: Run tests with coverage
+        run: flutter test --coverage
+
+      - name: Check coverage threshold
+        # 覆盖率下限，防止后续改动把整体覆盖率悄悄拉低。
+        # 分母是 lcov 收录的可执行行（即被测试真正加载过的文件），当前约 83%。
+        run: |
+          covered=$(awk -F'[:,]' '/^DA:/ && $3+0 > 0 { c++ } END { print c+0 }' coverage/lcov.info)
+          total=$(awk -F'[:,]' '/^DA:/ { t++ } END { print t+0 }' coverage/lcov.info)
+          echo "覆盖 $covered / $total 行"
+          pct=$(awk -v c="$covered" -v t="$total" 'BEGIN { printf "%.1f", (t > 0 ? c * 100 / t : 0) }')
+          echo "覆盖率 ${pct}%"
+          awk -v p="$pct" 'BEGIN { if (p + 0 < 80) { print "覆盖率低于 80%，请补充测试"; exit 1 } }'
+
+      - name: Build web (smoke)
+        # 构建失败往往由资源路径、条件导入等问题引起，analyze 与 test 都发现不了
+        run: flutter build web --release

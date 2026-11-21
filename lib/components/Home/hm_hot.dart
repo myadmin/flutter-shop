@@ -169,7 +169,7 @@ class HmHot extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: config.backgroundColor,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.card),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

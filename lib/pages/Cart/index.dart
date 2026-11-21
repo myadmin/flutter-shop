@@ -11,6 +11,7 @@ import 'package:hm_shop/models/cart.dart';
 import 'package:hm_shop/stores/cart_controller.dart';
 import 'package:hm_shop/stores/user_controller.dart';
 import 'package:hm_shop/utils/api_exception.dart';
+import 'package:hm_shop/utils/money.dart';
 import 'package:hm_shop/utils/toast_utils.dart';
 
 /// 购物车页
@@ -92,12 +93,14 @@ class _CartViewState extends State<CartView> {
   }
 
   /// 合计金额（不含运费）
+  ///
+  /// 以「分」为单位做整数累加，避免多条商品浮点相加后差一分。
   String get _totalAmount {
-    final total = _selectedItems.fold<double>(
+    final totalCents = _selectedItems.fold<int>(
       0,
-      (sum, item) => sum + item.nowPriceValue * item.count,
+      (sum, item) => sum + item.nowPriceCents * item.count,
     );
-    return total.toStringAsFixed(2);
+    return formatCents(totalCents);
   }
 
   /// 购物车商品总件数

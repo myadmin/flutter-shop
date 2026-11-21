@@ -11,6 +11,10 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # 代码里没有直接使用 CupertinoIcons，但可达代码（GetX 内部组件）引用了该字体：
+  # 删掉这个依赖后 `flutter build web` 会告警
+  # "Expected to find fonts for (MaterialIcons, packages/cupertino_icons/CupertinoIcons)"，
+  # 且相关图标会缺字形。tree-shaking 后仅占 1.4 KB，因此保留。
   cupertino_icons: ^1.0.8
   carousel_slider: ^5.1.2
   dio: ^5.11.1

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hm_shop/components/Mine/hm_entry_item.dart';
 import 'package:hm_shop/constants/app_assets.dart';
+import 'package:hm_shop/constants/app_theme.dart';
 
 /// 「我的」页面订单管理入口区
 class HmMineOrderModule extends StatelessWidget {
@@ -27,7 +28,7 @@ class HmMineOrderModule extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.card),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
           child: Column(

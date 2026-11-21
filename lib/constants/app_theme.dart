@@ -69,9 +69,16 @@ class AppColors {
 class AppRadius {
   const AppRadius._();
 
-  static const double card = 8;
+  /// 卡片与容器圆角（订单卡、品牌卡、会员卡、弹窗等统一用 10）
+  static const double card = 10;
+
+  /// 图片圆角
   static const double image = 8;
+
+  /// 胶囊形按钮 / 输入框 / 搜索框
   static const double pill = 28;
+
+  /// Toast 胶囊
   static const double toast = 40;
 }
 
@@ -86,6 +93,5 @@ class AppSpacing {
   static const double page = 10;
 
   static const double small = 6;
-  static const double medium = 10;
   static const double large = 20;
 }

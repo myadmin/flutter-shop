@@ -67,7 +67,8 @@ void main() {
       expect(item.postFee, '1.00');
       // 字符串数量也能解析
       expect(item.count, 3);
-      expect(item.subtotalText, '269.70');
+      // 分值为整数，供合计金额做整数累加
+      expect(item.nowPriceCents, 8990);
     });
 
     test('字段类型不稳定时不抛异常', () {
@@ -86,18 +87,13 @@ void main() {
       expect(item.count, 1);
       // 非法金额回退为 0.00
       expect(item.nowPrice, '0.00');
-      expect(item.nowPriceValue, 0);
+      expect(item.nowPriceCents, 0);
     });
 
     test('未勾选或已失效的商品不参与结算', () {
       expect(_item().isCheckoutSelected, isTrue);
       expect(_item(selected: false).isCheckoutSelected, isFalse);
       expect(_item(isEffective: false).isCheckoutSelected, isFalse);
-    });
-
-    test('数量受库存限制', () {
-      expect(_item(count: 2, stock: 3).canIncrease, isTrue);
-      expect(_item(count: 3, stock: 3).canIncrease, isFalse);
     });
 
     test('copyWith 只覆盖传入的字段', () {

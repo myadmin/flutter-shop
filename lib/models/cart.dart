@@ -1,4 +1,5 @@
 import 'package:hm_shop/models/parsers.dart';
+import 'package:hm_shop/utils/money.dart';
 
 /// 购物车条目（`/member/cart` 列表里的一项）
 ///
@@ -71,14 +72,8 @@ class CartItem {
     );
   }
 
-  /// 现价的数值形式，用于计算合计
-  double get nowPriceValue => double.tryParse(nowPrice) ?? 0;
-
-  /// 该条目的商品金额（现价 × 数量）
-  String get subtotalText => (nowPriceValue * count).toStringAsFixed(2);
-
-  /// 是否还能继续加数量（受库存限制）
-  bool get canIncrease => count < stock;
+  /// 现价的「分」值，用于整数累加合计，避免浮点误差
+  int get nowPriceCents => parseCents(nowPrice);
 
   /// 参与结算：既要勾选，也要是有效商品
   bool get isCheckoutSelected => selected && isEffective;

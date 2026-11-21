@@ -4,6 +4,7 @@ import 'package:hm_shop/models/home.dart';
 import 'package:hm_shop/models/order.dart';
 import 'package:hm_shop/models/parsers.dart';
 import 'package:hm_shop/utils/api_exception.dart';
+import 'package:hm_shop/utils/money.dart';
 
 void main() {
   group('模型反序列化取值工具', () {
@@ -200,6 +201,27 @@ void main() {
         resolveErrorMessage(StateError('x'), fallback: '首页加载失败'),
         '首页加载失败',
       );
+    });
+  });
+
+  group('金额以分为单位计算', () {
+    test('字符串金额解析成分', () {
+      expect(parseCents('69.90'), 6990);
+      expect(parseCents(' 12.5 '), 1250);
+      expect(parseCents('0'), 0);
+    });
+
+    test('非法或空金额回退为 0 分', () {
+      expect(parseCents('abc'), 0);
+      expect(parseCents(''), 0);
+    });
+
+    test('整数累加不丢精度', () {
+      // 用 double 直接相加会得到 0.30000000000000004
+      final total = parseCents('0.10') + parseCents('0.20');
+      expect(total, 30);
+      expect(formatCents(total), '0.30');
+      expect(formatCents(1223680), '12236.80');
     });
   });
 }

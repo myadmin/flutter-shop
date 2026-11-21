@@ -104,7 +104,7 @@ class HmSuggestion extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
               decoration: BoxDecoration(
                 color: AppColors.primary,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.card),
               ),
               // 价格过长时等比缩小，避免换行或溢出
               child: FittedBox(

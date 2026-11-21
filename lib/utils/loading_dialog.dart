@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hm_shop/constants/app_theme.dart';
 
 class LoadingDialog {
   /// 当前正在展示的加载弹窗路由。
@@ -31,7 +32,7 @@ class LoadingDialog {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

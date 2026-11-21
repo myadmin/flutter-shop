@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hm_shop/components/Mine/hm_entry_item.dart';
 import 'package:hm_shop/constants/app_assets.dart';
+import 'package:hm_shop/constants/app_theme.dart';
 
 /// 「我的」页面快捷入口区（我的收藏 / 我的足迹 / 我的客服）
 class HmMineQuickActions extends StatelessWidget {
@@ -23,7 +24,7 @@ class HmMineQuickActions extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.card),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,

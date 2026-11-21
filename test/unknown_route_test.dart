@@ -122,6 +122,40 @@ void main() {
     });
   });
 
+  group('初始路由栈', () {
+    test('根路径只压一层首页', () {
+      final routes = buildInitialRoutes('/');
+      expect(routes, hasLength(1));
+      expect(routes.single.settings.name, '/');
+    });
+
+    test('深链压成「首页 + 目标页」两层，不会多出空参数页面', () {
+      final url = AppRoutes.goodsList('c1', '渔夫帽');
+      final routes = buildInitialRoutes(url);
+
+      expect(routes, hasLength(2));
+      expect(routes.first.settings.name, '/');
+      expect(routes.last.settings.name, url);
+      // 默认的逐段拆分会产生 `/goods` 这一层（参数为空的商品详情页）
+      expect(
+        routes.map((route) => route.settings.name),
+        isNot(contains('/goods')),
+      );
+      expect(
+        (routes.last.settings.arguments as Map<String, dynamic>)['categoryId'],
+        'c1',
+      );
+    });
+
+    test('对不上的深链也先落到首页，再压一层兜底页', () {
+      final routes = buildInitialRoutes('/nope?x=1');
+
+      expect(routes, hasLength(2));
+      expect(routes.first.settings.name, '/');
+      expect(routes.last.settings.name, '/nope?x=1');
+    });
+  });
+
   group('路由地址构造', () {
     test('商品详情把 id 编进查询串并可被 buildRoute 还原', () {
       expect(AppRoutes.goods('42'), '/goods?id=42');

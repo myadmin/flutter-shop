@@ -1,4 +1,4 @@
-# hm_shop
+﻿# hm_shop
 
 基于 Flutter 的商城类 App 示例项目，采用「页面 / 组件 / API / 模型 / 状态」分层组织代码。已接入黑马 meikou 接口，完成首页（轮播图、分类、特惠推荐、爆款推荐、一站全买、推荐列表分页）、分类（一级导航 + 二级宫格 + 分类商品列表 + 推荐）、登录（token 持久化与请求鉴权）、商品详情、购物车、订单确认与「我的」页面。
 
@@ -92,7 +92,7 @@
 - **并发与容错**：购物车件数与购物车列表请求都做了在途去重（同一时刻只发一次）；首页整页刷新期间不接受滚动加载（`_refreshing`），避免与首屏请求抢 `limit`；401 跳转登录页带重入保护；滚动触发的加载在本地吞掉异常，不会冒泡成未捕获异步错误；`PlatformDispatcher.onError` 兜底记录漏网的异步异常
 - **加载弹窗**：`LoadingDialog` 持有 `DialogRoute` 引用，`hide()` 精确移除自身路由，不会误弹页面
 - **Toast 工具**：`ToastUtils` 基于 `SnackBar`，宽度随文案自适应；只有**相同文案**在 2 秒内重复时才节流，不同提示不会被吞掉，新提示会顶掉正在展示的旧提示
-- **自动化测试**：131 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、金额整数累加、全局用户态与购物车件数、骨架屏、商品聚合组件、规格选择弹层、订单组件、「我的」页面组件、分类页组件、购物车组件、未知路由兜底与深链解析，以及首页 / 购物车 / 登录 / 分类 / 分类商品列表 / 商品详情 / 订单确认七个页面的页面级交互（用 `MockAdapter` 替换 Dio 适配器，不发真实请求）
+- **自动化测试**：134 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、金额整数累加、全局用户态与购物车件数、骨架屏、商品聚合组件、规格选择弹层、订单组件、「我的」页面组件、分类页组件、购物车组件、未知路由兜底与深链解析，以及首页 / 购物车 / 登录 / 分类 / 分类商品列表 / 商品详情 / 订单确认七个页面的页面级交互（用 `MockAdapter` 替换 Dio 适配器，不发真实请求）
 - **代码规范与 CI**：`dart format`、`flutter analyze --fatal-infos`（已开启 `strict-casts` / `strict-inference` / `strict-raw-types`）、`flutter test --coverage`（覆盖率低于 80% 直接失败）、`flutter build web --release`（构建冒烟）在 CI 中全部强制通过
 
 ## 技术栈
@@ -240,6 +240,8 @@ Web 端启用了 `usePathUrlStrategy`，地址栏是真实路径（`/goods?id=40
 
 解析规则在 `buildRoute` 里：查询串会转成 `RouteSettings.arguments` 传给页面，站内 `pushNamed` 传入的 `arguments` 优先级更高；匹配不到的路由交给 `onUnknownRoute`，渲染 `UnknownRoutePage`（而不是白屏）。
 
+初始路由栈由 `buildInitialRoutes` 自己拼：Flutter 默认会把 `/goods/list?...` 逐段拆成 `/` → `/goods` → `/goods/list?...`，中间那层是没有 id 的商品详情页（从深链按返回会落到「商品信息缺失」的错误态）。现在固定压成「首页 + 目标页」两层，深链直接落到目标页，返回键回到首页。
+
 > 真实路径策略要求静态服务器支持「深链回退到 index.html」。部署到 GitHub Pages 时由 `.github/workflows/web.yml` 额外生成一份 `404.html`（内容与 `index.html` 相同）兜底；本地调试可用任意 SPA 回退的静态服务。
 
 ## 接口说明
@@ -297,7 +299,7 @@ flutter test --coverage
 1. `dart format --output=none --set-exit-if-changed lib test`
 2. `flutter analyze --fatal-infos`（info 级问题同样视为失败）
 3. `flutter test --coverage`
-4. 覆盖率阈值：整体可执行行覆盖率低于 **80%** 直接失败（当前 1896 / 2301 行 = 82.4%）。注意 lcov 只统计「被测试真正加载过」的文件，新增一个 import 就会改变分母——路由测试 import 了 `routes/index.dart`，把全部页面一起纳入统计
+4. 覆盖率阈值：整体可执行行覆盖率低于 **80%** 直接失败（当前 1903 / 2309 行 = 82.4%）。注意 lcov 只统计「被测试真正加载过」的文件，新增一个 import 就会改变分母——路由测试 import 了 `routes/index.dart`，把全部页面一起纳入统计
 5. `flutter build web --release` 构建冒烟 —— 资源路径、条件导入这类问题 analyze 与 test 都发现不了
 
 同一分支连续推送时，`concurrency` 会取消上一次仍在跑的检查，避免队列堆积。`.github/workflows/web.yml` 另行构建 Web 产物并通过 GitHub Pages 部署。

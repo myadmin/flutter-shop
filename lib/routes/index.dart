@@ -18,6 +18,10 @@ Widget getRootWidget() {
     routes: getRootRoutes(),
     // 深链（/goods?id=42）的名字带查询串，routes 表里查不到，交给 buildRoute 拆解
     onGenerateRoute: buildRoute,
+    // 初始路由栈自己拼：默认行为会把 `/goods/list?...` 逐段拆成
+    // `/` → `/goods` → `/goods/list?...`，中间那个 `/goods` 是参数为空的
+    // 商品详情页（返回时落在「商品信息缺失」错误态）
+    onGenerateInitialRoutes: buildInitialRoutes,
     // 连路径都对不上时展示兜底页，而不是白屏
     onUnknownRoute: buildUnknownRoute,
     theme: buildAppTheme(),
@@ -52,6 +56,25 @@ Route<dynamic>? buildRoute(RouteSettings settings) {
     builder: builder,
     settings: RouteSettings(name: name, arguments: arguments),
   );
+}
+
+/// 初始路由栈
+///
+/// Flutter 默认把带路径的 initialRoute 逐段拆分压栈：`/goods/list?...` 会变成
+/// `/` → `/goods` → `/goods/list?...`。中间那层 `/goods` 没有 id，是「商品信息
+/// 缺失」的错误页，从深链返回时会先落到它上面。这里改成「首页 + 目标页」两层：
+/// 深链直接落到目标页，返回键回到首页，也不会多建一层空参数页面。
+List<Route<dynamic>> buildInitialRoutes(String initialRoute) {
+  final home = buildRoute(const RouteSettings(name: AppRoutes.home));
+  final path = Uri.tryParse(initialRoute)?.path ?? initialRoute;
+  if (path.isEmpty || path == AppRoutes.home) {
+    return home == null ? const [] : [home];
+  }
+  final target = buildRoute(RouteSettings(name: initialRoute));
+  if (target == null) {
+    return home == null ? const [] : [home];
+  }
+  return [?home, target];
 }
 
 /// 未知路由兜底

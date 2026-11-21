@@ -116,3 +116,92 @@ Map<String, dynamic> goodsItemJson({
     'payCount': 12,
   };
 }
+
+/// 一份商品详情（结构对齐 `/goods` 接口的 result）
+Map<String, dynamic> goodsDetailJson({
+  String id = 'goods-1',
+  String name = '测试商品',
+  String price = '89.00',
+  String oldPrice = '99.00',
+  List<Map<String, dynamic>> skus = const [],
+  List<Map<String, dynamic>> properties = const [],
+  Map<String, dynamic>? brand,
+  List<String> detailPictures = const [],
+  int salesCount = 12,
+  int commentCount = 3,
+}) {
+  return {
+    'id': id,
+    'name': name,
+    'desc': '测试商品描述',
+    'price': price,
+    'oldPrice': oldPrice,
+    // 空串会走 AppNetworkImage 的占位分支，测试里不发起真实图片请求
+    'mainPictures': [''],
+    'salesCount': salesCount,
+    'commentCount': commentCount,
+    'brand': ?brand,
+    'skus': skus,
+    'details': {'properties': properties, 'pictures': detailPictures},
+  };
+}
+
+/// 一个规格（颜色 × 尺码可自行组合）
+Map<String, dynamic> skuJson({
+  String id = 'sku-1',
+  String price = '89.00',
+  int inventory = 10,
+  String color = '米白',
+  String size = 'M',
+}) {
+  return {
+    'id': id,
+    'price': price,
+    'inventory': inventory,
+    'picture': '',
+    'specs': [
+      {'name': '颜色', 'valueName': color},
+      {'name': '尺码', 'valueName': size},
+    ],
+  };
+}
+
+/// 立即购买结算信息（结构对齐 `/member/order/pre/now` 接口的 result）
+Map<String, dynamic> preOrderJson({
+  String receiver = '张三',
+  String contact = '13800138000',
+  String goodsName = '测试商品',
+  int count = 2,
+  String totalPayPrice = '190.00',
+}) {
+  return {
+    'userAddresses': [
+      {
+        'id': 'addr-1',
+        'receiver': receiver,
+        'contact': contact,
+        'fullLocation': '北京市 东城区',
+        'address': '23号',
+        'isDefault': 1,
+      },
+    ],
+    'goods': [
+      {
+        'id': 'goods-1',
+        'name': goodsName,
+        'picture': '',
+        'count': count,
+        'attrsText': '规格:默认',
+        'price': '89.00',
+        'totalPayPrice': '178.00',
+      },
+    ],
+    'summary': {
+      'goodsCount': count,
+      'totalPrice': '178.00',
+      'totalPayPrice': totalPayPrice,
+      'postFee': '12.00',
+      'discountPrice': '0.00',
+    },
+  };
+}

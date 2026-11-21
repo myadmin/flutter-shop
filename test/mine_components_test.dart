@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hm_shop/components/Mine/hm_mine_header.dart';
 import 'package:hm_shop/components/Mine/hm_mine_order_module.dart';
 import 'package:hm_shop/components/Mine/hm_mine_quick_actions.dart';
+import 'package:hm_shop/components/Mine/hm_mine_vip_card.dart';
 import 'package:hm_shop/models/user.dart';
 
 void main() {
@@ -95,6 +96,19 @@ void main() {
       await tester.tap(find.text('待发货'));
       await tester.pump();
       expect(tapped, ['待发货']);
+    });
+
+    testWidgets('HmMineVipCard 展示会员权益并回调开通', (tester) async {
+      var opened = false;
+      await tester.pumpWidget(
+        wrap(HmMineVipCard(onOpenTap: () => opened = true)),
+      );
+
+      expect(find.text('升级美荟商城会员，尊享无限免邮'), findsOneWidget);
+
+      await tester.tap(find.text('立即开通'));
+      await tester.pump();
+      expect(opened, isTrue);
     });
   });
 }

@@ -48,7 +48,13 @@ class _HomeViewState extends State<HomeView> {
 
   List<GoodDetailItem> _recommendList = [];
   int _page = 1;
+
+  /// 滚动加载更多在途标记，避免同一页重复请求
   bool _loading = false;
+
+  /// 整页刷新在途标记：刷新期间不接受滚动加载，否则会与首页首屏请求抢 limit
+  bool _refreshing = false;
+
   bool _hasMore = true;
 
   /// 为 true 时页面展示骨架屏
@@ -122,136 +128,110 @@ class _HomeViewState extends State<HomeView> {
     Navigator.pushNamed(context, '/goods', arguments: goods.id);
   }
 
-  /// 加载首页全部数据，全部完成后关闭骨架屏
+  /// 加载首页全部数据，全部完成后一次性刷新 UI
   ///
-  /// 单个模块失败只影响自身，只有全部模块都失败时才展示整页错误态。
+  /// 六个模块并发发出请求，但只调用一次 setState：此前每个模块各自 setState，
+  /// 一次刷新最多触发 6 帧整页重建。单个模块失败只影响自身，只有全部模块都
+  /// 失败时才展示整页错误态。
   Future<void> _loadHomeData() async {
+    if (_refreshing) {
+      return;
+    }
+    _refreshing = true;
+
     String? firstError;
     int successCount = 0;
 
-    Future<void> run(Future<void> Function() task) async {
+    /// 并发执行单个模块：失败时记录错误并返回 null，不向外抛异常
+    Future<T?> run<T>(Future<T> Function() task, String label) async {
       try {
-        await task();
+        final result = await task();
         successCount++;
+        return result;
       } catch (e) {
-        debugPrint('首页模块加载失败: $e');
+        debugPrint('$label失败: $e');
         firstError ??= resolveErrorMessage(e);
+        return null;
       }
     }
 
-    await Future.wait([
-      run(_getBannerList),
-      run(_getCategoryList),
-      run(_getSpecialRecommendList),
-      run(_getVogueRecommendList),
-      run(_getOneStopRecommendList),
-      run(() => _getRecommendList(isRefresh: true)),
-    ]);
+    try {
+      final (
+        bannerList,
+        categoryList,
+        specialRecommendResult,
+        inVogueRecommendResult,
+        oneStopRecommendResult,
+        recommendList,
+      ) = await (
+        run(getBannerListAPI, '获取轮播图'),
+        run(getCategoryListAPI, '获取分类列表'),
+        run(getProductListAPI, '获取特惠推荐'),
+        run(getInVogueListAPI, '获取爆款推荐'),
+        run(getOneStopListAPI, '获取一站全买'),
+        run(() => getRecommendListAPI({'limit': _pageSize}), '获取推荐列表'),
+      ).wait;
 
-    if (!mounted) return;
-    setState(() {
-      _isLoading = false;
-      // 一个模块都没成功，基本可判定为网络问题，展示整页重试
-      _errorMessage = successCount == 0 ? (firstError ?? '首页加载失败') : '';
-    });
+      if (!mounted) return;
+      setState(() {
+        // 失败的模块保留上一次的数据，不打断已有内容
+        if (bannerList != null) {
+          _bannerList = bannerList;
+        }
+        if (categoryList != null) {
+          _categoryList = categoryList;
+        }
+        if (specialRecommendResult != null) {
+          _specialRecommendResult = specialRecommendResult;
+        }
+        if (inVogueRecommendResult != null) {
+          _inVogueRecommendResult = inVogueRecommendResult;
+        }
+        if (oneStopRecommendResult != null) {
+          _oneStopRecommendResult = oneStopRecommendResult;
+        }
+        if (recommendList != null) {
+          _recommendList = recommendList;
+          _page = 1;
+          _hasMore = recommendList.length >= _pageSize;
+          if (_hasMore) {
+            _page++;
+          }
+        }
+        _isLoading = false;
+        // 一个模块都没成功，基本可判定为网络问题，展示整页重试
+        _errorMessage = successCount == 0 ? (firstError ?? '首页加载失败') : '';
+      });
+    } finally {
+      _refreshing = false;
+    }
   }
 
-  /// 滚动到底部时加载下一页；防重入由 _getRecommendList 内部保证
+  /// 滚动到底部时加载下一页；防重入由 _refreshing / _loading 共同保证
   void _registerEvent() {
     _scrollController.addListener(() {
+      if (_refreshing || _loading) {
+        return;
+      }
       if (_scrollController.position.pixels >=
           _scrollController.position.maxScrollExtent - 50) {
-        // 滚动触发的加载没有调用方 await 它，必须在这里吞掉异常：
-        // _getRecommendList 失败时会 rethrow 给首屏并发的调用方，
-        // 而这条路径没人接，否则会变成未捕获的异步错误。
-        unawaited(
-          _getRecommendList().catchError((Object error) {
-            debugPrint('加载更多推荐失败: $error');
-          }),
-        );
+        // 滚动触发的加载没有调用方 await 它，异常必须在 _getRecommendList
+        // 内部消化，否则会变成未捕获的异步错误。
+        unawaited(_getRecommendList());
       }
     });
   }
 
-  Future<void> _getBannerList() async {
-    try {
-      final bannerList = await getBannerListAPI();
-      if (!mounted) return;
-      setState(() {
-        _bannerList = bannerList;
-      });
-    } catch (e) {
-      debugPrint('获取轮播图失败: $e');
-      rethrow;
-    }
-  }
-
-  Future<void> _getCategoryList() async {
-    try {
-      final categoryList = await getCategoryListAPI();
-      if (!mounted) return;
-      setState(() {
-        _categoryList = categoryList;
-      });
-    } catch (e) {
-      debugPrint('获取分类列表失败: $e');
-      rethrow;
-    }
-  }
-
-  Future<void> _getSpecialRecommendList() async {
-    try {
-      final specialRecommendResult = await getProductListAPI();
-      if (!mounted) return;
-      setState(() {
-        _specialRecommendResult = specialRecommendResult;
-      });
-    } catch (e) {
-      debugPrint('获取特惠推荐失败: $e');
-      rethrow;
-    }
-  }
-
-  Future<void> _getVogueRecommendList() async {
-    try {
-      final inVogueRecommendResult = await getInVogueListAPI();
-      if (!mounted) return;
-      setState(() {
-        _inVogueRecommendResult = inVogueRecommendResult;
-      });
-    } catch (e) {
-      debugPrint('获取爆款推荐失败: $e');
-      rethrow;
-    }
-  }
-
-  Future<void> _getOneStopRecommendList() async {
-    try {
-      final oneStopRecommendResult = await getOneStopListAPI();
-      if (!mounted) return;
-      setState(() {
-        _oneStopRecommendResult = oneStopRecommendResult;
-      });
-    } catch (e) {
-      debugPrint('获取一站全买失败: $e');
-      rethrow;
-    }
-  }
-
-  /// 获取推荐列表
+  /// 获取推荐列表（滚动到底部时追加下一页）
   ///
   /// 后端 /home/recommend 只支持 limit（不支持 page / pageSize）：返回始终是
   /// 全量结果的前 limit 条且顺序稳定，因此这里用递增 limit 的方式拉取，等价于
   /// 「每次多取一页」。返回条数少于请求的 limit 时说明已经到底。
-  Future<void> _getRecommendList({bool isRefresh = false}) async {
-    if (_loading || (!_hasMore && !isRefresh)) {
+  Future<void> _getRecommendList() async {
+    if (_loading || !_hasMore) {
       return;
     }
     _loading = true;
-    if (isRefresh) {
-      _page = 1;
-      _hasMore = true;
-    }
     final int limit = _page * _pageSize;
     try {
       final recommendList = await getRecommendListAPI({'limit': limit});
@@ -264,8 +244,8 @@ class _HomeViewState extends State<HomeView> {
         _page++;
       }
     } catch (e) {
+      // 滚动加载的调用方不对异常做处理，这里必须吞掉并保留已有列表
       debugPrint('获取推荐列表失败: $e');
-      rethrow;
     } finally {
       _loading = false;
     }

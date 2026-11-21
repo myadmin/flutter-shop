@@ -14,6 +14,8 @@ class AppRoutes {
   static const String goodsPath = '/goods';
   static const String goodsListPath = '/goods/list';
   static const String orderConfirmPath = '/order/confirm';
+  static const String orderListPath = '/orders';
+  static const String orderDetailPath = '/orders/detail';
 
   /// 商品详情：`/goods?id=<商品 id>`
   static String goods(String goodsId) =>
@@ -27,4 +29,12 @@ class AppRoutes {
   /// 订单确认：`/order/confirm?skuId=<规格 id>&count=<数量>`
   static String orderConfirm(String skuId, int count) =>
       '$orderConfirmPath?skuId=${Uri.encodeQueryComponent(skuId)}&count=$count';
+
+  /// 我的订单：`/orders?state=<orderState>`，state 为 0 时不带查询串
+  static String orderList([int state = 0]) =>
+      state == 0 ? orderListPath : '$orderListPath?state=$state';
+
+  /// 订单详情：`/orders/detail?id=<订单 id>`
+  static String orderDetail(String orderId) =>
+      '$orderDetailPath?id=${Uri.encodeQueryComponent(orderId)}';
 }

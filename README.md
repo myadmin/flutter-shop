@@ -1,6 +1,6 @@
-﻿# hm_shop
+# hm_shop
 
-基于 Flutter 的商城类 App 示例项目，采用「页面 / 组件 / API / 模型 / 状态」分层组织代码。已接入黑马 meikou 接口，完成首页（轮播图、分类、特惠推荐、爆款推荐、一站全买、推荐列表分页）、分类（一级导航 + 二级宫格 + 分类商品列表 + 推荐）、登录（token 持久化与请求鉴权）、商品详情、购物车、订单确认与「我的」页面。
+基于 Flutter 的商城类 App 示例项目，采用「页面 / 组件 / API / 模型 / 状态」分层组织代码。已接入黑马 meikou 接口，完成首页（轮播图、分类、特惠推荐、爆款推荐、一站全买、推荐列表分页）、分类（一级导航 + 二级宫格 + 分类商品列表 + 推荐）、登录（token 持久化与请求鉴权）、商品详情、购物车、订单确认、订单列表与详情、「我的」页面。
 
 ## 功能概览
 
@@ -58,8 +58,19 @@
 - **退出登录**：二次确认后清除本地 token 与用户信息
 - **会员卡片**：展示美荟商城会员开通入口
 - **快捷入口**：我的收藏、我的足迹、我的客服（统一由 `HmEntryItem` 渲染，点击提示功能开发中）
-- **订单管理**：我的订单、待付款、待发货、待收货、待评价（同上）
+- **订单管理**：我的订单、待付款、待发货、待收货、待评价五个入口；未登录先跳登录页，已登录按对应状态进入订单列表（见下方「订单列表与详情」）
 - **猜你喜欢**：`HmGuess` 作为吸顶标题（`SliverPersistentHeaderDelegate`），复用 `HmMoreList` 双列网格，调用 `/home/goods/guessLike` 按 `page`、`pageSize` 分页
+
+### 订单列表与详情
+
+- **状态筛选**：`HmOrderStatusTabs` 五个 tab（全部 / 待付款 / 待发货 / 待收货 / 待评价）平分宽度，选中项主色加粗并在下方显示短下划线；切换 tab 时清空列表、回到顶部并重新拉取（`orderState` 作为请求参数）
+- **分页加载**：`pageSize=10`，滚动到距底部 200px 时追加下一页；`_hasMore` 由 `page < pages` 判断，底部展示「加载中 / 没有更多订单了」
+- **订单卡片**：`HmOrderCard` 展示订单号后 8 位、状态、下单时间、商品行（超过 3 行折叠为「还有 N 件商品」）、「共 N 件 / 实付金额」与操作按钮
+- **删除订单**：卡片与详情页都支持删除，二次确认后调 `DELETE /member/order`（请求体 `{"ids": [...]}`）；列表内直接移除该条，详情页删除后带 `true` 返回列表并触发刷新
+- **详情页**：状态横幅（状态 + 提示语）、收货地址、商品清单、金额明细（商品总额 / 运费 / 实付金额）、订单信息（编号 / 下单时间 / 支付方式 / 支付与发货时间等，为空的行自动隐藏）
+- **主操作按钮**：按状态给出「去支付 / 提醒发货 / 确认收货 / 去评价 / 再次购买」；只有「再次购买」有接口支持（按明细逐条加入购物车并刷新角标），其余提示「演示接口未提供该操作」
+- **状态与容错**：未登录展示「登录后查看订单」并可跳登录、空列表按是否筛选给出不同文案、接口失败展示 `AppErrorView` 与重试、支持下拉刷新；登录态变化时自动重新加载
+- **宽屏适配**：tab 栏与列表内容统一收窄到 600 并居中，与购物车、订单确认页保持一致
 
 ### 登录
 
@@ -92,7 +103,7 @@
 - **并发与容错**：购物车件数与购物车列表请求都做了在途去重（同一时刻只发一次）；首页整页刷新期间不接受滚动加载（`_refreshing`），避免与首屏请求抢 `limit`；401 跳转登录页带重入保护；滚动触发的加载在本地吞掉异常，不会冒泡成未捕获异步错误；`PlatformDispatcher.onError` 兜底记录漏网的异步异常
 - **加载弹窗**：`LoadingDialog` 持有 `DialogRoute` 引用，`hide()` 精确移除自身路由，不会误弹页面
 - **Toast 工具**：`ToastUtils` 基于 `SnackBar`，宽度随文案自适应；只有**相同文案**在 2 秒内重复时才节流，不同提示不会被吞掉，新提示会顶掉正在展示的旧提示
-- **自动化测试**：135 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、金额整数累加、全局用户态与购物车件数、骨架屏、商品聚合组件、规格选择弹层、订单组件、「我的」页面组件、分类页组件、购物车组件、未知路由兜底与深链解析，以及首页 / 购物车 / 登录 / 分类 / 分类商品列表 / 商品详情 / 订单确认七个页面的页面级交互（用 `MockAdapter` 替换 Dio 适配器，不发真实请求）
+- **自动化测试**：145 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、金额整数累加、全局用户态与购物车件数、骨架屏、商品聚合组件、规格选择弹层、订单组件、「我的」页面组件、分类页组件、购物车组件、未知路由兜底与深链解析，以及首页 / 购物车 / 登录 / 分类 / 分类商品列表 / 商品详情 / 订单确认 / 订单列表 / 订单详情九个页面的页面级交互（用 `MockAdapter` 替换 Dio 适配器，不发真实请求）
 - **代码规范与 CI**：`dart format`、`flutter analyze --fatal-infos`（已开启 `strict-casts` / `strict-inference` / `strict-raw-types`）、`flutter test --coverage`（覆盖率低于 80% 直接失败）、`flutter build web --release`（构建冒烟）在 CI 中全部强制通过
 
 ## 技术栈
@@ -116,7 +127,7 @@ lib/
 ├── api/                        # 接口调用
 │   ├── home.dart               # 首页 6 个接口的请求函数
 │   ├── goods.dart              # 商品详情
-│   ├── order.dart              # 结算信息 / 提交订单
+│   ├── order.dart              # 结算信息 / 提交订单 / 订单列表与详情 / 删除订单
 │   ├── cart.dart               # 购物车列表 / 件数 / 增删改
 │   ├── category.dart           # 分类下的商品
 │   ├── mine.dart               # 猜你喜欢分页接口
@@ -125,6 +136,7 @@ lib/
 │   ├── common/                 # 跨页面通用组件
 │   │   ├── hm_bottom_bar.dart  # 底部操作栏容器 / 价格 / 按钮
 │   │   ├── hm_goods_card.dart  # 商品卡片（图片 / 标题 / 价格 / 付款人数）
+│   │   ├── hm_empty_view.dart  # 通用空态（图标 / 标题 / 说明 / 按钮）
 │   │   ├── app_network_image.dart # 统一网络图片（带解码尺寸与占位）
 │   │   └── app_error_view.dart # 统一错误态 + 重试
 │   ├── Home/                   # 首页业务组件
@@ -155,6 +167,11 @@ lib/
 │   │   ├── hm_cart_quantity_stepper.dart # 数量增减控件
 │   │   ├── hm_cart_summary_bar.dart   # 全选 / 合计 / 结算栏
 │   │   └── hm_cart_empty.dart         # 空态与未登录态
+│   ├── Order/                  # 订单列表 / 详情组件
+│   │   ├── hm_order_status_tabs.dart # 状态筛选 tab
+│   │   ├── hm_order_card.dart        # 订单卡片（商品行 / 金额 / 操作按钮）
+│   │   ├── hm_order_sku_row.dart     # 订单内商品行
+│   │   └── hm_order_info_row.dart    # 详情页「标签 - 值」行
 │   └── Mine/
 │       ├── hm_mine_header.dart      # 头像 / 昵称 / 登录与退出入口
 │       ├── hm_mine_vip_card.dart    # 会员卡
@@ -172,6 +189,7 @@ lib/
 │   ├── home.dart               # 首页数据模型
 │   ├── goods.dart              # 商品详情模型
 │   ├── order.dart              # 结算与订单模型
+│   ├── order_list.dart         # 订单列表 / 详情模型与状态枚举（OrderState）
 │   ├── cart.dart               # 购物车条目模型（含小计与结算条件）
 │   ├── category_goods.dart     # 分类下的商品与同级分类
 │   └── user.dart               # 用户信息模型
@@ -182,6 +200,8 @@ lib/
 │   │   └── skeleton.dart       # 首页骨架屏
 │   ├── GoodsDetail/index.dart  # 商品详情页
 │   ├── OrderConfirm/index.dart # 订单确认页
+│   ├── OrderList/index.dart    # 订单列表：状态筛选 + 分页 + 删除
+│   ├── OrderDetail/index.dart  # 订单详情：状态 / 地址 / 金额明细 / 删除
 │   ├── Category/index.dart     # 分类页：一级导航 + 二级宫格 + 推荐
 │   ├── GoodsList/index.dart    # 分类商品列表：同级分类切换 + 商品网格
 │   ├── Cart/index.dart         # 购物车：清单、勾选、改数量、删除、结算入口
@@ -200,6 +220,7 @@ lib/
 │   ├── api_exception.dart      # ApiException / NetworkException / resolveErrorMessage
 │   ├── money.dart              # 金额按「分」整数累加（parseCents / formatCents）
 │   ├── loading_dialog.dart     # 统一加载中对话框
+│   ├── order_actions.dart      # 订单删除确认与主操作（再次购买）复用逻辑
 │   ├── web_url_strategy.dart   # Web 真实路径策略的跨平台门面（条件导入）
 │   └── toast_utils.dart        # 自适应宽度 Toast
 ├── assets/                     # 底部导航图标、我的页图标、首页装饰图（WebP）等资源
@@ -219,6 +240,7 @@ test/
 ├── cart_test.dart              # 购物车模型 / 组件 / 全局件数
 ├── pages_test.dart             # 页面级交互（购物车 / 登录 / 分类）
 ├── pages_flow_test.dart        # 商品详情页与订单确认页的成功 / 失败 / 缺参
+├── order_pages_test.dart       # 订单列表与详情页：筛选 / 删除 / 主操作 / 空态与未登录
 ├── cart_api_test.dart          # 购物车接口层：方法、路径、入参与解析
 ├── loading_dialog_test.dart    # 加载弹窗的展示、重复展示与关闭
 ├── home_page_test.dart         # 首页并发加载、部分失败降级、整页错误重试
@@ -237,6 +259,8 @@ Web 端启用了 `usePathUrlStrategy`，地址栏是真实路径（`/goods?id=40
 | `/goods?id=<商品 id>` | `GoodsDetailPage` | `id` |
 | `/goods/list?categoryId=<分类 id>&title=<分类名>` | `GoodsListPage` | `categoryId`、`title` |
 | `/order/confirm?skuId=<sku>&count=<数量>` | `OrderConfirmPage` | `skuId`、`count` |
+| `/orders?state=<订单状态>` | `OrderListPage` | `state`（缺省为 0，即全部） |
+| `/orders/detail?id=<订单 id>` | `OrderDetailPage` | `id` |
 
 解析规则在 `buildRoute` 里：查询串会转成 `RouteSettings.arguments` 传给页面，站内 `pushNamed` 传入的 `arguments` 优先级更高；匹配不到的路由交给 `onUnknownRoute`，渲染 `UnknownRoutePage`（而不是白屏）。
 
@@ -270,6 +294,9 @@ Web 端启用了 `usePathUrlStrategy`，地址栏是真实路径（`/goods?id=40
 | DELETE | `/member/cart` | 批量删除，请求体 `{"ids": [skuId, ...]}`（放 query 会报缺少请求体） |
 | GET | `/member/order/pre/now` | 立即购买结算信息，参数 `skuId`、`count`，映射为 `PreOrderResult` |
 | POST | `/member/order` | 提交订单，返回订单 id |
+| GET | `/member/order` | 订单列表，参数 `page`、`pageSize`、`orderState`（0 表示全部，可不传），映射为 `OrderListResult` |
+| GET | `/member/order/{id}` | 订单详情，比列表多收货人、支付方式与各环节时间，映射为 `OrderDetail` |
+| DELETE | `/member/order` | 删除订单，请求体 `{"ids": [订单 id, ...]}`（放 query 会报缺少请求体） |
 | POST | `/login` | 账号密码登录，返回用户信息（含 `token`），映射为 `UserInfo` |
 | GET | `/member/profile` | 获取当前登录用户信息（携带 token），映射为 `UserInfo` |
 
@@ -299,7 +326,7 @@ flutter test --coverage
 1. `dart format --output=none --set-exit-if-changed lib test`
 2. `flutter analyze --fatal-infos`（info 级问题同样视为失败）
 3. `flutter test --coverage`
-4. 覆盖率阈值：整体可执行行覆盖率低于 **80%** 直接失败（当前 1903 / 2309 行 = 82.4%）。注意 lcov 只统计「被测试真正加载过」的文件，新增一个 import 就会改变分母——路由测试 import 了 `routes/index.dart`，把全部页面一起纳入统计
+4. 覆盖率阈值：整体可执行行覆盖率低于 **80%** 直接失败（当前 2331 / 2817 行 = 82.7%）。注意 lcov 只统计「被测试真正加载过」的文件，新增一个 import 就会改变分母——路由测试 import 了 `routes/index.dart`，把全部页面一起纳入统计
 5. `flutter build web --release` 构建冒烟 —— 资源路径、条件导入这类问题 analyze 与 test 都发现不了
 
 同一分支连续推送时，`concurrency` 会取消上一次仍在跑的检查，避免队列堆积。`.github/workflows/web.yml` 另行构建 Web 产物并通过 GitHub Pages 部署。
@@ -318,7 +345,8 @@ flutter test --coverage
 
 ## 当前状态与已知问题
 
-- 顶部搜索框、会员卡开通、快捷入口与订单管理入口均为静态占位，点击提示「功能开发中」。
+- 顶部搜索框、会员卡开通与快捷入口（我的收藏 / 我的足迹 / 我的客服）仍为静态占位，点击提示「功能开发中」；`GET /member/footprint` 在接口侧不存在（404），足迹功能无法接真实数据。
+- 订单的「去支付 / 提醒发货 / 确认收货 / 去评价」没有对应接口（`PUT /member/order`、`/member/order/pay/*`、`/member/order/cancel/*`、`/member/order/consume/*`、`/member/order/status/*` 均不存在），点击只提示「演示接口未提供该操作」；只有「再次购买」通过逐条加入购物车实现。`GET /member/order/count` 存在但需要参数且实测仍返回 400，因此状态 tab 上不显示数量角标。
 - 分类商品接口 `/category/sub/filter?id=` **不支持分页**（`page`/`pageSize` 会被忽略），一次返回该分类全部商品；实测单个二级分类最多 16 件，因此商品列表页不做分页，只提供下拉刷新。33 个二级分类里有 8 个本身没有商品，进入后展示空态。
 - 购物车结算复用「立即购买」链路（`/member/order/pre/now` + `/member/order`），**接口只支持单件商品结算**，因此多选时点击「结算」会提示只勾选一件。
 - 接口没有「全选 / 批量勾选」的接口（`PUT /member/cart` 与 `PUT /member/cart/checked` 均不存在），「全选」是逐条 `PUT /member/cart/{skuId}` 串行完成的，条目很多时会较慢。

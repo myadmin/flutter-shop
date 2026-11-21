@@ -234,3 +234,91 @@ Map<String, dynamic> categoryGoodsJson({
         ],
   };
 }
+
+/// 订单里的一个商品行（`skus` 数组项）
+Map<String, dynamic> orderSkuJson({
+  String id = 'sku-1',
+  String name = '测试商品',
+  String curPrice = '89.00',
+  int quantity = 2,
+  String attrsText = '规格:默认',
+}) {
+  return {
+    'id': id,
+    'spuId': 'goods-1',
+    'name': name,
+    'quantity': quantity,
+    'image': '',
+    'realPay': curPrice,
+    'curPrice': curPrice,
+    'properties': <Map<String, dynamic>>[],
+    'attrsText': attrsText,
+  };
+}
+
+/// 一条订单（结构对齐 `/member/order` 接口 items 数组项）
+Map<String, dynamic> orderItemJson({
+  String id = 'order-00000042',
+  int orderState = 2,
+  String createTime = '2026-11-20 10:00:00',
+  String payMoney = '190.00',
+  String totalMoney = '178.00',
+  int totalNum = 2,
+  List<Map<String, dynamic>>? skus,
+}) {
+  return {
+    'id': id,
+    'createTime': createTime,
+    'payType': 0,
+    'orderState': orderState,
+    'payLatestTime': '2026-11-20 10:30:00',
+    'postFee': '12.00',
+    'payMoney': payMoney,
+    'totalMoney': totalMoney,
+    'totalNum': totalNum,
+    'skus': skus ?? [orderSkuJson()],
+  };
+}
+
+/// 订单列表分页结果（结构对齐 `/member/order` 接口的 result）
+Map<String, dynamic> orderListJson({
+  int counts = 1,
+  int pages = 1,
+  int page = 1,
+  List<Map<String, dynamic>>? items,
+}) {
+  return {
+    'counts': counts,
+    'pageSize': 10,
+    'pages': pages,
+    'page': page,
+    'items': items ?? [orderItemJson()],
+  };
+}
+
+/// 订单详情（结构对齐 `/member/order/{id}` 接口的 result）
+Map<String, dynamic> orderDetailJson({
+  String id = 'order-00000042',
+  int orderState = 2,
+  String receiverContact = '张三',
+  String receiverMobile = '13800138000',
+  String receiverAddress = '北京市 东城区23号',
+  int payChannel = 1,
+  String payTime = '2026-11-20 10:05:00',
+  List<Map<String, dynamic>>? skus,
+}) {
+  return {
+    ...orderItemJson(id: id, orderState: orderState, skus: skus),
+    'payState': 2,
+    'countdown': -1,
+    'deliveryTimeType': 0,
+    'receiverContact': receiverContact,
+    'receiverMobile': receiverMobile,
+    'receiverAddress': receiverAddress,
+    'payChannel': payChannel,
+    'payTime': payTime,
+    'consignTime': '',
+    'endTime': '',
+    'closeTime': '',
+  };
+}

@@ -6,6 +6,8 @@ import 'package:hm_shop/pages/GoodsList/index.dart';
 import 'package:hm_shop/pages/Main/index.dart';
 import 'package:hm_shop/pages/Login/index.dart';
 import 'package:hm_shop/pages/OrderConfirm/index.dart';
+import 'package:hm_shop/pages/OrderDetail/index.dart';
+import 'package:hm_shop/pages/OrderList/index.dart';
 import 'package:hm_shop/pages/Unknown/index.dart';
 import 'package:hm_shop/routes/app_routes.dart';
 
@@ -135,5 +137,19 @@ Map<String, Widget Function(BuildContext)> getRootRoutes() {
         count: int.tryParse(params['count']?.toString() ?? '') ?? 1,
       );
     }, // 订单确认路由
+    AppRoutes.orderListPath: (context) {
+      // 我的订单：`/orders?state=2`，不带 state 时展示「全部」
+      final arguments = ModalRoute.of(context)?.settings.arguments;
+      final params = arguments is Map ? arguments : <String, dynamic>{};
+      return OrderListPage(
+        initialTab: int.tryParse(params['state']?.toString() ?? '') ?? 0,
+      );
+    }, // 我的订单路由
+    AppRoutes.orderDetailPath: (context) {
+      // 订单详情：`/orders/detail?id=<订单 id>`
+      final arguments = ModalRoute.of(context)?.settings.arguments;
+      final params = arguments is Map ? arguments : <String, dynamic>{};
+      return OrderDetailPage(orderId: params['id']?.toString() ?? '');
+    }, // 订单详情路由
   };
 }

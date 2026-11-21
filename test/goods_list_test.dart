@@ -65,6 +65,21 @@ void main() {
     expect(find.text('1人付款'), findsNWidgets(2));
   });
 
+  testWidgets('手机宽度下商品排成两列', (tester) async {
+    installMock((options) => envelope(categoryGoodsJson()));
+
+    await pumpPage(
+      tester,
+      const GoodsListPage(categoryId: 'sub-1', title: '子分类一'),
+    );
+
+    // 414 宽、单列最大 210 → 两列：两张卡片落在同一行，右边那张更靠右
+    final first = tester.getTopLeft(find.byType(HmGoodsCard).at(0));
+    final second = tester.getTopLeft(find.byType(HmGoodsCard).at(1));
+    expect(second.dy, first.dy);
+    expect(second.dx, greaterThan(first.dx));
+  });
+
   testWidgets('点击商品卡片跳转到商品详情', (tester) async {
     installMock((options) => envelope(categoryGoodsJson()));
     final recorder = _RouteRecorder();

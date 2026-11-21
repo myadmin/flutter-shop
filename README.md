@@ -7,7 +7,7 @@
 ### 首页
 
 - **骨架屏**：数据加载期间展示 `HomeSkeleton`，带呼吸闪烁动画；全部接口返回后切换为真实内容
-- **并行加载与容错**：`Future.wait` 同时请求 6 个首页接口，各模块子请求独立异常隔离，单个接口失败不影响其余模块展示
+- **并行加载与容错**：6 个首页接口并发请求，各模块异常独立隔离，单个接口失败不影响其余模块展示；全部返回后**只调用一次 `setState`**（此前每个模块各刷新一次，一次下拉会触发最多 6 帧整页重建）
 - **错误态与重试**：6 个模块全部失败（典型如断网）时展示 `AppErrorView` 与「重新加载」按钮；部分失败则静默降级，只展示成功模块
 - **下拉刷新**：`RefreshIndicator` 重新拉取全部首页数据，自动重置分页参数（`_page = 1`）与加载状态；错误态下同样可下拉刷新
 - **轮播图**：`/home/banner` 获取图片，自动播放（4 秒间隔），底部指示点可点击切换
@@ -77,14 +77,15 @@
 - **状态管理分工**：跨页面共享的用户态与购物车件数放在 GetX 控制器（`UserController` / `CartController`，页面通过 `Obx` 响应式刷新），且仅在 `main()` 中注册一次；页面私有的列表数据、加载态与错误文案用 `State` + `setState`
 - **登录态管理**：`TokenManager` 基于 `shared_preferences` 持久化 token（写盘 `await` 落盘完成）；启动时若已登录则请求 `/member/profile` 恢复用户信息，失效时自动清理并降级
 - **网络层**：Dio 单例封装，统一超时与请求头注入；异常被翻译为 `ApiException`（业务错误，带 `code`）或 `NetworkException`（网络 / 超时 / 401），页面统一用 `resolveErrorMessage` 提取可展示文案
+- **金额计算**：`lib/utils/money.dart` 把金额以「分」为单位的整数累加（`parseCents` / `formatCents`），避免多条商品按 `double` 相加后差一分
 - **登录态失效**：拦截器识别 HTTP 401，自动清理 token 并触发 `DioRequest.onUnauthorized`，由 `MainPage` 统一跳转登录页
-- **设计令牌**：颜色、圆角、间距集中在 `lib/constants/app_theme.dart`（`AppColors` / `AppRadius` / `AppSpacing`），页面不再散落颜色字面量
+- **设计令牌**：颜色、圆角、间距集中在 `lib/constants/app_theme.dart`（`AppColors` / `AppRadius` / `AppSpacing`），页面不再散落颜色字面量与圆角字面量（卡片统一 `AppRadius.card`）
 - **图片统一**：所有网络图片经 `AppNetworkImage` 加载，列表项按 `decodeWidth`（或 `LayoutBuilder` 实测宽度）设置 `cacheWidth`，降低解码内存占用；首页两张装饰图改用 WebP，体积从 287 KB 降到 18 KB
-- **并发与容错**：购物车件数与购物车列表请求都做了在途去重（同一时刻只发一次）；401 跳转登录页带重入保护；滚动触发的加载在本地吞掉异常，不会冒泡成未捕获异步错误；`PlatformDispatcher.onError` 兜底记录漏网的异步异常
+- **并发与容错**：购物车件数与购物车列表请求都做了在途去重（同一时刻只发一次）；首页整页刷新期间不接受滚动加载（`_refreshing`），避免与首屏请求抢 `limit`；401 跳转登录页带重入保护；滚动触发的加载在本地吞掉异常，不会冒泡成未捕获异步错误；`PlatformDispatcher.onError` 兜底记录漏网的异步异常
 - **加载弹窗**：`LoadingDialog` 持有 `DialogRoute` 引用，`hide()` 精确移除自身路由，不会误弹页面
-- **Toast 工具**：`ToastUtils` 基于 `SnackBar`，宽度随文案自适应，并做重复弹出节流
-- **自动化测试**：90 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、全局用户态与购物车件数、骨架屏、商品聚合组件、规格选择弹层、订单组件、「我的」页面组件、分类页组件、购物车组件，以及购物车 / 登录 / 分类三个页面的页面级交互（用 `MockAdapter` 替换 Dio 适配器，不发真实请求）
-- **代码规范**：`dart format`、`flutter analyze --fatal-infos`（已开启 `strict-casts` / `strict-inference` / `strict-raw-types`）、`flutter test` 三项在 CI 中全部强制通过
+- **Toast 工具**：`ToastUtils` 基于 `SnackBar`，宽度随文案自适应；只有**相同文案**在 2 秒内重复时才节流，不同提示不会被吞掉，新提示会顶掉正在展示的旧提示
+- **自动化测试**：95 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、金额整数累加、全局用户态与购物车件数、骨架屏、商品聚合组件、规格选择弹层、订单组件、「我的」页面组件、分类页组件、购物车组件，以及首页 / 购物车 / 登录 / 分类四个页面的页面级交互（用 `MockAdapter` 替换 Dio 适配器，不发真实请求）
+- **代码规范与 CI**：`dart format`、`flutter analyze --fatal-infos`（已开启 `strict-casts` / `strict-inference` / `strict-raw-types`）、`flutter test --coverage`（覆盖率低于 80% 直接失败）、`flutter build web --release`（构建冒烟）在 CI 中全部强制通过
 
 ## 技术栈
 
@@ -183,6 +184,7 @@ lib/
 ├── utils/
 │   ├── dio_request.dart        # Dio 单例封装（注入 token、401 处理）
 │   ├── api_exception.dart      # ApiException / NetworkException / resolveErrorMessage
+│   ├── money.dart              # 金额按「分」整数累加（parseCents / formatCents）
 │   ├── loading_dialog.dart     # 统一加载中对话框
 │   └── toast_utils.dart        # 自适应宽度 Toast
 ├── assets/                     # 底部导航图标、我的页图标、首页装饰图（WebP）等资源
@@ -200,6 +202,7 @@ test/
 ├── mine_components_test.dart   # 「我的」页面组件
 ├── cart_test.dart              # 购物车模型 / 组件 / 全局件数
 ├── pages_test.dart             # 页面级交互（购物车 / 登录 / 分类）
+├── home_page_test.dart         # 首页并发加载、部分失败降级、整页错误重试
 └── widget_test.dart            # 首页骨架屏、订单组件、商品聚合组件
 ```
 
@@ -255,13 +258,21 @@ dart format --output=none --set-exit-if-changed lib test
 # 4. 静态分析（含 info 级问题，当前 0 告警）
 flutter analyze --fatal-infos
 
-# 5. 运行单元与组件测试
-flutter test
+# 5. 运行单元与组件测试（附带覆盖率）
+flutter test --coverage
 ```
 
 ## 持续集成
 
-`.github/workflows/dart.yml` 在 push / PR 时依次执行格式检查、静态分析（`--fatal-infos`）与测试；`.github/workflows/web.yml` 构建 Web 产物并通过 GitHub Pages 部署。
+`.github/workflows/dart.yml` 在 push / PR 时依次执行五项检查，任何一项失败都会挡住合并：
+
+1. `dart format --output=none --set-exit-if-changed lib test`
+2. `flutter analyze --fatal-infos`（info 级问题同样视为失败）
+3. `flutter test --coverage`
+4. 覆盖率阈值：整体可执行行覆盖率低于 **80%** 直接失败（当前约 86%）
+5. `flutter build web --release` 构建冒烟 —— 资源路径、条件导入这类问题 analyze 与 test 都发现不了
+
+同一分支连续推送时，`concurrency` 会取消上一次仍在跑的检查，避免队列堆积。`.github/workflows/web.yml` 另行构建 Web 产物并通过 GitHub Pages 部署。
 
 ## 当前状态与已知问题
 
@@ -271,3 +282,5 @@ flutter test
 - 接口没有「全选 / 批量勾选」的接口（`PUT /member/cart` 与 `PUT /member/cart/checked` 均不存在），「全选」是逐条 `PUT /member/cart/{skuId}` 串行完成的，条目很多时会较慢。
 - Web 端仍使用默认的 hash 路由（`#/goods`），未启用 `usePathUrlStrategy`，也还没有 `onUnknownRoute` 兜底页，直接分享深链的能力有限。
 - 商品**列表页**（分类 → 商品列表）尚未开发，是当前最后一个占位场景。
+- 覆盖率只统计「被测试真正加载过」的文件（lcov 的统计口径），首页轮播、首页装饰区块、我的会员卡、商品详情品牌/参数等纯展示组件仍未被测试加载；CI 的 80% 阈值只约束已纳入统计的部分。
+- `cupertino_icons` 在代码里没有被直接引用，但 GetX 内部组件引用其字体，删除后 `flutter build web` 会告警缺字体，因此保留（tree-shaking 后仅 1.4 KB）。

@@ -8,6 +8,7 @@ import 'package:hm_shop/components/Mine/hm_mine_order_module.dart';
 import 'package:hm_shop/components/Mine/hm_mine_quick_actions.dart';
 import 'package:hm_shop/components/Mine/hm_mine_vip_card.dart';
 import 'package:hm_shop/models/home.dart';
+import 'package:hm_shop/routes/app_routes.dart';
 import 'package:hm_shop/stores/token_manager.dart';
 import 'package:hm_shop/stores/user_controller.dart';
 import 'package:hm_shop/utils/toast_utils.dart';
@@ -117,7 +118,7 @@ class _MineViewState extends State<MineView> {
   }
 
   void _onGoodsTap(GoodDetailItem goods) {
-    Navigator.pushNamed(context, '/goods', arguments: goods.id);
+    Navigator.pushNamed(context, AppRoutes.goods(goods.id));
   }
 
   @override
@@ -129,7 +130,7 @@ class _MineViewState extends State<MineView> {
           child: Obx(
             () => HmMineHeader(
               user: _userController.user.value,
-              onLoginTap: () => Navigator.pushNamed(context, '/login'),
+              onLoginTap: () => Navigator.pushNamed(context, AppRoutes.login),
               onLogoutTap: _confirmLogout,
             ),
           ),

@@ -43,9 +43,20 @@ jobs:
 
       - name: Build web
         # 项目站点地址为 https://<owner>.github.io/<repo>/，需要匹配仓库名子路径
+        #
+        # 想试 WebAssembly 产物可以在这行追加 `--wasm`：main.dart.wasm 比
+        # main.dart.js 小约 15%，Chrome 下实测可正常渲染。但 skwasm 的多线程
+        # 渲染需要 COOP/COEP 响应头，GitHub Pages 无法自定义响应头，因此默认
+        # 仍用 JS 产物（详见 README 的「关于 --wasm」）。
         run: |
           REPO_NAME="${GITHUB_REPOSITORY#*/}"
           flutter build web --release --base-href "/${REPO_NAME}/"
+
+      - name: Add SPA fallback for deep links
+        # 应用启用了真实路径策略（/goods 而非 #/goods），GitHub Pages 是把
+        # 目录当静态文件服务的，直接访问深链会返回 404。用一份内容相同的
+        # 404.html 兜底：页面被当作文档返回，Flutter 启动后再按地址栏路径恢复路由。
+        run: cp build/web/index.html build/web/404.html
 
       - name: Upload web artifact
         uses: actions/upload-artifact@v4

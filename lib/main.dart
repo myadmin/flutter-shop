@@ -5,10 +5,14 @@ import 'package:get/get.dart';
 import 'package:hm_shop/routes/index.dart';
 import 'package:hm_shop/stores/cart_controller.dart';
 import 'package:hm_shop/stores/user_controller.dart';
+import 'package:hm_shop/utils/web_url_strategy.dart';
 
 void main(List<String> args) {
   // 插件（SharedPreferences）依赖 binding，必须在 runApp 之前初始化
   WidgetsFlutterBinding.ensureInitialized();
+  // Web 端改用真实路径（/goods）而非 hash 路径（#/goods），
+  // 便于分享与直接访问；非 Web 平台是空实现。
+  configureWebUrlStrategy();
   // 捕获未处理的框架异常，release 下也保留一条可检索的日志
   FlutterError.onError = (details) {
     FlutterError.presentError(details);

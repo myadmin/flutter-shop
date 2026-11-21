@@ -7,6 +7,7 @@ import 'package:hm_shop/components/Category/hm_category_recommend.dart';
 import 'package:hm_shop/components/Category/hm_category_search.dart';
 import 'package:hm_shop/components/common/app_error_view.dart';
 import 'package:hm_shop/models/home.dart';
+import 'package:hm_shop/routes/app_routes.dart';
 import 'package:hm_shop/utils/api_exception.dart';
 import 'package:hm_shop/utils/toast_utils.dart';
 
@@ -99,7 +100,7 @@ class _CategoryViewState extends State<CategoryView> {
   }
 
   void _onGoodsTap(GoodDetailItem item) {
-    Navigator.pushNamed(context, '/goods', arguments: item.id);
+    Navigator.pushNamed(context, AppRoutes.goods(item.id));
   }
 
   void _onCategorySelected(int index) {

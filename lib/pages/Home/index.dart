@@ -10,6 +10,7 @@ import 'package:hm_shop/components/Home/hm_slider.dart';
 import 'package:hm_shop/components/Home/hm_suggestion.dart';
 import 'package:hm_shop/models/home.dart';
 import 'package:hm_shop/pages/Home/skeleton.dart';
+import 'package:hm_shop/routes/app_routes.dart';
 import 'package:hm_shop/utils/api_exception.dart';
 
 /// 首页视图
@@ -125,7 +126,7 @@ class _HomeViewState extends State<HomeView> {
   }
 
   void _onGoodsTap(GoodsItem goods) {
-    Navigator.pushNamed(context, '/goods', arguments: goods.id);
+    Navigator.pushNamed(context, AppRoutes.goods(goods.id));
   }
 
   /// 加载首页全部数据，全部完成后一次性刷新 UI

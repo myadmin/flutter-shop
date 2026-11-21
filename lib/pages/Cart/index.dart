@@ -8,6 +8,7 @@ import 'package:hm_shop/components/common/app_error_view.dart';
 import 'package:hm_shop/components/common/hm_bottom_bar.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/cart.dart';
+import 'package:hm_shop/routes/app_routes.dart';
 import 'package:hm_shop/stores/cart_controller.dart';
 import 'package:hm_shop/stores/user_controller.dart';
 import 'package:hm_shop/utils/api_exception.dart';
@@ -297,8 +298,7 @@ class _CartViewState extends State<CartView> {
     final item = selected.first;
     Navigator.pushNamed(
       context,
-      '/order/confirm',
-      arguments: {'skuId': item.skuId, 'count': item.count},
+      AppRoutes.orderConfirm(item.skuId, item.count),
     );
   }
 
@@ -381,7 +381,7 @@ class _CartViewState extends State<CartView> {
         title: '登录后查看购物车',
         description: '登录即可同步购物车里的商品与选中状态',
         actionText: '去登录',
-        onAction: () => Navigator.pushNamed(context, '/login'),
+        onAction: () => Navigator.pushNamed(context, AppRoutes.login),
       );
     }
 

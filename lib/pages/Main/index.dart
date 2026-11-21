@@ -7,6 +7,7 @@ import 'package:hm_shop/pages/Cart/index.dart';
 import 'package:hm_shop/pages/Category/index.dart';
 import 'package:hm_shop/pages/Home/index.dart';
 import 'package:hm_shop/pages/Mine/index.dart';
+import 'package:hm_shop/routes/app_routes.dart';
 import 'package:hm_shop/stores/cart_controller.dart';
 import 'package:hm_shop/stores/token_manager.dart';
 import 'package:hm_shop/stores/user_controller.dart';
@@ -90,7 +91,7 @@ class _MainPageState extends State<MainPage> {
     ToastUtils.showToast(context, '登录已过期，请重新登录');
     Navigator.pushNamed(
       context,
-      '/login',
+      AppRoutes.login,
     ).whenComplete(() => _redirectingToLogin = false);
   }
 

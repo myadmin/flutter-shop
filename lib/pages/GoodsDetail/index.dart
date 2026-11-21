@@ -11,6 +11,7 @@ import 'package:hm_shop/components/GoodsDetail/hm_sku_selector.dart';
 import 'package:hm_shop/components/common/app_error_view.dart';
 import 'package:hm_shop/components/common/app_network_image.dart';
 import 'package:hm_shop/models/goods.dart';
+import 'package:hm_shop/routes/app_routes.dart';
 import 'package:hm_shop/stores/cart_controller.dart';
 import 'package:hm_shop/stores/token_manager.dart';
 import 'package:hm_shop/utils/api_exception.dart';
@@ -94,7 +95,7 @@ class _GoodsDetailPageState extends State<GoodsDetailPage> {
       return true;
     }
     ToastUtils.showToast(context, '请先登录');
-    Navigator.pushNamed(context, '/login');
+    Navigator.pushNamed(context, AppRoutes.login);
     return false;
   }
 
@@ -143,8 +144,7 @@ class _GoodsDetailPageState extends State<GoodsDetailPage> {
     }
     Navigator.pushNamed(
       context,
-      '/order/confirm',
-      arguments: {'skuId': selection.sku.id, 'count': selection.count},
+      AppRoutes.orderConfirm(selection.sku.id, selection.count),
     );
   }
 

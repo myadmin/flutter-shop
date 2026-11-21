@@ -16,6 +16,10 @@ dependencies:
   # "Expected to find fonts for (MaterialIcons, packages/cupertino_icons/CupertinoIcons)"，
   # 且相关图标会缺字形。tree-shaking 后仅占 1.4 KB，因此保留。
   cupertino_icons: ^1.0.8
+  # 仅用于 Web 的 URL 策略（把地址栏从 #/goods 换成 /goods），
+  # 由 lib/utils/web_url_strategy.dart 做条件导入，非 Web 平台不会编译到。
+  flutter_web_plugins:
+    sdk: flutter
   carousel_slider: ^5.1.2
   dio: ^5.11.1
   get: ^4.7.3

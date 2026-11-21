@@ -84,7 +84,7 @@
 - **并发与容错**：购物车件数与购物车列表请求都做了在途去重（同一时刻只发一次）；首页整页刷新期间不接受滚动加载（`_refreshing`），避免与首屏请求抢 `limit`；401 跳转登录页带重入保护；滚动触发的加载在本地吞掉异常，不会冒泡成未捕获异步错误；`PlatformDispatcher.onError` 兜底记录漏网的异步异常
 - **加载弹窗**：`LoadingDialog` 持有 `DialogRoute` 引用，`hide()` 精确移除自身路由，不会误弹页面
 - **Toast 工具**：`ToastUtils` 基于 `SnackBar`，宽度随文案自适应；只有**相同文案**在 2 秒内重复时才节流，不同提示不会被吞掉，新提示会顶掉正在展示的旧提示
-- **自动化测试**：109 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、金额整数累加、全局用户态与购物车件数、骨架屏、商品聚合组件、规格选择弹层、订单组件、「我的」页面组件、分类页组件、购物车组件、未知路由兜底与深链解析，以及首页 / 购物车 / 登录 / 分类四个页面的页面级交互（用 `MockAdapter` 替换 Dio 适配器，不发真实请求）
+- **自动化测试**：124 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、金额整数累加、全局用户态与购物车件数、骨架屏、商品聚合组件、规格选择弹层、订单组件、「我的」页面组件、分类页组件、购物车组件、未知路由兜底与深链解析，以及首页 / 购物车 / 登录 / 分类 / 商品详情 / 订单确认六个页面的页面级交互（用 `MockAdapter` 替换 Dio 适配器，不发真实请求）
 - **代码规范与 CI**：`dart format`、`flutter analyze --fatal-infos`（已开启 `strict-casts` / `strict-inference` / `strict-raw-types`）、`flutter test --coverage`（覆盖率低于 80% 直接失败）、`flutter build web --release`（构建冒烟）在 CI 中全部强制通过
 
 ## 技术栈
@@ -206,6 +206,9 @@ test/
 ├── mine_components_test.dart   # 「我的」页面组件
 ├── cart_test.dart              # 购物车模型 / 组件 / 全局件数
 ├── pages_test.dart             # 页面级交互（购物车 / 登录 / 分类）
+├── pages_flow_test.dart        # 商品详情页与订单确认页的成功 / 失败 / 缺参
+├── cart_api_test.dart          # 购物车接口层：方法、路径、入参与解析
+├── loading_dialog_test.dart    # 加载弹窗的展示、重复展示与关闭
 ├── home_page_test.dart         # 首页并发加载、部分失败降级、整页错误重试
 ├── unknown_route_test.dart     # 未知路由兜底、深链解析、地址构造
 └── widget_test.dart            # 首页骨架屏、订单组件、商品聚合组件
@@ -280,7 +283,7 @@ flutter test --coverage
 1. `dart format --output=none --set-exit-if-changed lib test`
 2. `flutter analyze --fatal-infos`（info 级问题同样视为失败）
 3. `flutter test --coverage`
-4. 覆盖率阈值：整体可执行行覆盖率低于 **80%** 直接失败（当前约 86%）
+4. 覆盖率阈值：整体可执行行覆盖率低于 **80%** 直接失败（当前 1763 / 2164 行 = 81.5%）。注意 lcov 只统计「被测试真正加载过」的文件，新增一个 import 就会改变分母——路由测试 import 了 `routes/index.dart`，把全部页面一起纳入统计
 5. `flutter build web --release` 构建冒烟 —— 资源路径、条件导入这类问题 analyze 与 test 都发现不了
 
 同一分支连续推送时，`concurrency` 会取消上一次仍在跑的检查，避免队列堆积。`.github/workflows/web.yml` 另行构建 Web 产物并通过 GitHub Pages 部署。
@@ -306,5 +309,5 @@ flutter test --coverage
 - Web 端已启用真实路径与未知路由兜底：`/goods?id=...` 这类深链可以直接访问、刷新后仍停在同一页；但深链只携带查询串，像 `/order/confirm` 这种强依赖 `skuId` 的页面在参数缺失时会落到页面的错误态，而不是给出「链接参数缺失」的专门提示。
 - GitHub Pages 用 `404.html` 实现深链回退，代价是「不存在的路径」也返回 HTTP 200，对 SEO 不友好；这是静态托管的通用取舍，不是代码问题。
 - 商品**列表页**（分类 → 商品列表）尚未开发，是当前最后一个占位场景。
-- 覆盖率只统计「被测试真正加载过」的文件（lcov 的统计口径），首页轮播、首页装饰区块、我的会员卡、商品详情品牌/参数等纯展示组件仍未被测试加载；CI 的 80% 阈值只约束已纳入统计的部分。
+- 覆盖率只统计「被测试真正加载过」的文件（lcov 的统计口径）。首页轮播、首页装饰区块、分类左栏、商品详情的品牌与参数区块等纯展示组件仍未被测试加载，`lib/pages/Main/index.dart` 与 `lib/pages/Mine/index.dart` 也只有路由测试带起来的少量行被覆盖；CI 的 80% 阈值只约束已纳入统计的部分。
 - `cupertino_icons` 在代码里没有被直接引用，但 GetX 内部组件引用其字体，删除后 `flutter build web` 会告警缺字体，因此保留（tree-shaking 后仅 1.4 KB）。

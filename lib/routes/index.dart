@@ -11,6 +11,7 @@ import 'package:hm_shop/pages/Login/index.dart';
 import 'package:hm_shop/pages/OrderConfirm/index.dart';
 import 'package:hm_shop/pages/OrderDetail/index.dart';
 import 'package:hm_shop/pages/OrderList/index.dart';
+import 'package:hm_shop/pages/Profile/index.dart';
 import 'package:hm_shop/pages/Unknown/index.dart';
 import 'package:hm_shop/pages/Vip/index.dart';
 import 'package:hm_shop/routes/app_routes.dart';
@@ -160,5 +161,6 @@ Map<String, Widget Function(BuildContext)> getRootRoutes() {
         const CustomerServicePage(), // 客服中心路由
     AppRoutes.footprintPath: (context) => const FootprintPage(), // 我的足迹路由
     AppRoutes.vipPath: (context) => const VipBenefitsPage(), // 会员权益路由
+    AppRoutes.profilePath: (context) => const ProfilePage(), // 个人资料路由
   };
 }

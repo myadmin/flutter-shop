@@ -20,6 +20,7 @@ class AppRoutes {
   static const String customerServicePath = '/customer-service';
   static const String footprintPath = '/footprint';
   static const String vipPath = '/vip';
+  static const String profilePath = '/profile';
 
   /// 商品详情：`/goods?id=<商品 id>`
   static String goods(String goodsId) =>

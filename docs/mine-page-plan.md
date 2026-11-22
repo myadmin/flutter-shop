@@ -125,6 +125,7 @@
 | 新增收藏 | POST | `/member/collect` | ⚠️ 入参未知，暂不接 |
 | 收货地址 | GET | `/member/address` | ✅ 可用（本页暂不用） |
 | 用户资料 | GET | `/member/profile` | ✅ 已有 |
+| 修改资料 | PUT | `/member/profile` | ✅ 可用（传了才改；后端几乎不校验，头像与所在地改不了） |
 | 足迹 | — | `/member/footprint` | ❌ 404，改本地存储 |
 | 会员 | — | — | ❌ 无接口，静态页 |
 
@@ -136,5 +137,12 @@
    - ✅ 已完成：`lib/pages/Collect/`、`lib/pages/CustomerService/`、`lib/components/Collect/hm_collect_tile.dart`；收藏只读（写接口入参未知），客服为静态内容
 3. **第三批（P2）**：本地足迹（含商品详情埋点）+ 会员权益页 + 订单状态角标
    - ✅ 已完成：`lib/models/footprint.dart`、`lib/stores/footprint_store.dart`、`lib/pages/Footprint/`、`lib/components/Footprint/hm_footprint_tile.dart`、`lib/pages/Vip/`；足迹只存本机（接口 404），会员权益为纯静态说明，订单角标用四次 `pageSize=1` 列表查询折算
+
+### 追加：个人资料页（规划外需求）
+
+- 触发：用户反馈「登录后用户信息不能点击进去修改」
+- 方案：`lib/pages/Profile/`（`/profile`），「我的」页点头像 / 昵称进入；可改昵称、性别、生日、职业，保存走 `PUT /member/profile`（传了才改，只提交改动字段）
+- 限制：后端对昵称空值 / 长度、性别取值几乎不校验，约束全在前端；头像上传接口不存在（`POST /member/profile/avatar` 500）、所在地无地区数据源，两项只读
+- 已完成，待随本次提交入库
 
 每批完成后统一跑 `dart format` / `flutter analyze --fatal-infos` / `flutter test` / `flutter build web`，并同步 README 与用例数。

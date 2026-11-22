@@ -230,6 +230,9 @@ class _MineViewState extends State<MineView> {
               user: _userController.user.value,
               onLoginTap: () => Navigator.pushNamed(context, AppRoutes.login),
               onLogoutTap: _confirmLogout,
+              // 资料页保存后会直接更新 UserController，Obx 会自动刷新头像与昵称
+              onProfileTap: () =>
+                  Navigator.pushNamed(context, AppRoutes.profilePath),
             ),
           ),
         ),

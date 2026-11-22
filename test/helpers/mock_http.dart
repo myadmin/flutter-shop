@@ -359,3 +359,28 @@ Map<String, dynamic> collectListJson({
     'items': items ?? [collectItemJson()],
   };
 }
+
+/// 个人资料（结构对齐 `/member/profile` 的 result）
+Map<String, dynamic> userProfileJson({
+  String id = 'u-1',
+  String nickname = '晚星12',
+  String account = '用户13800138000',
+  String avatar = '',
+  String gender = '女',
+  String birthday = '1995-06-18',
+  String fullLocation = '河南省 郑州市 中原区',
+  String profession = '前端工程师',
+  String token = 'token-new',
+}) {
+  return {
+    'id': id,
+    'nickname': nickname,
+    'account': account,
+    'avatar': avatar,
+    'gender': gender,
+    'birthday': birthday,
+    'fullLocation': fullLocation,
+    'profession': profession,
+    'token': token,
+  };
+}

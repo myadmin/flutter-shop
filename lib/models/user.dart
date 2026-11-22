@@ -14,6 +14,9 @@ class UserInfo {
   String provinceCode;
   String profession;
 
+  /// 所在地（`/member/profile` 返回的 `fullLocation`，如「河南省 郑州市 中原区」）
+  String fullLocation;
+
   UserInfo({
     required this.id,
     required this.account,
@@ -26,6 +29,7 @@ class UserInfo {
     required this.cityCode,
     required this.provinceCode,
     required this.profession,
+    this.fullLocation = '',
   });
 
   factory UserInfo.fromJson(Map<String, dynamic> json) => UserInfo(
@@ -40,6 +44,7 @@ class UserInfo {
     cityCode: asString(json['cityCode']),
     provinceCode: asString(json['provinceCode']),
     profession: asString(json['profession']),
+    fullLocation: asString(json['fullLocation']),
   );
 
   /// 空用户，用于「未登录」状态的初值与退出登录后的复位

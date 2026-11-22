@@ -131,7 +131,10 @@
 ## 实施批次
 
 1. **第一批（P0）**：订单列表页 + 订单详情页 + 路由接线（4 个状态入口分别带 `orderState`）
+   - ✅ 已完成（`afa6605`）：`lib/pages/OrderList/`、`lib/pages/OrderDetail/`、`lib/components/Order/`、`lib/utils/order_actions.dart`
 2. **第二批（P1）**：收藏列表页 + 客服静态页
+   - ✅ 已完成：`lib/pages/Collect/`、`lib/pages/CustomerService/`、`lib/components/Collect/hm_collect_tile.dart`；收藏只读（写接口入参未知），客服为静态内容
 3. **第三批（P2）**：本地足迹（含商品详情埋点）+ 会员权益页 + 订单状态角标
+   - ⏳ 未开始
 
 每批完成后统一跑 `dart format` / `flutter analyze --fatal-infos` / `flutter test` / `flutter build web`，并同步 README 与用例数。

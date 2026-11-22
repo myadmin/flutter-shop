@@ -1,6 +1,8 @@
 // 路由配置
 import 'package:flutter/material.dart';
 import 'package:hm_shop/constants/app_theme.dart';
+import 'package:hm_shop/pages/Collect/index.dart';
+import 'package:hm_shop/pages/CustomerService/index.dart';
 import 'package:hm_shop/pages/GoodsDetail/index.dart';
 import 'package:hm_shop/pages/GoodsList/index.dart';
 import 'package:hm_shop/pages/Main/index.dart';
@@ -151,5 +153,8 @@ Map<String, Widget Function(BuildContext)> getRootRoutes() {
       final params = arguments is Map ? arguments : <String, dynamic>{};
       return OrderDetailPage(orderId: params['id']?.toString() ?? '');
     }, // 订单详情路由
+    AppRoutes.collectPath: (context) => const CollectPage(), // 我的收藏路由
+    AppRoutes.customerServicePath: (context) =>
+        const CustomerServicePage(), // 客服中心路由
   };
 }

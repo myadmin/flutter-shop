@@ -30,6 +30,8 @@ class HttpConstants {
   static const String cart = '/member/cart';
   // 购物车商品件数（用于 tab 角标）
   static const String cartCount = '/member/cart/count';
+  // 我的收藏（`/member/collect?collectType=1|2`，collectType 必填）
+  static const String collect = '/member/collect';
   // 立即购买-预付订单
   static const String preOrder = '/member/order/pre/now';
   // 提交订单

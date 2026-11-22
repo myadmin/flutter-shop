@@ -322,3 +322,40 @@ Map<String, dynamic> orderDetailJson({
     'closeTime': '',
   };
 }
+
+/// 收藏项（结构对齐 `/member/collect` 的 items 元素）
+Map<String, dynamic> collectItemJson({
+  String id = 'collect-1',
+  String goodsId = 'goods-1',
+  String name = '测试收藏商品',
+  String picture = '',
+  String price = '59.00',
+  int collectType = 1,
+  String createTime = '2026-11-20 09:00:00',
+}) {
+  return {
+    'id': id,
+    'goodsId': goodsId,
+    'name': name,
+    'picture': picture,
+    'price': price,
+    'collectType': collectType,
+    'createTime': createTime,
+  };
+}
+
+/// 收藏列表分页结果（结构对齐 `/member/collect` 的 result）
+Map<String, dynamic> collectListJson({
+  int counts = 1,
+  int pages = 1,
+  int page = 1,
+  List<Map<String, dynamic>>? items,
+}) {
+  return {
+    'counts': counts,
+    'pageSize': 10,
+    'pages': pages,
+    'page': page,
+    'items': items ?? [collectItemJson()],
+  };
+}

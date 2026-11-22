@@ -1,6 +1,6 @@
 # hm_shop
 
-基于 Flutter 的商城类 App 示例项目，采用「页面 / 组件 / API / 模型 / 状态」分层组织代码。已接入黑马 meikou 接口，完成首页（轮播图、分类、特惠推荐、爆款推荐、一站全买、推荐列表分页）、分类（一级导航 + 二级宫格 + 分类商品列表 + 推荐）、登录（token 持久化与请求鉴权）、商品详情、购物车、订单确认、订单列表与详情、「我的」页面。
+基于 Flutter 的商城类 App 示例项目，采用「页面 / 组件 / API / 模型 / 状态」分层组织代码。已接入黑马 meikou 接口，完成首页（轮播图、分类、特惠推荐、爆款推荐、一站全买、推荐列表分页）、分类（一级导航 + 二级宫格 + 分类商品列表 + 推荐）、登录（token 持久化与请求鉴权）、商品详情、购物车、订单确认、订单列表与详情、「我的」页面（含我的收藏、客服中心）。
 
 ## 功能概览
 
@@ -57,7 +57,7 @@
 - **用户信息头部**：展示头像与账号；未登录时显示「立即登录」，点击跳转 `/login`
 - **退出登录**：二次确认后清除本地 token 与用户信息
 - **会员卡片**：展示美荟商城会员开通入口
-- **快捷入口**：我的收藏、我的足迹、我的客服（统一由 `HmEntryItem` 渲染，点击提示功能开发中）
+- **快捷入口**：我的收藏、我的足迹、我的客服（统一由 `HmEntryItem` 渲染）；收藏未登录先跳登录页、已登录进入收藏列表，客服进入客服中心，足迹提示功能开发中（接口侧没有足迹端点）
 - **订单管理**：我的订单、待付款、待发货、待收货、待评价五个入口；未登录先跳登录页，已登录按对应状态进入订单列表（见下方「订单列表与详情」）
 - **猜你喜欢**：`HmGuess` 作为吸顶标题（`SliverPersistentHeaderDelegate`），复用 `HmMoreList` 双列网格，调用 `/home/goods/guessLike` 按 `page`、`pageSize` 分页
 
@@ -71,6 +71,23 @@
 - **主操作按钮**：按状态给出「去支付 / 提醒发货 / 确认收货 / 去评价 / 再次购买」；只有「再次购买」有接口支持（按明细逐条加入购物车并刷新角标），其余提示「演示接口未提供该操作」
 - **状态与容错**：未登录展示「登录后查看订单」并可跳登录、空列表按是否筛选给出不同文案、接口失败展示 `AppErrorView` 与重试、支持下拉刷新；登录态变化时自动重新加载
 - **宽屏适配**：tab 栏与列表内容统一收窄到 600 并居中，与购物车、订单确认页保持一致
+
+### 我的收藏
+
+- **进入方式**：「我的」页快捷入口（未登录先跳登录页）或直接访问 `/collect`
+- **列表展示**：`HmCollectTile` 展示商品图、名称（两行截断）、价格与收藏时间，点击整行进入商品详情
+- **分页加载**：`pageSize=10`，滚动到距底部 200px 时追加下一页，底部展示「加载中 / 没有更多收藏了」
+- **只读设计**：接口公开的只有 `GET /member/collect`，收藏与取消收藏的入参试遍都返回 400（`code: 10017`），因此页面不放置「取消收藏」按钮，避免给出点了必然失败的入口
+- **字段兜底**：演示账号的收藏为空，items 的字段名无法用真实数据验证，模型对 `goodsId|spuId|goods_id`、`name|goodsName|title`、`picture|image|goodsPicture`、`price|goodsPrice` 等常见命名做了多组兜底；字段缺失只影响展示（名称缺失显示「商品信息已失效」、图片缺失显示占位图、名称与价格都缺失时连 `￥0.00` 也不渲染、无商品 id 时卡片不可点），不会抛异常
+- **状态与容错**：未登录展示「登录后查看收藏」并可跳登录、空列表展示「还没有收藏」并可去逛逛、接口失败展示 `AppErrorView` 与重试、支持下拉刷新；登录态变化时自动重新加载
+- **宽屏适配**：列表内容收窄到 600 并居中
+
+### 客服中心
+
+- **在线客服**：展示服务时间（每天 09:00 - 21:00），点击「联系客服」提示演示接口未提供在线客服并给出客服热线
+- **联系方式**：客服热线支持一键复制（`Clipboard` + Toast 反馈），并展示服务邮箱
+- **常见问题**：`ExpansionTile` 折叠四项 FAQ（退换货、发货时效、运费、发票），展开查看回答
+- 接口侧没有任何客服端点，本页是纯静态内容，路线为 `/customer-service`，因此在任意尺寸下都可直接访问
 
 ### 登录
 
@@ -103,7 +120,7 @@
 - **并发与容错**：购物车件数与购物车列表请求都做了在途去重（同一时刻只发一次）；首页整页刷新期间不接受滚动加载（`_refreshing`），避免与首屏请求抢 `limit`；401 跳转登录页带重入保护；滚动触发的加载在本地吞掉异常，不会冒泡成未捕获异步错误；`PlatformDispatcher.onError` 兜底记录漏网的异步异常
 - **加载弹窗**：`LoadingDialog` 持有 `DialogRoute` 引用，`hide()` 精确移除自身路由，不会误弹页面
 - **Toast 工具**：`ToastUtils` 基于 `SnackBar`，宽度随文案自适应；只有**相同文案**在 2 秒内重复时才节流，不同提示不会被吞掉，新提示会顶掉正在展示的旧提示
-- **自动化测试**：145 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、金额整数累加、全局用户态与购物车件数、骨架屏、商品聚合组件、规格选择弹层、订单组件、「我的」页面组件、分类页组件、购物车组件、未知路由兜底与深链解析，以及首页 / 购物车 / 登录 / 分类 / 分类商品列表 / 商品详情 / 订单确认 / 订单列表 / 订单详情九个页面的页面级交互（用 `MockAdapter` 替换 Dio 适配器，不发真实请求）
+- **自动化测试**：156 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、金额整数累加、全局用户态与购物车件数、骨架屏、商品聚合组件、规格选择弹层、订单组件、「我的」页面组件、分类页组件、购物车组件、收藏卡片、未知路由兜底与深链解析，以及首页 / 购物车 / 登录 / 分类 / 分类商品列表 / 商品详情 / 订单确认 / 订单列表 / 订单详情 / 我的收藏 / 客服中心十一个页面的页面级交互与「我的」页快捷入口接线（用 `MockAdapter` 替换 Dio 适配器，不发真实请求）
 - **代码规范与 CI**：`dart format`、`flutter analyze --fatal-infos`（已开启 `strict-casts` / `strict-inference` / `strict-raw-types`）、`flutter test --coverage`（覆盖率低于 80% 直接失败）、`flutter build web --release`（构建冒烟）在 CI 中全部强制通过
 
 ## 技术栈
@@ -128,6 +145,7 @@ lib/
 │   ├── home.dart               # 首页 6 个接口的请求函数
 │   ├── goods.dart              # 商品详情
 │   ├── order.dart              # 结算信息 / 提交订单 / 订单列表与详情 / 删除订单
+│   ├── collect.dart            # 我的收藏列表
 │   ├── cart.dart               # 购物车列表 / 件数 / 增删改
 │   ├── category.dart           # 分类下的商品
 │   ├── mine.dart               # 猜你喜欢分页接口
@@ -172,6 +190,8 @@ lib/
 │   │   ├── hm_order_card.dart        # 订单卡片（商品行 / 金额 / 操作按钮）
 │   │   ├── hm_order_sku_row.dart     # 订单内商品行
 │   │   └── hm_order_info_row.dart    # 详情页「标签 - 值」行
+│   ├── Collect/                # 收藏列表组件
+│   │   └── hm_collect_tile.dart      # 收藏条目（图片 / 名称 / 价格 / 收藏时间）
 │   └── Mine/
 │       ├── hm_mine_header.dart      # 头像 / 昵称 / 登录与退出入口
 │       ├── hm_mine_vip_card.dart    # 会员卡
@@ -190,6 +210,7 @@ lib/
 │   ├── goods.dart              # 商品详情模型
 │   ├── order.dart              # 结算与订单模型
 │   ├── order_list.dart         # 订单列表 / 详情模型与状态枚举（OrderState）
+│   ├── collect.dart            # 收藏列表模型（字段名多组兜底）
 │   ├── cart.dart               # 购物车条目模型（含小计与结算条件）
 │   ├── category_goods.dart     # 分类下的商品与同级分类
 │   └── user.dart               # 用户信息模型
@@ -202,6 +223,8 @@ lib/
 │   ├── OrderConfirm/index.dart # 订单确认页
 │   ├── OrderList/index.dart    # 订单列表：状态筛选 + 分页 + 删除
 │   ├── OrderDetail/index.dart  # 订单详情：状态 / 地址 / 金额明细 / 删除
+│   ├── Collect/index.dart      # 我的收藏：分页列表 / 未登录 / 空态
+│   ├── CustomerService/index.dart # 客服中心：服务时间 / 联系方式 / 常见问题
 │   ├── Category/index.dart     # 分类页：一级导航 + 二级宫格 + 推荐
 │   ├── GoodsList/index.dart    # 分类商品列表：同级分类切换 + 商品网格
 │   ├── Cart/index.dart         # 购物车：清单、勾选、改数量、删除、结算入口
@@ -241,6 +264,7 @@ test/
 ├── pages_test.dart             # 页面级交互（购物车 / 登录 / 分类）
 ├── pages_flow_test.dart        # 商品详情页与订单确认页的成功 / 失败 / 缺参
 ├── order_pages_test.dart       # 订单列表与详情页：筛选 / 删除 / 主操作 / 空态与未登录
+├── collect_pages_test.dart     # 收藏页 / 客服中心页 / 「我的」页快捷入口接线
 ├── cart_api_test.dart          # 购物车接口层：方法、路径、入参与解析
 ├── loading_dialog_test.dart    # 加载弹窗的展示、重复展示与关闭
 ├── home_page_test.dart         # 首页并发加载、部分失败降级、整页错误重试
@@ -261,6 +285,8 @@ Web 端启用了 `usePathUrlStrategy`，地址栏是真实路径（`/goods?id=40
 | `/order/confirm?skuId=<sku>&count=<数量>` | `OrderConfirmPage` | `skuId`、`count` |
 | `/orders?state=<订单状态>` | `OrderListPage` | `state`（缺省为 0，即全部） |
 | `/orders/detail?id=<订单 id>` | `OrderDetailPage` | `id` |
+| `/collect` | `CollectPage` | 无 |
+| `/customer-service` | `CustomerServicePage` | 无 |
 
 解析规则在 `buildRoute` 里：查询串会转成 `RouteSettings.arguments` 传给页面，站内 `pushNamed` 传入的 `arguments` 优先级更高；匹配不到的路由交给 `onUnknownRoute`，渲染 `UnknownRoutePage`（而不是白屏）。
 
@@ -297,6 +323,7 @@ Web 端启用了 `usePathUrlStrategy`，地址栏是真实路径（`/goods?id=40
 | GET | `/member/order` | 订单列表，参数 `page`、`pageSize`、`orderState`（0 表示全部，可不传），映射为 `OrderListResult` |
 | GET | `/member/order/{id}` | 订单详情，比列表多收货人、支付方式与各环节时间，映射为 `OrderDetail` |
 | DELETE | `/member/order` | 删除订单，请求体 `{"ids": [订单 id, ...]}`（放 query 会报缺少请求体） |
+| GET | `/member/collect` | 我的收藏，参数 `collectType`（**必填，只接受 1 / 2**，缺失或其它值都会 500）、`page`、`pageSize`，映射为 `CollectListResult`；`POST /member/collect` 存在但入参试遍都返回 `400 code: 10017`，因此不提供收藏 / 取消收藏 |
 | POST | `/login` | 账号密码登录，返回用户信息（含 `token`），映射为 `UserInfo` |
 | GET | `/member/profile` | 获取当前登录用户信息（携带 token），映射为 `UserInfo` |
 
@@ -326,7 +353,7 @@ flutter test --coverage
 1. `dart format --output=none --set-exit-if-changed lib test`
 2. `flutter analyze --fatal-infos`（info 级问题同样视为失败）
 3. `flutter test --coverage`
-4. 覆盖率阈值：整体可执行行覆盖率低于 **80%** 直接失败（当前 2331 / 2817 行 = 82.7%）。注意 lcov 只统计「被测试真正加载过」的文件，新增一个 import 就会改变分母——路由测试 import 了 `routes/index.dart`，把全部页面一起纳入统计
+4. 覆盖率阈值：整体可执行行覆盖率低于 **80%** 直接失败（当前 2555 / 3014 行 = 84.8%）。注意 lcov 只统计「被测试真正加载过」的文件，新增一个 import 就会改变分母——路由测试 import 了 `routes/index.dart`，把全部页面一起纳入统计
 5. `flutter build web --release` 构建冒烟 —— 资源路径、条件导入这类问题 analyze 与 test 都发现不了
 
 同一分支连续推送时，`concurrency` 会取消上一次仍在跑的检查，避免队列堆积。`.github/workflows/web.yml` 另行构建 Web 产物并通过 GitHub Pages 部署。
@@ -345,12 +372,13 @@ flutter test --coverage
 
 ## 当前状态与已知问题
 
-- 顶部搜索框、会员卡开通与快捷入口（我的收藏 / 我的足迹 / 我的客服）仍为静态占位，点击提示「功能开发中」；`GET /member/footprint` 在接口侧不存在（404），足迹功能无法接真实数据。
+- 顶部搜索框、会员卡开通与「我的足迹」仍为静态占位，点击提示「功能开发中」；`GET /member/footprint` 在接口侧不存在（404），足迹功能无法接真实数据。
+- 收藏只做只读列表：`GET /member/collect` 可用（`collectType` 必填且只接受 1 / 2），但写接口 `POST /member/collect` 用 `goodsId` / `spuId` / `skuId` / `id` 与 `collectType` 的各种组合都返回 `400 code: 10017`，无法确定入参，因此不提供收藏与取消收藏按钮。演示账号的收藏为空，items 的字段名也无法用真实数据验证，模型按常见命名做了多组兜底。
 - 订单的「去支付 / 提醒发货 / 确认收货 / 去评价」没有对应接口（`PUT /member/order`、`/member/order/pay/*`、`/member/order/cancel/*`、`/member/order/consume/*`、`/member/order/status/*` 均不存在），点击只提示「演示接口未提供该操作」；只有「再次购买」通过逐条加入购物车实现。`GET /member/order/count` 存在但需要参数且实测仍返回 400，因此状态 tab 上不显示数量角标。
 - 分类商品接口 `/category/sub/filter?id=` **不支持分页**（`page`/`pageSize` 会被忽略），一次返回该分类全部商品；实测单个二级分类最多 16 件，因此商品列表页不做分页，只提供下拉刷新。33 个二级分类里有 8 个本身没有商品，进入后展示空态。
 - 购物车结算复用「立即购买」链路（`/member/order/pre/now` + `/member/order`），**接口只支持单件商品结算**，因此多选时点击「结算」会提示只勾选一件。
 - 接口没有「全选 / 批量勾选」的接口（`PUT /member/cart` 与 `PUT /member/cart/checked` 均不存在），「全选」是逐条 `PUT /member/cart/{skuId}` 串行完成的，条目很多时会较慢。
 - Web 端已启用真实路径与未知路由兜底：`/goods?id=...` 这类深链可以直接访问、刷新后仍停在同一页；但深链只携带查询串，像 `/order/confirm` 这种强依赖 `skuId` 的页面在参数缺失时会落到页面的错误态，而不是给出「链接参数缺失」的专门提示。
 - GitHub Pages 用 `404.html` 实现深链回退，代价是「不存在的路径」也返回 HTTP 200，对 SEO 不友好；这是静态托管的通用取舍，不是代码问题。
-- 覆盖率只统计「被测试真正加载过」的文件（lcov 的统计口径）。首页轮播、首页装饰区块、分类左栏、商品详情的品牌与参数区块等纯展示组件仍未被测试加载，`lib/pages/Main/index.dart` 与 `lib/pages/Mine/index.dart` 也只有路由测试带起来的少量行被覆盖；CI 的 80% 阈值只约束已纳入统计的部分。
+- 覆盖率只统计「被测试真正加载过」的文件（lcov 的统计口径）。首页轮播、首页装饰区块、分类左栏、商品详情的品牌与参数区块等纯展示组件仍未被测试加载，`lib/pages/Main/index.dart` 也只有路由测试带起来的少量行被覆盖（`lib/pages/Mine/index.dart` 现已由快捷入口接线用例覆盖到列表加载与三个入口）；CI 的 80% 阈值只约束已纳入统计的部分。
 - `cupertino_icons` 在代码里没有被直接引用，但 GetX 内部组件引用其字体，删除后 `flutter build web` 会告警缺字体，因此保留（tree-shaking 后仅 1.4 KB）。

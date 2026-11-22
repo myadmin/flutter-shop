@@ -16,6 +16,8 @@ class AppRoutes {
   static const String orderConfirmPath = '/order/confirm';
   static const String orderListPath = '/orders';
   static const String orderDetailPath = '/orders/detail';
+  static const String collectPath = '/collect';
+  static const String customerServicePath = '/customer-service';
 
   /// 商品详情：`/goods?id=<商品 id>`
   static String goods(String goodsId) =>

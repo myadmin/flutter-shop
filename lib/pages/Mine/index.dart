@@ -76,6 +76,24 @@ class _MineViewState extends State<MineView> {
     Navigator.pushNamed(context, AppRoutes.orderList(state));
   }
 
+  /// 快捷入口：收藏需要登录，客服是静态页，足迹留到后续批次
+  void _onQuickEntryTap(String label) {
+    if (label == '我的收藏') {
+      if (!_userController.isLoggedIn) {
+        ToastUtils.showToast(context, '登录后查看收藏');
+        Navigator.pushNamed(context, AppRoutes.login);
+        return;
+      }
+      Navigator.pushNamed(context, AppRoutes.collectPath);
+      return;
+    }
+    if (label == '我的客服') {
+      Navigator.pushNamed(context, AppRoutes.customerServicePath);
+      return;
+    }
+    _showComingSoon(label);
+  }
+
   /// 二次确认后清除本地 token 与内存登录态
   Future<void> _confirmLogout() async {
     final confirmed = await showDialog<bool>(
@@ -160,7 +178,7 @@ class _MineViewState extends State<MineView> {
           child: HmMineVipCard(onOpenTap: () => _showComingSoon('会员开通')),
         ),
         SliverToBoxAdapter(
-          child: HmMineQuickActions(onEntryTap: _showComingSoon),
+          child: HmMineQuickActions(onEntryTap: _onQuickEntryTap),
         ),
         SliverToBoxAdapter(
           child: HmMineOrderModule(onEntryTap: _onOrderEntryTap),

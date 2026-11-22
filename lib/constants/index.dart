@@ -4,6 +4,8 @@ class GlobalConstants {
   static const int timeout = 10;
   static const String successCode = '1';
   static const String tokenKey = 'hm_shop_token';
+  // 本地足迹（后端无足迹接口，浏览记录只存在本机）
+  static const String footprintKey = 'hm_shop_footprint';
 }
 
 // 请求接口地址常量

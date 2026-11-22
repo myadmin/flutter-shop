@@ -7,6 +7,7 @@ import 'package:hm_shop/components/common/hm_bottom_bar.dart';
 import 'package:hm_shop/pages/GoodsDetail/index.dart';
 import 'package:hm_shop/pages/OrderConfirm/index.dart';
 import 'package:hm_shop/stores/cart_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'helpers/mock_http.dart';
 
@@ -16,6 +17,8 @@ void main() {
   setUp(() {
     Get.reset();
     Get.put(CartController(), permanent: true);
+    // 商品详情加载成功会写一条本地足迹，这里给 shared_preferences 一个内存实现
+    SharedPreferences.setMockInitialValues({});
   });
 
   tearDown(Get.reset);

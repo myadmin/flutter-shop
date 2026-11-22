@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hm_shop/api/mine.dart';
+import 'package:hm_shop/api/order.dart';
 import 'package:hm_shop/components/Home/hm_more_list.dart';
 import 'package:hm_shop/components/Mine/hm_guess.dart';
 import 'package:hm_shop/components/Mine/hm_mine_header.dart';
@@ -38,15 +39,24 @@ class _MineViewState extends State<MineView> {
   bool _isLoading = false;
   bool _hasMore = true;
 
+  /// 订单入口角标：键为入口名称（「待付款」等），值为订单数量
+  Map<String, int> _orderCounts = const {};
+
+  late final Worker _userWatcher;
+
   @override
   void initState() {
     super.initState();
     _getGuessList();
     _registerEvent();
+    _loadOrderCounts();
+    // 登录 / 退出后重新拉一次角标，避免残留上一个账号的数字
+    _userWatcher = ever(_userController.user, (_) => _loadOrderCounts());
   }
 
   @override
   void dispose() {
+    _userWatcher.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -65,18 +75,63 @@ class _MineViewState extends State<MineView> {
     '待评价': OrderState.unevaluated,
   };
 
+  /// 订单入口角标：[OrderState] 与入口名称的对应关系（「我的订单」不带角标）
+  static const Map<String, int> _orderBadgeStates = {
+    '待付款': OrderState.unpaid,
+    '待发货': OrderState.unshipped,
+    '待收货': OrderState.unreceived,
+    '待评价': OrderState.unevaluated,
+  };
+
+  /// 拉取各状态订单数量
+  ///
+  /// 后端没有专门的数量接口（`GET /member/order/count` 需要参数且试出 400），
+  /// 这里对每个状态用 `pageSize=1` 查一次、只读 `counts`；四个请求并发，
+  /// 单个失败只影响对应角标，不打断其它入口。
+  Future<void> _loadOrderCounts() async {
+    if (!_userController.isLoggedIn) {
+      if (_orderCounts.isNotEmpty) {
+        setState(() {
+          _orderCounts = const {};
+        });
+      }
+      return;
+    }
+    final counts = <String, int>{};
+    await Future.wait(
+      _orderBadgeStates.entries.map((entry) async {
+        try {
+          final result = await getOrderListAPI(
+            orderState: entry.value,
+            pageSize: 1,
+          );
+          counts[entry.key] = result.counts;
+        } catch (e) {
+          debugPrint('获取${entry.key}订单数量失败: $e');
+        }
+      }),
+    );
+    if (!mounted || !_userController.isLoggedIn) return;
+    setState(() {
+      _orderCounts = counts;
+    });
+  }
+
   /// 订单管理入口：未登录先去登录，已登录按入口带上对应的状态筛选
-  void _onOrderEntryTap(String label) {
+  Future<void> _onOrderEntryTap(String label) async {
     if (!_userController.isLoggedIn) {
       ToastUtils.showToast(context, '登录后查看订单');
-      Navigator.pushNamed(context, AppRoutes.login);
+      await Navigator.pushNamed(context, AppRoutes.login);
       return;
     }
     final state = _orderEntryStates[label] ?? OrderState.all;
-    Navigator.pushNamed(context, AppRoutes.orderList(state));
+    await Navigator.pushNamed(context, AppRoutes.orderList(state));
+    // 列表页里可能删除了订单，回来刷新角标
+    if (!mounted) return;
+    await _loadOrderCounts();
   }
 
-  /// 快捷入口：收藏需要登录，客服是静态页，足迹留到后续批次
+  /// 快捷入口：收藏需要登录；足迹是本地数据、客服是静态页，都不需要登录
   void _onQuickEntryTap(String label) {
     if (label == '我的收藏') {
       if (!_userController.isLoggedIn) {
@@ -85,6 +140,10 @@ class _MineViewState extends State<MineView> {
         return;
       }
       Navigator.pushNamed(context, AppRoutes.collectPath);
+      return;
+    }
+    if (label == '我的足迹') {
+      Navigator.pushNamed(context, AppRoutes.footprintPath);
       return;
     }
     if (label == '我的客服') {
@@ -175,13 +234,18 @@ class _MineViewState extends State<MineView> {
           ),
         ),
         SliverToBoxAdapter(
-          child: HmMineVipCard(onOpenTap: () => _showComingSoon('会员开通')),
+          child: HmMineVipCard(
+            onOpenTap: () => Navigator.pushNamed(context, AppRoutes.vipPath),
+          ),
         ),
         SliverToBoxAdapter(
           child: HmMineQuickActions(onEntryTap: _onQuickEntryTap),
         ),
         SliverToBoxAdapter(
-          child: HmMineOrderModule(onEntryTap: _onOrderEntryTap),
+          child: HmMineOrderModule(
+            onEntryTap: _onOrderEntryTap,
+            counts: _orderCounts,
+          ),
         ),
         const SliverPersistentHeader(pinned: true, delegate: HmGuess()),
         HmMoreList(recommendList: _list, onItemTap: _onGoodsTap),

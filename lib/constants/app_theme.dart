@@ -31,6 +31,9 @@ class AppColors {
   /// 页面背景灰
   static const Color pageBackground = Color(0xFFF7F7F7);
 
+  /// 角标底色（待付款等入口右侧的数字气泡）
+  static const Color badge = Color(0xFFE23B3B);
+
   /// 输入框填充底色
   static const Color inputFill = Color(0xFFF5F5F5);
 

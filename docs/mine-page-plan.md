@@ -135,6 +135,6 @@
 2. **第二批（P1）**：收藏列表页 + 客服静态页
    - ✅ 已完成：`lib/pages/Collect/`、`lib/pages/CustomerService/`、`lib/components/Collect/hm_collect_tile.dart`；收藏只读（写接口入参未知），客服为静态内容
 3. **第三批（P2）**：本地足迹（含商品详情埋点）+ 会员权益页 + 订单状态角标
-   - ⏳ 未开始
+   - ✅ 已完成：`lib/models/footprint.dart`、`lib/stores/footprint_store.dart`、`lib/pages/Footprint/`、`lib/components/Footprint/hm_footprint_tile.dart`、`lib/pages/Vip/`；足迹只存本机（接口 404），会员权益为纯静态说明，订单角标用四次 `pageSize=1` 列表查询折算
 
 每批完成后统一跑 `dart format` / `flutter analyze --fatal-infos` / `flutter test` / `flutter build web`，并同步 README 与用例数。

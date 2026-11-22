@@ -11,8 +11,10 @@ import 'package:hm_shop/components/GoodsDetail/hm_sku_selector.dart';
 import 'package:hm_shop/components/common/app_error_view.dart';
 import 'package:hm_shop/components/common/app_network_image.dart';
 import 'package:hm_shop/models/goods.dart';
+import 'package:hm_shop/models/footprint.dart';
 import 'package:hm_shop/routes/app_routes.dart';
 import 'package:hm_shop/stores/cart_controller.dart';
+import 'package:hm_shop/stores/footprint_store.dart';
 import 'package:hm_shop/stores/token_manager.dart';
 import 'package:hm_shop/utils/api_exception.dart';
 import 'package:hm_shop/utils/loading_dialog.dart';
@@ -74,6 +76,8 @@ class _GoodsDetailPageState extends State<GoodsDetailPage> {
       setState(() {
         _detail = detail;
       });
+      // 详情加载成功即记一条浏览足迹（只存本机）
+      await _recordFootprint(detail);
     } catch (e) {
       debugPrint('获取商品详情失败: $e');
       if (!mounted) return;
@@ -86,6 +90,15 @@ class _GoodsDetailPageState extends State<GoodsDetailPage> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  // 记录浏览足迹（仅本机），失败不影响详情展示
+  Future<void> _recordFootprint(GoodsDetail detail) async {
+    try {
+      await FootprintStore.record(FootprintItem.fromGoodsDetail(detail));
+    } catch (e) {
+      debugPrint('记录浏览足迹失败: $e');
     }
   }
 

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hm_shop/components/Mine/hm_entry_item.dart';
 import 'package:hm_shop/components/Mine/hm_mine_header.dart';
 import 'package:hm_shop/components/Mine/hm_mine_order_module.dart';
 import 'package:hm_shop/components/Mine/hm_mine_quick_actions.dart';
 import 'package:hm_shop/components/Mine/hm_mine_vip_card.dart';
+import 'package:hm_shop/constants/app_assets.dart';
 import 'package:hm_shop/models/user.dart';
 
 void main() {
@@ -109,6 +111,55 @@ void main() {
       await tester.tap(find.text('立即开通'));
       await tester.pump();
       expect(opened, isTrue);
+    });
+
+    testWidgets('HmEntryItem 有角标时展示数字，为 0 时不展示', (tester) async {
+      await tester.pumpWidget(
+        wrap(
+          const HmEntryItem(
+            icon: AppAssets.icUserObligation,
+            label: '待付款',
+            badge: 3,
+          ),
+        ),
+      );
+
+      expect(find.text('待付款'), findsOneWidget);
+      expect(find.text('3'), findsOneWidget);
+
+      await tester.pumpWidget(
+        wrap(const HmEntryItem(icon: AppAssets.icUserObligation, label: '待付款')),
+      );
+
+      expect(find.text('0'), findsNothing);
+    });
+
+    testWidgets('HmEntryItem 角标超过 99 时展示 99+', (tester) async {
+      await tester.pumpWidget(
+        wrap(
+          const HmEntryItem(
+            icon: AppAssets.icUserObligation,
+            label: '待付款',
+            badge: 120,
+          ),
+        ),
+      );
+
+      expect(find.text('99+'), findsOneWidget);
+    });
+
+    testWidgets('HmMineOrderModule 按名称展示角标数字', (tester) async {
+      await tester.pumpWidget(
+        wrap(
+          HmMineOrderModule(
+            onEntryTap: (_) {},
+            counts: const {'待付款': 2, '待评价': 5},
+          ),
+        ),
+      );
+
+      expect(find.text('2'), findsOneWidget);
+      expect(find.text('5'), findsOneWidget);
     });
   });
 }

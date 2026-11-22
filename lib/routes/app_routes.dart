@@ -18,6 +18,8 @@ class AppRoutes {
   static const String orderDetailPath = '/orders/detail';
   static const String collectPath = '/collect';
   static const String customerServicePath = '/customer-service';
+  static const String footprintPath = '/footprint';
+  static const String vipPath = '/vip';
 
   /// 商品详情：`/goods?id=<商品 id>`
   static String goods(String goodsId) =>

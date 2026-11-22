@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/pages/Collect/index.dart';
 import 'package:hm_shop/pages/CustomerService/index.dart';
+import 'package:hm_shop/pages/Footprint/index.dart';
 import 'package:hm_shop/pages/GoodsDetail/index.dart';
 import 'package:hm_shop/pages/GoodsList/index.dart';
 import 'package:hm_shop/pages/Main/index.dart';
@@ -11,6 +12,7 @@ import 'package:hm_shop/pages/OrderConfirm/index.dart';
 import 'package:hm_shop/pages/OrderDetail/index.dart';
 import 'package:hm_shop/pages/OrderList/index.dart';
 import 'package:hm_shop/pages/Unknown/index.dart';
+import 'package:hm_shop/pages/Vip/index.dart';
 import 'package:hm_shop/routes/app_routes.dart';
 
 Widget getRootWidget() {
@@ -156,5 +158,7 @@ Map<String, Widget Function(BuildContext)> getRootRoutes() {
     AppRoutes.collectPath: (context) => const CollectPage(), // 我的收藏路由
     AppRoutes.customerServicePath: (context) =>
         const CustomerServicePage(), // 客服中心路由
+    AppRoutes.footprintPath: (context) => const FootprintPage(), // 我的足迹路由
+    AppRoutes.vipPath: (context) => const VipBenefitsPage(), // 会员权益路由
   };
 }

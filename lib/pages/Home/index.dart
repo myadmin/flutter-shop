@@ -18,13 +18,19 @@ import 'package:hm_shop/utils/api_exception.dart';
 /// 负责并行拉取首页各模块数据（轮播图、分类、推荐等），
 /// 加载期间展示骨架屏，加载完成后渲染真实内容。
 class HomeView extends StatefulWidget {
-  const HomeView({super.key, this.onCategoryTap});
+  const HomeView({super.key, this.onCategoryTap, this.isActive = true});
 
   /// 点击顶部一级分类的回调
   ///
   /// 首页本身没有跳分类页的能力（分类页挂在底部 tab 容器里），
   /// 由 [MainPage] 传进来负责切 tab 并选中对应分类。
   final ValueChanged<CategoryItem>? onCategoryTap;
+
+  /// 首页当前是否可见
+  ///
+  /// 底部 tab 用 IndexedStack 保活，首页切走后仍在树上；轮播的自动播放
+  /// 定时器需要跟着这个标记暂停，否则切到购物车后它还在后台翻页。
+  final bool isActive;
 
   @override
   State<HomeView> createState() => _HomeViewState();
@@ -90,7 +96,9 @@ class _HomeViewState extends State<HomeView> {
   /// 按页面从上到下的顺序拼装各模块 sliver，并用 SizedBox 控制模块间距
   List<Widget> _getScrollChildren() {
     return [
-      SliverToBoxAdapter(child: HmSlider(bannerList: _bannerList)),
+      SliverToBoxAdapter(
+        child: HmSlider(bannerList: _bannerList, autoPlay: widget.isActive),
+      ),
       const SliverToBoxAdapter(child: SizedBox(height: 10)),
       SliverToBoxAdapter(
         child: HmCategory(

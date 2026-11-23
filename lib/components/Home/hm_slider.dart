@@ -8,7 +8,14 @@ import 'package:hm_shop/utils/toast_utils.dart';
 class HmSlider extends StatefulWidget {
   final List<BannerItem> bannerList;
 
-  const HmSlider({super.key, required this.bannerList});
+  /// 是否允许自动轮播
+  ///
+  /// 首页被 IndexedStack 保活，切到其它 tab 后这个 widget 仍在树上；
+  /// 传 false 可以让 carousel_slider 取消定时器（它在 didUpdateWidget 里
+  /// 会调用 handleAutoPlay 重新决定是否起定时器）。
+  final bool autoPlay;
+
+  const HmSlider({super.key, required this.bannerList, this.autoPlay = true});
 
   @override
   State<HmSlider> createState() => _HmSliderState();
@@ -31,7 +38,7 @@ class _HmSliderState extends State<HmSlider> {
       }),
       options: CarouselOptions(
         viewportFraction: 1.0,
-        autoPlay: true,
+        autoPlay: widget.autoPlay,
         autoPlayInterval: const Duration(seconds: 4),
         height: 300,
         onPageChanged: (index, reason) {

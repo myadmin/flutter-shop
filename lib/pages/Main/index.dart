@@ -51,13 +51,27 @@ class _MainPageState extends State<MainPage> {
   final UserController _userController = Get.find<UserController>();
   final CartController _cartController = Get.find<CartController>();
 
-  /// 购物车在底部 tab 中的下标
-  static const int _cartTabIndex = 2;
+  /// 首页在底部 tab 中的下标
+  static const int _homeTabIndex = 0;
 
   /// 「分类」在底部 tab 中的下标
   static const int _categoryTabIndex = 1;
 
-  int _currentIndex = 0;
+  /// 购物车在底部 tab 中的下标
+  static const int _cartTabIndex = 2;
+
+  /// 「我的」在底部 tab 中的下标
+  static const int _mineTabIndex = 3;
+
+  int _currentIndex = _homeTabIndex;
+
+  /// 已经打开过的 tab 下标
+  ///
+  /// IndexedStack 会把所有子页一次性 build 出来，四个页面的 initState 都在首帧
+  /// 执行：登录态下等于启动就发出 14 个请求（首页 6 + 分类 2 + 购物车 1 +
+  /// 我的 5），而用户此时可能只想看首页。这里改成「首次切到某个 tab 才真正
+  /// 构建它」，打开过的 tab 继续留在 IndexedStack 里保持状态。
+  final Set<int> _visitedTabs = <int>{_homeTabIndex};
 
   /// 首页分类入口请求选中的一级分类 id
   String? _categoryRequestId;
@@ -126,11 +140,46 @@ class _MainPageState extends State<MainPage> {
 
   /// 首页点了某个一级分类：切到「分类」tab 并让分类页选中同一分类
   void _onHomeCategoryTap(CategoryItem category) {
+    _categoryRequestId = category.id;
+    _categoryRequestTicket++;
+    _selectTab(_categoryTabIndex);
+  }
+
+  /// 切换底部 tab：同时把目标 tab 标记为「已打开」，让它在这一帧真正构建
+  void _selectTab(int index) {
     setState(() {
-      _categoryRequestId = category.id;
-      _categoryRequestTicket++;
-      _currentIndex = _categoryTabIndex;
+      _currentIndex = index;
+      _visitedTabs.add(index);
     });
+  }
+
+  /// 按 tab 下标构建页面；没打开过的 tab 先占位，避免启动时就发它的请求
+  Widget _buildTabPage(int index) {
+    if (!_visitedTabs.contains(index)) {
+      return const SizedBox.shrink();
+    }
+    switch (index) {
+      case _categoryTabIndex:
+        return CategoryView(
+          selectedCategoryId: _categoryRequestId,
+          selectionTicket: _categoryRequestTicket,
+        );
+      case _cartTabIndex:
+        return CartView(
+          isActive: _currentIndex == _cartTabIndex,
+          onGoShopping: () => _selectTab(_homeTabIndex),
+        );
+      case _mineTabIndex:
+        return const MineView();
+      case _homeTabIndex:
+      default:
+        return HomeView(
+          onCategoryTap: _onHomeCategoryTap,
+          // 只在首页可见时让轮播自动播放：IndexedStack 会把首页留在树上，
+          // 不传这个标记的话切到其它 tab 后定时器仍在跑。
+          isActive: _currentIndex == _homeTabIndex,
+        );
+    }
   }
 
   /// 购物车图标：有商品时叠加件数角标
@@ -167,30 +216,20 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     return PopScope(
       // 停在非首页 tab 时，返回键先回到首页，再按一次才退出
-      canPop: _currentIndex == 0,
+      canPop: _currentIndex == _homeTabIndex,
       onPopInvokedWithResult: (bool didPop, Object? result) {
         if (didPop) {
           return;
         }
-        setState(() {
-          _currentIndex = 0;
-        });
+        _selectTab(_homeTabIndex);
       },
       child: Scaffold(
         body: SafeArea(
           child: IndexedStack(
             index: _currentIndex,
             children: [
-              HomeView(onCategoryTap: _onHomeCategoryTap),
-              CategoryView(
-                selectedCategoryId: _categoryRequestId,
-                selectionTicket: _categoryRequestTicket,
-              ),
-              CartView(
-                isActive: _currentIndex == _cartTabIndex,
-                onGoShopping: () => setState(() => _currentIndex = 0),
-              ),
-              const MineView(),
+              for (var index = 0; index < _tabList.length; index++)
+                _buildTabPage(index),
             ],
           ),
         ),
@@ -200,11 +239,7 @@ class _MainPageState extends State<MainPage> {
           unselectedItemColor: Colors.black,
           selectedItemColor: Colors.black,
           type: BottomNavigationBarType.fixed,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
+          onTap: _selectTab,
           items: _buildTabItems(),
         ),
       ),

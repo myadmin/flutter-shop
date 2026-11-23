@@ -1,8 +1,19 @@
 # 更新日志
 
-版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.1+2` 里 `1.0.1` 是 `versionName`，`2` 是 `versionCode`）。
+版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.2+3` 里 `1.0.2` 是 `versionName`，`3` 是 `versionCode`）。
 
 打 `v*` 标签时，[Build Mobile](.github/workflows/mobile.yml) 会把这里对应版本的「本次更新」自动写进 GitHub Release 说明，所以新增版本时记得在本文件补一段。
+
+## [1.0.2] - 2026-11-23
+
+启动性能与应用标识：
+
+- 底部 tab 改为「首次打开才构建」：`IndexedStack` 之前会把四个页面一次性建出来，登录态下冷启动就发 14 个请求（首页 6 + 分类 2 + 购物车 1 + 我的 5）。现在首屏只发首页的 6 个，分类 / 购物车 / 我的等首次切过去才加载，打开过的页面继续保活。
+- 首页轮播在切到其它 tab 时暂停自动播放。此前 `IndexedStack` 保活导致定时器在后台一直翻页，Web 上持续占 CPU。
+- 应用名统一为「美荟商城」：Android 的 `android:label` 从 `hm_shop` 改过来，iOS 的 `CFBundleDisplayName` 从 `Hm Shop` 改过来，与 Web 的标题 / PWA 名称一致。
+- 应用图标替换为品牌图标（品牌橙渐变 + 白色购物袋）：Android 5 档 mipmap、iOS 13 个尺寸、Web favicon 与两个 PWA 图标全部重新生成，不再使用 Flutter 模板图标。图标母版见 `docs/icon/app_icon_1024.png`，重新生成用 `tool/generate_icons.py`。
+- 版本号提升到 `1.0.2+3`；`pubspec.yaml` 的描述补全到当前页面清单（之前还停在 5 个页面）。
+- 新增 5 个底部 tab 容器用例：启动只加载首页、切 tab 才加载对应页、来回切不重复请求、轮播随 tab 暂停与恢复。
 
 ## [1.0.1] - 2026-11-23
 

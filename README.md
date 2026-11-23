@@ -138,7 +138,9 @@
 
 ### 其他
 
-- **底部导航**：首页 / 分类 / 购物车 / 我的，使用 `IndexedStack` 保持各页面状态；购物车 tab 带件数角标；`PopScope` 让 Android 返回键在非首页 tab 时先回到首页，而不是直接退出
+- **底部导航**：首页 / 分类 / 购物车 / 我的，使用 `IndexedStack` 保持各页面状态，但**首次切到某个 tab 才真正构建它**——四个页面一次性建出来时，登录态下冷启动会发 14 个请求（首页 6 + 分类 2 + 购物车 1 + 我的 5），懒加载后首屏只发首页的 6 个；购物车 tab 带件数角标；`PopScope` 让 Android 返回键在非首页 tab 时先回到首页，而不是直接退出
+- **轮播随 tab 暂停**：首页被 `IndexedStack` 保活，`HmSlider` 通过 `HomeView(isActive: ...)` 拿到可见性，切到其它 tab 时把 `autoPlay` 置 false，`carousel_slider` 会在 `didUpdateWidget` 里取消定时器，回到首页再恢复
+- **应用标识**：三端应用名统一为「美荟商城」，图标是品牌橙渐变 + 白色购物袋（母版 `docs/icon/app_icon_1024.png`，由 `tool/generate_icons.py` 生成三端全部尺寸），替换掉 Flutter 模板默认图标；详见「移动端打包」里的「应用名与图标」
 - **状态管理分工**：跨页面共享的用户态与购物车件数放在 GetX 控制器（`UserController` / `CartController`，页面通过 `Obx` 响应式刷新），且仅在 `main()` 中注册一次；页面私有的列表数据、加载态与错误文案用 `State` + `setState`
 - **登录态管理**：`TokenManager` 基于 `shared_preferences` 持久化 token（写盘 `await` 落盘完成）；启动时若已登录则请求 `/member/profile` 恢复用户信息，失效时自动清理并降级
 - **网络层**：Dio 单例封装，统一超时与请求头注入；异常被翻译为 `ApiException`（业务错误，带 `code`）或 `NetworkException`（网络 / 超时 / 401），页面统一用 `resolveErrorMessage` 提取可展示文案
@@ -149,7 +151,7 @@
 - **并发与容错**：购物车件数与购物车列表请求都做了在途去重（同一时刻只发一次）；首页整页刷新期间不接受滚动加载（`_refreshing`），避免与首屏请求抢 `limit`；401 跳转登录页带重入保护；滚动触发的加载在本地吞掉异常，不会冒泡成未捕获异步错误；`PlatformDispatcher.onError` 兜底记录漏网的异步异常
 - **加载弹窗**：`LoadingDialog` 持有 `DialogRoute` 引用，`hide()` 精确移除自身路由，不会误弹页面
 - **Toast 工具**：`ToastUtils` 基于 `SnackBar`，宽度随文案自适应；只有**相同文案**在 2 秒内重复时才节流，不同提示不会被吞掉，新提示会顶掉正在展示的旧提示
-- **自动化测试**：187 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、金额整数累加、全局用户态与购物车件数、本地足迹存储（去重 / 上限 / 损坏数据）、足迹分组、骨架屏、商品聚合组件、规格选择弹层、订单组件、「我的」页面组件、分类页组件、购物车组件、收藏卡片、未知路由兜底与深链解析，以及首页 / 购物车 / 登录 / 分类 / 分类商品列表 / 商品详情 / 订单确认 / 订单列表 / 订单详情 / 我的收藏 / 客服中心 / 我的足迹 / 会员权益 / 个人资料十四个页面的页面级交互、「我的」页快捷入口接线与订单角标、首页分类入口切 tab 并选中分类（用 `MockAdapter` 替换 Dio 适配器，不发真实请求）
+- **自动化测试**：192 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、金额整数累加、全局用户态与购物车件数、本地足迹存储（去重 / 上限 / 损坏数据）、足迹分组、骨架屏、商品聚合组件、规格选择弹层、订单组件、「我的」页面组件、分类页组件、购物车组件、收藏卡片、未知路由兜底与深链解析，以及首页 / 购物车 / 登录 / 分类 / 分类商品列表 / 商品详情 / 订单确认 / 订单列表 / 订单详情 / 我的收藏 / 客服中心 / 我的足迹 / 会员权益 / 个人资料十四个页面的页面级交互、「我的」页快捷入口接线与订单角标、首页分类入口切 tab 并选中分类、底部 tab 懒加载（首屏只发首页请求 / 切 tab 才加载对应页 / 来回切不重复请求 / 轮播随 tab 暂停与恢复）（用 `MockAdapter` 替换 Dio 适配器，不发真实请求）
 - **代码规范与 CI**：`dart format`、`flutter analyze --fatal-infos`（已开启 `strict-casts` / `strict-inference` / `strict-raw-types`）、`flutter test --coverage`（覆盖率低于 80% 直接失败）、`flutter build web --release`（构建冒烟）在 CI 中全部强制通过
 
 ## 技术栈
@@ -287,6 +289,14 @@ lib/
 ```
 
 ```text
+tool/
+└── generate_icons.py           # 生成 Android / iOS / Web 三端全部尺寸的应用图标
+docs/
+├── mine-page-plan.md           # 「我的」页功能规划（三批已全部落地）
+└── icon/app_icon_1024.png      # 应用图标母版
+```
+
+```text
 test/
 ├── helpers/mock_http.dart      # MockAdapter 与响应 / 数据构造工具
 ├── dio_request_test.dart       # 网络层：业务码、超时、401、鉴权头
@@ -307,6 +317,7 @@ test/
 ├── loading_dialog_test.dart    # 加载弹窗的展示、重复展示与关闭
 ├── home_page_test.dart         # 首页并发加载、部分失败降级、整页错误重试
 ├── category_selection_test.dart # 首页分类入口 → 分类页选中（组件回调 / 外部选中 / 切 tab）
+├── main_tabs_test.dart         # 底部 tab 懒加载 / 保活 / 轮播随 tab 暂停
 ├── unknown_route_test.dart     # 未知路由兜底、深链解析、地址构造
 └── widget_test.dart            # 首页骨架屏、订单组件、商品聚合组件
 ```
@@ -396,7 +407,7 @@ flutter test --coverage
 1. `dart format --output=none --set-exit-if-changed lib test`
 2. `flutter analyze --fatal-infos`（info 级问题同样视为失败）
 3. `flutter test --coverage`
-4. 覆盖率阈值：整体可执行行覆盖率低于 **80%** 直接失败（当前 3056 / 3521 行 = 86.8%）。注意 lcov 只统计「被测试真正加载过」的文件，新增一个 import 就会改变分母——路由测试 import 了 `routes/index.dart`，把全部页面一起纳入统计
+4. 覆盖率阈值：整体可执行行覆盖率低于 **80%** 直接失败（当前 3071 / 3532 行 = 86.9%）。注意 lcov 只统计「被测试真正加载过」的文件，新增一个 import 就会改变分母——路由测试 import 了 `routes/index.dart`，把全部页面一起纳入统计
 5. `flutter build web --release` 构建冒烟 —— 资源路径、条件导入这类问题 analyze 与 test 都发现不了
 
 同一分支连续推送时，`concurrency` 会取消上一次仍在跑的检查，避免队列堆积。`.github/workflows/web.yml` 另行构建 Web 产物并通过 GitHub Pages 部署。
@@ -428,6 +439,18 @@ flutter test --coverage
 1. **Gradle 必须 ≥ 9.3.1。** Flutter 3.47.9 模板里的 AGP 是 `9.1.0`，它在 apply 阶段就会校验 Gradle 版本，用 8.x 会直接失败（`Minimum supported Gradle version is 9.3.1. Current version is 8.14.`）。`android/gradle/wrapper/gradle-wrapper.properties` 已指向腾讯镜像的 `gradle-9.3.1-all.zip`（换成官方 `services.gradle.org` 同理，镜像只是国内下载快）。另外 `android/gradle.properties` 的 JVM 参数从 `-Xmx8G` 降到 `-Xmx4G`、并关掉 `kotlin.incremental`（Windows 上会遇到 `Could not close incremental caches` 导致 release 构建失败，关掉更稳）。
 2. **签名材料全部走 Secrets，缺了自动降级。** `android/app/build.gradle.kts` 会读 `android/key.properties`：文件存在就用 release 签名（可上架），不存在就退回 debug 签名（可安装、不能上架）。CI 上只要配了 `ANDROID_KEYSTORE_BASE64` 就会自动写出这个文件，构建后再用 `apksigner --print-certs` 把实际证书打印出来，避免「以为配了正式签名、其实还在走 debug」这种静默错误。本地配置方式见 `android/key.properties.example`（`key.properties`、`*.jks`、`*.keystore` 都已在 `.gitignore` 里）。
 3. **iOS 出 IPA 必须有 Apple 开发者账号。** 项目使用 Swift Package Manager（没有 `Podfile`），因此不需要 `pod install`；`build-ios` 走 `--no-codesign` 只验证编译，`build-ios-signed` 才会导入证书与描述文件、给工程补上 `DEVELOPMENT_TEAM`，再执行 `flutter build ipa`。
+
+#### 应用名与图标
+
+三端的应用名统一为「美荟商城」：Android 在 `android/app/src/main/AndroidManifest.xml` 的 `android:label`，iOS 在 `ios/Runner/Info.plist` 的 `CFBundleDisplayName`（`CFBundleName` 保留 `hm_shop` 作为内部短名），Web 在 `web/index.html` 的 `<title>` 与 `web/manifest.json` 的 `name` / `short_name`。改名前 Android 显示 `hm_shop`、iOS 显示 `Hm Shop`，和 Web 的「美荟商城」不一致。
+
+图标是品牌橙渐变底 + 白色购物袋，母版在 `docs/icon/app_icon_1024.png`，由 `tool/generate_icons.py` 一次性生成全部尺寸：
+
+- Android：`mipmap-mdpi` 到 `mipmap-xxxhdpi` 五档 `ic_launcher.png`（48 / 72 / 96 / 144 / 192），圆角方形（半径 22%）。
+- iOS：`AppIcon.appiconset` 里 `Contents.json` 声明的 13 个尺寸，直角满幅且不带透明通道（iOS 自己裁圆角）。
+- Web：`web/favicon.png`、`Icon-192/512.png` 与两个 `Icon-maskable-*.png`（maskable 变体把图形缩到 72%，留出系统裁切的安全区）。
+
+要改图标就改脚本里的颜色 / 几何参数（或直接替换母版 PNG）后重跑 `python tool/generate_icons.py`；脚本需要 Pillow，这只是工具的一次性依赖，不在 `pubspec.yaml` 里。Android 目前没有做 adaptive icon（`mipmap-anydpi-v26`），部分 Android 8+ 桌面会把这张图套进系统蒙版里显示，需要时再补 foreground / background 两层。
 
 需要的 Secrets（前四个管 Android，后四个管 iOS），都是可选的——没配就跳过对应能力：
 
@@ -481,6 +504,6 @@ flutter test --coverage
 - Web 端已启用真实路径与未知路由兜底：`/goods?id=...` 这类深链可以直接访问、刷新后仍停在同一页；但深链只携带查询串，像 `/order/confirm` 这种强依赖 `skuId` 的页面在参数缺失时会落到页面的错误态，而不是给出「链接参数缺失」的专门提示。
 - GitHub Pages 用 `404.html` 实现深链回退，代价是「不存在的路径」也返回 HTTP 200，对 SEO 不友好；这是静态托管的通用取舍，不是代码问题。
 - 首页分类入口只能跳到「分类」页的对应一级分类，不能直达商品列表：分类商品接口 `/category/sub/filter?id=` 只接受**二级分类 id**，一级分类没有对应的商品列表接口。
-- 覆盖率只统计「被测试真正加载过」的文件（lcov 的统计口径）。首页轮播、首页装饰区块、分类左栏、商品详情的品牌与参数区块等纯展示组件仍未被测试加载，`lib/pages/Main/index.dart` 现已由首页分类入口用例覆盖到 tab 切换与选中项下传（`lib/pages/Mine/index.dart` 现已由快捷入口接线用例覆盖到列表加载、快捷入口与资料页入口）；CI 的 80% 阈值只约束已纳入统计的部分。
+- 覆盖率只统计「被测试真正加载过」的文件（lcov 的统计口径）。首页轮播、首页装饰区块、分类左栏、商品详情的品牌与参数区块等纯展示组件仍未被测试加载，`lib/pages/Main/index.dart` 现已由首页分类入口用例覆盖到 tab 切换与选中项下传、由底部 tab 用例覆盖到懒加载 / 保活 / 轮播暂停（`lib/pages/Mine/index.dart` 现已由快捷入口接线用例覆盖到列表加载、快捷入口与资料页入口）；CI 的 80% 阈值只约束已纳入统计的部分。
 - `cupertino_icons` 在代码里没有被直接引用，但 GetX 内部组件引用其字体，删除后 `flutter build web` 会告警缺字体，因此保留（tree-shaking 后仅 1.4 KB）。
 - 移动端的正式签名依赖仓库外凭证：默认（没配 Secrets）产出的是 debug 签名的 APK 与未签名的 `Runner.app`——能装进手机、不能上架；配好 `ANDROID_KEYSTORE_BASE64` 后 APK/AAB 自动变正式签名，配好 iOS 那四个 Secrets 后 `build-ios-signed` 才产出可安装的 IPA（`ad-hoc` 方式还需要把设备 UDID 加进描述文件）。签名脚手架已就位，缺的只是证书本身。详见「移动端打包（Android / iOS）」。

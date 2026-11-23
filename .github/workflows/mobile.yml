@@ -4,6 +4,8 @@
 #   打标签或手动触发还会额外产出可安装的 IPA
 #
 # 各 job 相互独立，任一失败不影响其它 job；产物都在 Actions 运行页的 Artifacts 区下载。
+# 打 v* 标签（或手动触发并勾选 publish_release）时，publish-release job 会把产物汇总成一个
+# GitHub Release，Releases 页面即可直接下载 apk / aab / ipa。
 #
 # 需要的 Secrets（都是可选的，没配就自动降级）：
 #   ANDROID_KEYSTORE_BASE64      release keystore 的 base64（`base64 -w0 upload-keystore.jks`）
@@ -28,6 +30,15 @@ on:
     branches: [ "master" ]
   # 只改了文档/Web 的提交也想跳过移动端构建时，可在提交信息里加 [skip ci]
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: "构建完把安装包发到 GitHub Releases"
+        type: boolean
+        default: true
+      release_tag:
+        description: "发布用的 tag，留空则用 v1.0.0-build.<run number>"
+        type: string
+        required: false
 
 # 同一分支只保留最新一次移动端构建，推送频繁时不至于把 runner 排队排满
 concurrency:
@@ -257,3 +268,115 @@ jobs:
           path: build/ios/ipa/*.ipa
           if-no-files-found: error
           retention-days: 14
+
+  # 把上面几个 job 的产物汇总成一个 GitHub Release，方便直接在 Releases 页面下载安装包
+  publish-release:
+    name: Publish GitHub Release
+    needs: [ build-android, build-ios ]
+    # 打 v* 标签自动发版；也可以在 Actions 页手动触发并勾选 publish_release
+    if: startsWith(github.ref, 'refs/tags/') || inputs.publish_release == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      # 只用来在 Release 说明里写清本次是正式签名还是 debug 签名
+      HAS_ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      HAS_IOS_SIGNING: ${{ secrets.IOS_CERTIFICATE_BASE64 != '' && secrets.IOS_PROVISIONING_PROFILE_BASE64 != '' && secrets.IOS_TEAM_ID != '' }}
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: hm-shop-*
+          path: dist
+          merge-multiple: true
+
+      - name: Resolve release tag
+        env:
+          INPUT_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          TAG="${INPUT_TAG:-}"
+          if [ -z "$TAG" ]; then
+            if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+              TAG="${GITHUB_REF#refs/tags/}"
+            else
+              TAG="v1.0.0-build.${GITHUB_RUN_NUMBER}"
+            fi
+          fi
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" > /dev/null 2>&1; then
+            echo "TAG_EXISTS=true" >> "$GITHUB_ENV"
+          else
+            echo "TAG_EXISTS=false" >> "$GITHUB_ENV"
+          fi
+          echo "::notice::本次发布会使用的 tag：$TAG"
+
+      - name: Compose release notes
+        run: |
+          set -euo pipefail
+          ANDROID_SIGNING="debug 签名（配置了 ANDROID_KEYSTORE_BASE64 后会变成正式签名）"
+          if [ "${HAS_ANDROID_KEYSTORE:-false}" = "true" ]; then
+            ANDROID_SIGNING="release 签名"
+          fi
+          IOS_SIGNED="未包含签名 IPA（配置 iOS 签名 Secrets 后重新打标签即可产出）"
+          if [ "${HAS_IOS_SIGNING:-false}" = "true" ]; then
+            IOS_SIGNED="包含签名 IPA，可直接安装到描述文件里列出的设备"
+          fi
+
+          cat > release-notes.md <<NOTES
+          ## 安装包
+
+          | 文件 | 适用场景 |
+          | --- | --- |
+          | \`app-arm64-v8a-release.apk\` | 绝大多数现代安卓手机（首选） |
+          | \`app-armeabi-v7a-release.apk\` | 较老的 32 位安卓设备 |
+          | \`app-x86_64-release.apk\` | 安卓模拟器 / x86 平板 |
+          | \`app-release.aab\` | 上架 Google Play 用 |
+          | \`Runner.app.zip\` | iOS 未签名产物，需要用 Xcode 自行签名安装 |
+          | \`*.ipa\` | iOS 签名包（存在时才上传） |
+
+          - Android 签名：${ANDROID_SIGNING}
+          - iOS：${IOS_SIGNED}
+
+          ## 安装提示
+
+          1. 直接在手机上点上面的 apk 下载，或先下载再传到手机安装；
+          2. 首次安装需要在系统设置里允许「安装未知来源应用」；
+          3. 如果手机是 arm64（2016 年以后的机型基本都是），装 \`arm64-v8a\` 那个即可，体积也最小。
+
+          包内版本号见 \`pubspec.yaml\` 的 \`version\` 字段。
+          NOTES
+
+      - name: Upload assets to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          FILES=(dist/*.apk dist/*.aab dist/*.zip dist/*.ipa)
+          if [ ${#FILES[@]} -eq 0 ]; then
+            echo "::error::没有找到可发布的产物，检查上游 job 是否成功"
+            exit 1
+          fi
+          printf '待上传文件：\n'
+          printf '  %s\n' "${FILES[@]}"
+
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "release $TAG 已存在，改为覆盖上传资产"
+            gh release upload "$TAG" "${FILES[@]}" --clobber
+          else
+            TARGET_ARGS=()
+            if [ "$TAG_EXISTS" != "true" ]; then
+              TARGET_ARGS=(--target "$GITHUB_SHA")
+            fi
+            gh release create "$TAG" "${FILES[@]}" \
+              --title "HM Shop ${TAG}" \
+              --notes-file release-notes.md \
+              "${TARGET_ARGS[@]}"
+          fi
+
+      - name: Report release url
+        run: echo "::notice::安装包已发布：https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
+

@@ -415,7 +415,7 @@ flutter test --coverage
 
 ### 移动端打包（Android / iOS）
 
-`.github/workflows/mobile.yml` 与 Web 流水线互不影响，单独产出移动端安装包，产物都能在 Actions 运行页的 Artifacts 区下载：
+`.github/workflows/mobile.yml` 与 Web 流水线互不影响，单独产出移动端安装包：产物既在 Actions 运行页的 Artifacts 区，也会在**打 `v*` 标签时汇总发布到 GitHub Releases**（Releases 页面直接点 apk 就能下载安装）。
 
 | Job | Runner | 产物 |
 | --- | --- | --- |
@@ -443,6 +443,23 @@ flutter test --coverage
 另外两个可选 Repository variable（不是 Secret）：`IOS_BUNDLE_ID`（要替换成的 Bundle Identifier，缺省沿用 `com.example.hmShop`）、`IOS_EXPORT_METHOD`（`ad-hoc` 装指定设备，`app-store-connect` 传 App Store，缺省 `ad-hoc`）。
 
 本机实测（Windows + Flutter 3.47.9 + AGP 9.1.0 / Gradle 9.3.1）：干净检出后 `flutter build apk --release` 52.3 MB、`--split-per-abi` 三个包如上表、`flutter build appbundle --release` 51.0 MB，全部构建成功；把测试 keystore 放进 `android/app/` 后 `apksigner verify --print-certs` 输出 `CN=HM Shop Test`，删掉 `key.properties` 重新构建则回到 `CN=Android Debug`——有/无密钥两条路径都验证过。CI 上也验证了降级路径：没配 Secrets 时 Android job 的「Decode release keystore」显示 skipped、「Verify APK signature」打印出 `CN=Android Debug`，iOS 签名 job 在 push 场景下整个 job 是 skipped。macOS 签名链路无法在本机验证，配上 Secrets 打 `v*` 标签即可验证。
+
+#### 发布到 GitHub Releases
+
+`publish-release` job 会把 `build-android`、`build-ios`（以及配了签名时的 `build-ios-signed`）的产物汇总成一个 Release，并自动生成说明（选哪个 apk、签名状态如何）：
+
+| 触发方式 | 效果 |
+| --- | --- |
+| `git tag v1.0.0 && git push origin v1.0.0` | 用该 tag 建 Release，标题 `HM Shop v1.0.0` |
+| Actions 页手动 Run workflow | 勾选 `publish_release`（默认勾上），tag 留空则用 `v1.0.0-build.<run number>`，也可自己填 |
+| push 到 `master` / PR | 只产出 Actions Artifacts，不发 Release（避免每次提交都刷一条 release） |
+
+细节：
+
+- Release 里带 `app-arm64-v8a-release.apk`（首选）、`app-armeabi-v7a-release.apk`、`app-x86_64-release.apk`、`app-release.aab`、`Runner.app.zip`，配了 iOS 签名时再加 `Runner.ipa`；
+- 同一个 tag 重复发版时会走 `gh release upload --clobber` 覆盖资产，不会报错；
+- 这个 job 需要 `contents: write` 权限（workflow 里已显式声明）；如果仓库 Settings → Actions → General 的 Workflow permissions 被设成「Read repository contents」，需要在那边改成 Read and write，否则 `gh release create` 会 403。
+
 
 ## 当前状态与已知问题
 

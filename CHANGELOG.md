@@ -1,0 +1,29 @@
+# 更新日志
+
+版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.1+2` 里 `1.0.1` 是 `versionName`，`2` 是 `versionCode`）。
+
+打 `v*` 标签时，[Build Mobile](.github/workflows/mobile.yml) 会把这里对应版本的「本次更新」自动写进 GitHub Release 说明，所以新增版本时记得在本文件补一段。
+
+## [1.0.1] - 2026-11-23
+
+打包与发布链路完善，界面功能与 1.0.0 一致：
+
+- 版本号提升到 `1.0.1+2`，APK 的 `versionName` / `versionCode` 随之更新（`1.0.1` / `2`）。
+- 修复 Android 打包：`android/gradle/wrapper/gradle-wrapper.properties` 指回 Gradle 9.3.1。Flutter 3.47.9 模板里的 AGP 是 9.1.0，要求 Gradle ≥ 9.3.1，用 8.14 会在 apply 阶段直接失败（`Minimum supported Gradle version is 9.3.1`）。
+- 新增 `Build Mobile` 工作流：Android 产出按 ABI 拆分的三个 APK 与一个 AAB，iOS 产出未签名的 `Runner.app.zip`；同一分支只跑最新一次。
+- 新增签名脚手架：Android 读 `android/key.properties`，有正式 keystore 就签正式包、没有就退回 debug 签名；iOS 在配置好证书 Secrets 后产出可安装的 `.ipa`，缺 Secrets 时自动降级不报错。
+- 新增 `publish-release` job：打 `v*` 标签（或手动触发）时把安装包汇总发布到 GitHub Releases，直接点就能下载，并自动生成「选哪个 apk」的说明。
+- 文档补齐：README 增加「移动端打包（Android / iOS）」小节，含产物表、签名 Secrets 清单、发版方式与本文件。
+
+## [1.0.0] - 2026-11-23
+
+首个可安装版本：
+
+- 首页：轮播图、一级分类快捷入口（点击切到分类页并选中同一分类）、热门推荐、特惠推荐、推荐商品分页加载。
+- 分类：左侧一级分类与右侧二级分类、推荐商品联动，支持从外部指定选中项。
+- 商品详情：图片轮播、规格（SKU）选择、加入购物车、猜你喜欢。
+- 购物车：登录态联动、数量增减、删除、结算进入订单确认。
+- 订单确认：收货地址、商品清单、金额明细、提交下单。
+- 订单：列表（全部 / 待付款 / 待发货 / 待收货 / 待评价）、订单详情、删除订单、再次购买。
+- 我的：登录与退出、个人资料（昵称 / 性别 / 生日 / 职业，只提交改动字段）、会员权益页、我的收藏、我的足迹（本地存储，最多 50 条）、客服中心、订单状态角标。
+- 全局：统一主题色板与圆角 / 间距常量、Dio 拦截器统一注入 token 与错误提示、支持深链（`/goods/list`、`/orders`、`/profile` 等可直接打开）、12 个页面级 widget 测试共 187 个用例。

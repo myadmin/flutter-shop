@@ -450,8 +450,8 @@ flutter test --coverage
 
 | 触发方式 | 效果 |
 | --- | --- |
-| `git tag v1.0.0 && git push origin v1.0.0` | 用该 tag 建 Release，标题 `HM Shop v1.0.0` |
-| Actions 页手动 Run workflow | 勾选 `publish_release`（默认勾上），tag 留空则用 `v1.0.0-build.<run number>`，也可自己填 |
+| `git tag v1.0.1 && git push origin v1.0.1` | 用该 tag 建 Release，标题 `HM Shop v1.0.1` |
+| Actions 页手动 Run workflow | 勾选 `publish_release`（默认勾上），tag 留空则用 `v<包内版本号>-build.<run number>`（如 `v1.0.1-build.12`），也可自己填 |
 | push 到 `master` / PR | 只产出 Actions Artifacts，不发 Release（避免每次提交都刷一条 release） |
 
 细节：
@@ -461,7 +461,12 @@ flutter test --coverage
 - 这个 job 需要 `contents: write` 权限（workflow 里已显式声明）。**注意仓库级开关**：Settings → Actions → General → Workflow permissions 如果是「Read repository contents」，`GITHUB_TOKEN` 会被钉死成只读，工作流里再怎么声明 `permissions: contents: write` 也提不上去，`gh release create` 直接 403。本仓库已调整为「Read and write permissions」；
 - 两个容易踩的实现细节，都已在 workflow 里处理：① `actions/download-artifact` 下载时会**保留上传时的相对路径**（`flutter-apk/`、`bundle/release/`），所以收集文件必须用 `find dist -type f -name '*.apk'`，用 `dist/*.apk` 只能匹配到平铺的 `Runner.app.zip`；② `gh release` 必须在 git 仓库里执行，job 里要先 `actions/checkout`（或者给 gh 传 `--repo owner/name`），否则报 `fatal: not a git repository`。
 
+#### 版本号与更新日志
 
+- 版本号的唯一来源是 `pubspec.yaml` 的 `version: 1.0.1+2`：`+` 前是 `versionName`、后是 `versionCode`，两者都会写进 APK / AAB / IPA。
+- 改版本号时同步在 [CHANGELOG.md](CHANGELOG.md) 顶部补一段 `## [1.0.1] - YYYY-MM-DD`，写清这个版本改了什么。
+- 打 `v1.0.1` 标签后，`publish-release` 会用 `awk` 从 CHANGELOG 里抽出该版本段落，放在 Release 说明开头作为「本次更新」，后面再接安装包表格与安装提示。段落缺失时只在日志里打一条 notice，不会阻断发布。
+- 手动触发时 tag 的缺省值也来自包内版本号（`v1.0.1-build.<run number>`），不再是写死的 `v1.0.0`。
 
 ## 当前状态与已知问题
 

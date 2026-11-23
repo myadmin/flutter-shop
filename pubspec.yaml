@@ -2,7 +2,9 @@ name: hm_shop
 description: "基于 Flutter 的商城示例应用（首页 / 商品详情 / 订单确认 / 登录 / 我的）。"
 publish_to: 'none'
 
-version: 1.0.0+1
+# 版本号格式：<versionName>+<versionCode>。修改后同步 CHANGELOG.md，
+# 打 v<versionName> 标签即触发 Build Mobile 打包并把 CHANGELOG 对应段落写进 Release 说明。
+version: 1.0.1+2
 
 environment:
   sdk: ^3.13.7

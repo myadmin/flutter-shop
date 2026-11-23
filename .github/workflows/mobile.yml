@@ -301,12 +301,17 @@ jobs:
           INPUT_TAG: ${{ inputs.release_tag }}
         run: |
           set -euo pipefail
+          # 版本号以 pubspec.yaml 为唯一来源，避免 tag 与包内 versionName 不一致
+          APP_VERSION=$(sed -n 's/^version:[[:space:]]*//p' pubspec.yaml | head -1 | tr -d '\r')
+          APP_VERSION_NAME="${APP_VERSION%%+*}"
+          echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
+          echo "APP_VERSION_NAME=$APP_VERSION_NAME" >> "$GITHUB_ENV"
           TAG="${INPUT_TAG:-}"
           if [ -z "$TAG" ]; then
             if [[ "$GITHUB_REF" == refs/tags/* ]]; then
               TAG="${GITHUB_REF#refs/tags/}"
             else
-              TAG="v1.0.0-build.${GITHUB_RUN_NUMBER}"
+              TAG="v${APP_VERSION_NAME}-build.${GITHUB_RUN_NUMBER}"
             fi
           fi
           echo "TAG=$TAG" >> "$GITHUB_ENV"
@@ -329,7 +334,28 @@ jobs:
             IOS_SIGNED="包含签名 IPA，可直接安装到描述文件里列出的设备"
           fi
 
-          cat > release-notes.md <<NOTES
+          # 从 CHANGELOG.md 里抽出「## [1.0.1] - 2026-11-23」这种段落，作为 Release 说明的「本次更新」；
+          # 抽不到（比如补丁版本没写日志）就整体省略，不阻断发布
+          VERSION_NAME="${APP_VERSION_NAME:-}"
+          CHANGELOG_SECTION=""
+          if [ -n "$VERSION_NAME" ] && [ -f CHANGELOG.md ]; then
+            CHANGELOG_SECTION=$(awk -v ver="$VERSION_NAME" '
+              index($0, "## [" ver "]") == 1 { inside = 1; next }
+              inside && index($0, "## [") == 1 { exit }
+              inside { print }
+            ' CHANGELOG.md | tr -d '\r' | cat -s | sed -e '/./,$!d')
+          fi
+          if [ -z "$CHANGELOG_SECTION" ]; then
+            echo "::notice::CHANGELOG.md 里没有 ${VERSION_NAME} 的段落，Release 说明只包含安装包信息"
+          fi
+
+          { # 组内输出整体重定向：先「本次更新」，再安装包说明
+            if [ -n "$CHANGELOG_SECTION" ]; then
+              echo "## 本次更新（${VERSION_NAME}）"
+              echo
+              printf '%s\n\n' "$CHANGELOG_SECTION"
+            fi
+            cat <<NOTES
           ## 安装包
 
           | 文件 | 适用场景 |
@@ -350,8 +376,9 @@ jobs:
           2. 首次安装需要在系统设置里允许「安装未知来源应用」；
           3. 如果手机是 arm64（2016 年以后的机型基本都是），装 \`arm64-v8a\` 那个即可，体积也最小。
 
-          包内版本号见 \`pubspec.yaml\` 的 \`version\` 字段。
+          包内版本号：\`${APP_VERSION}\`（来自 \`pubspec.yaml\` 的 \`version\` 字段）。
           NOTES
+          } > release-notes.md
 
       - name: Upload assets to release
         env:

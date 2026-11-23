@@ -46,6 +46,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # 先检查签名 Secrets 是否齐全：缺 iOS 签名时直接跳过签名 job，
+  # 不再去排队等 macOS runner（排队排不到会被 GitHub 以 cancelled 收场，把整次运行染红）
+  detect-signing:
+    name: Detect signing secrets
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      android_signed: ${{ steps.check.outputs.android_signed }}
+      ios_signed: ${{ steps.check.outputs.ios_signed }}
+    steps:
+      - name: Check secrets
+        id: check
+        env:
+          HAS_ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+          HAS_IOS_SIGNING: ${{ secrets.IOS_CERTIFICATE_BASE64 != '' && secrets.IOS_PROVISIONING_PROFILE_BASE64 != '' && secrets.IOS_TEAM_ID != '' }}
+        run: |
+          set -euo pipefail
+          echo "android_signed=${HAS_ANDROID_KEYSTORE}" >> "$GITHUB_OUTPUT"
+          echo "ios_signed=${HAS_IOS_SIGNING}" >> "$GITHUB_OUTPUT"
+          echo "::notice::Android release 签名：${HAS_ANDROID_KEYSTORE}；iOS 签名：${HAS_IOS_SIGNING}"
+
   build-android:
     name: Android APK / AAB
     runs-on: ubuntu-latest
@@ -168,8 +189,12 @@ jobs:
 
   build-ios-signed:
     name: iOS IPA (signed)
-    # 签名包只在打标签或手动触发时构建：平时 push 不浪费 macOS runner
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
+    needs: [ detect-signing ]
+    # 签名包只在「打标签或手动触发」且「三个签名 Secret 齐全」时构建：
+    # 缺 Secret 时连 runner 都不申请，避免白占 macOS runner 排队名额（排不到会 cancelled，把整次运行染红）
+    if: |
+      needs.detect-signing.outputs.ios_signed == 'true' &&
+      (github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/'))
     runs-on: macos-15
     timeout-minutes: 60
     env:
@@ -275,7 +300,12 @@ jobs:
     needs: [ build-android, build-ios ]
     # 打 v* 标签自动发版；也可以在 Actions 页手动触发并勾选 publish_release
     # 注意：inputs.publish_release 是 boolean 类型，不能跟字符串 'true' 比较（会被转成 NaN 而恒为 false）
-    if: startsWith(github.ref, 'refs/tags/') || inputs.publish_release == true
+    # always() + 只要求 Android 成功：macOS runner 排队排不到时 iOS job 会 cancelled，
+    # 这时仍要把 Android 产物发出去，而不是让整次发布 skip 掉
+    if: |
+      always() &&
+      needs.build-android.result == 'success' &&
+      (startsWith(github.ref, 'refs/tags/') || inputs.publish_release == true)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -333,6 +363,11 @@ jobs:
           if [ "${HAS_IOS_SIGNING:-false}" = "true" ]; then
             IOS_SIGNED="包含签名 IPA，可直接安装到描述文件里列出的设备"
           fi
+          # macOS runner 排队排不到时 iOS job 会被 cancelled，这里如实标注产物是否缺失
+          IOS_UNSIGNED="未包含（macOS runner 本次未成功，可重跑 Build Mobile 后重新上传）"
+          if find dist -name 'Runner.app.zip' | grep -q .; then
+            IOS_UNSIGNED="已包含"
+          fi
 
           # 从 CHANGELOG.md 里抽出「## [1.0.1] - 2026-11-23」这种段落，作为 Release 说明的「本次更新」；
           # 抽不到（比如补丁版本没写日志）就整体省略，不阻断发布
@@ -369,6 +404,7 @@ jobs:
 
           - Android 签名：${ANDROID_SIGNING}
           - iOS：${IOS_SIGNED}
+          - iOS 未签名产物（Runner.app.zip）：${IOS_UNSIGNED}
 
           ## 安装提示
 

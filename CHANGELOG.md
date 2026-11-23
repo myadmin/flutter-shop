@@ -1,8 +1,18 @@
 # 更新日志
 
-版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.6+7` 里 `1.0.6` 是 `versionName`，`7` 是 `versionCode`）。
+版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.7+8` 里 `1.0.7` 是 `versionName`，`8` 是 `versionCode`）。
 
 打 `v*` 标签时，[Build Mobile](.github/workflows/mobile.yml) 会把这里对应版本的「本次更新」自动写进 GitHub Release 说明，所以新增版本时记得在本文件补一段。
+
+## [1.0.7] - 2026-11-24
+
+修掉发版流水线「动不动就变红、Release 被 skip」的问题：
+
+- 新增 `detect-signing` job：先判断签名 Secrets 是否齐全。缺 iOS 签名时 `build-ios-signed` 整个 job 直接 skip，不再去申请 macOS runner——之前 v1.0.5 / v1.0.6 的 `Build Mobile` 都是因为这个 job 排队排不到被 `cancelled`（`Due to capacity constraints, jobs targeting macOS arm64 runners may experience longer queue times.`）而把整次运行染红。
+- `publish-release` 改为 `always() && build-android == success`：iOS job 被 cancelled 时仍发布 Android 产物，不再让 `Publish GitHub Release` 跟着 skip（v1.0.6 首次运行就是这样没发出 Release 的）。
+- Release 说明新增一行「iOS 未签名产物（Runner.app.zip）：已包含 / 未包含」，缺产物时如实标注并提示重跑。
+- README 补充 macOS runner 容量限制的说明与两层兜底逻辑、以及 `detect-signing` 这一行。
+- 只改 CI 与文档，未改动应用代码；版本号提升到 `1.0.7+8`。
 
 ## [1.0.6] - 2026-11-23
 

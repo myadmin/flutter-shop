@@ -4,7 +4,7 @@ publish_to: 'none'
 
 # 版本号格式：<versionName>+<versionCode>。修改后同步 CHANGELOG.md，
 # 打 v<versionName> 标签即触发 Build Mobile 打包并把 CHANGELOG 对应段落写进 Release 说明。
-version: 1.0.6+7
+version: 1.0.7+8
 
 environment:
   sdk: ^3.13.7

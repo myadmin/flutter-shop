@@ -486,15 +486,23 @@ find build/web -name '*.symbols' -print -delete
 
 | Job | Runner | 产物 |
 | --- | --- | --- |
+| `detect-signing` | `ubuntu-latest` | 先判断签名 Secrets 是否齐全，供后面的 job 决定跑不跑（几秒完成） |
 | `build-android` | `ubuntu-latest` + JDK 17 | `app-arm64-v8a-release.apk`（18.4 MB）、`app-armeabi-v7a-release.apk`（15.9 MB）、`app-x86_64-release.apk`（19.8 MB）、`app-release.aab`（51.0 MB） |
 | `build-ios` | `macos-15` | 未签名的 `Runner.app.zip`（只验证能否编译） |
-| `build-ios-signed` | `macos-15` | 配好签名 Secrets 后产出的可安装 `Runner.ipa`（仅打标签 / 手动触发时运行） |
+| `build-ios-signed` | `macos-15` | 配好签名 Secrets 后产出的可安装 `Runner.ipa`（仅打标签 / 手动触发、且 Secrets 齐全时运行） |
 
 触发方式是 push 到 `master`、打 `v*` 标签或手动 `workflow_dispatch`；同一分支只跑最新一次（`concurrency` 取消排队中的旧任务）。三点前提必须知道：
 
 1. **Gradle 必须 ≥ 9.3.1。** Flutter 3.47.9 模板里的 AGP 是 `9.1.0`，它在 apply 阶段就会校验 Gradle 版本，用 8.x 会直接失败（`Minimum supported Gradle version is 9.3.1. Current version is 8.14.`）。`android/gradle/wrapper/gradle-wrapper.properties` 已指向腾讯镜像的 `gradle-9.3.1-all.zip`（换成官方 `services.gradle.org` 同理，镜像只是国内下载快）。另外 `android/gradle.properties` 的 JVM 参数从 `-Xmx8G` 降到 `-Xmx4G`、并关掉 `kotlin.incremental`（Windows 上会遇到 `Could not close incremental caches` 导致 release 构建失败，关掉更稳）。
 2. **签名材料全部走 Secrets，缺了自动降级。** `android/app/build.gradle.kts` 会读 `android/key.properties`：文件存在就用 release 签名（可上架），不存在就退回 debug 签名（可安装、不能上架）。CI 上只要配了 `ANDROID_KEYSTORE_BASE64` 就会自动写出这个文件，构建后再用 `apksigner --print-certs` 把实际证书打印出来，避免「以为配了正式签名、其实还在走 debug」这种静默错误。本地配置方式见 `android/key.properties.example`（`key.properties`、`*.jks`、`*.keystore` 都已在 `.gitignore` 里）。
 3. **iOS 出 IPA 必须有 Apple 开发者账号。** 项目使用 Swift Package Manager（没有 `Podfile`），因此不需要 `pod install`；`build-ios` 走 `--no-codesign` 只验证编译，`build-ios-signed` 才会导入证书与描述文件、给工程补上 `DEVELOPMENT_TEAM`，再执行 `flutter build ipa`。
+
+**macOS runner 排队排不到会以 `cancelled` 收场**（annotation 原文：`Due to capacity constraints, jobs targeting macOS arm64 runners may experience longer queue times.`），这会把整次运行染红。为此 `mobile.yml` 做了两层兜底：
+
+- `detect-signing` 先判断签名 Secrets 是否齐全，**缺 iOS 签名时 `build-ios-signed` 整个 job 直接 skip**，不再去申请 macOS runner 白占排队名额（此前 v1.0.5 / v1.0.6 都是因为这个 job 被 cancelled 导致运行失败）；
+- `publish-release` 改成 `always()` + 只要求 `build-android` 成功，iOS job 被 cancelled 时**照样发布 Android 产物**（说明里会如实标注「iOS 未签名产物：未包含」），而不是整次发布 skip 掉。
+
+真要补 iOS 产物，在 Actions 页对该次 `Build Mobile` 点 `Re-run failed jobs` 即可（rerun 会重新申请 macOS runner）。
 
 #### 应用名与图标
 
@@ -521,11 +529,11 @@ find build/web -name '*.symbols' -print -delete
 
 另外两个可选 Repository variable（不是 Secret）：`IOS_BUNDLE_ID`（要替换成的 Bundle Identifier，缺省沿用 `com.example.hmShop`）、`IOS_EXPORT_METHOD`（`ad-hoc` 装指定设备，`app-store-connect` 传 App Store，缺省 `ad-hoc`）。
 
-本机实测（Windows + Flutter 3.47.9 + AGP 9.1.0 / Gradle 9.3.1）：干净检出后 `flutter build apk --release` 52.3 MB、`--split-per-abi` 三个包如上表、`flutter build appbundle --release` 51.0 MB，全部构建成功；把测试 keystore 放进 `android/app/` 后 `apksigner verify --print-certs` 输出 `CN=HM Shop Test`，删掉 `key.properties` 重新构建则回到 `CN=Android Debug`——有/无密钥两条路径都验证过。CI 上也验证了降级路径：没配 Secrets 时 Android job 的「Decode release keystore」显示 skipped、「Verify APK signature」打印出 `CN=Android Debug`，iOS 签名 job 在 push 场景下整个 job 是 skipped。macOS 签名链路无法在本机验证，配上 Secrets 打 `v*` 标签即可验证。
+本机实测（Windows + Flutter 3.47.9 + AGP 9.1.0 / Gradle 9.3.1）：干净检出后 `flutter build apk --release` 52.3 MB、`--split-per-abi` 三个包如上表、`flutter build appbundle --release` 51.0 MB，全部构建成功；把测试 keystore 放进 `android/app/` 后 `apksigner verify --print-certs` 输出 `CN=HM Shop Test`，删掉 `key.properties` 重新构建则回到 `CN=Android Debug`——有/无密钥两条路径都验证过。CI 上也验证了降级路径：没配 Secrets 时 Android job 的「Decode release keystore」显示 skipped、「Verify APK signature」打印出 `CN=Android Debug`，iOS 签名 job 整个是 skipped（`detect-signing` 判定缺 Secret，连 macOS runner 都不申请）。macOS 签名链路无法在本机验证，配上 Secrets 打 `v*` 标签即可验证。
 
 #### 发布到 GitHub Releases
 
-`publish-release` job 会把 `build-android`、`build-ios`（以及配了签名时的 `build-ios-signed`）的产物汇总成一个 Release，并自动生成说明（选哪个 apk、签名状态如何）：
+`publish-release` job 会把 `build-android`、`build-ios`（以及配了签名时的 `build-ios-signed`）的产物汇总成一个 Release，并自动生成说明（选哪个 apk、签名状态如何）。它的执行条件是 `always() && build-android == success`——iOS job 因为 macOS runner 排队被 cancelled 时不会拖累发布，缺的产物会在说明里标注：
 
 | 触发方式 | 效果 |
 | --- | --- |

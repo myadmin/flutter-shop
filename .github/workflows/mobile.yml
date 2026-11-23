@@ -286,6 +286,9 @@ jobs:
       HAS_IOS_SIGNING: ${{ secrets.IOS_CERTIFICATE_BASE64 != '' && secrets.IOS_PROVISIONING_PROFILE_BASE64 != '' && secrets.IOS_TEAM_ID != '' }}
 
     steps:
+      # gh release 需要在 git 仓库里运行（否则会报 fatal: not a git repository），先 checkout
+      - uses: actions/checkout@v4
+
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -355,45 +358,36 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -eo pipefail
-          shopt -s nullglob
-          FILES=(dist/*.apk dist/*.aab dist/*.zip dist/*.ipa)
+          # download-artifact 会保留上传时的相对路径（flutter-apk/、bundle/release/ 等），
+          # 所以必须用 find 递归找，`dist/*.apk` 这种通配只能匹配到平铺的文件
+          mapfile -t FILES < <(find dist -type f \( -name '*.apk' -o -name '*.aab' -o -name '*.zip' -o -name '*.ipa' \) | sort)
           if [ ${#FILES[@]} -eq 0 ]; then
-            echo "::error::没有找到可发布的产物，检查上游 job 是否成功"
+            echo "::error::没有找到可发布的产物，检查上游 job 是否成功（dist 内容见日志）"
+            find dist -type f | head -20
             exit 1
           fi
           printf '待上传文件：\n'
           printf '  %s\n' "${FILES[@]}"
 
-          # 先确认 token 真的有写权限：否则 gh 只会给出一个难以定位的 403
-          PUSH_PERM=$(curl -sS -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}" | jq -r '.permissions.push // false')
-          echo "token 对仓库的 permissions.push = ${PUSH_PERM}"
-          if [ "$PUSH_PERM" != "true" ]; then
-            echo "::error::GITHUB_TOKEN 没有写权限（permissions.push=${PUSH_PERM}），创建 Release 会被拒绝。请到仓库 Settings → Actions → General → Workflow permissions 选择「Read and write permissions」，然后重跑本工作流。"
-            exit 1
-          fi
-
-          if gh release view "$TAG" > /dev/null 2>&1; then
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
             echo "release ${TAG} 已存在，改为覆盖上传资产"
-            if ! OUT=$(gh release upload "$TAG" "${FILES[@]}" --clobber 2>&1); then
-              echo "::error::gh release upload 失败：$(echo "$OUT" | tr '\n' ' ' | cut -c1-600)"
+            OUT=$(gh release upload "$TAG" "${FILES[@]}" --clobber --repo "$GITHUB_REPOSITORY" 2>&1) || {
+              echo "::error::gh release upload 失败：$(echo "$OUT" | tr '\n' ' ' | cut -c1-800)"
               exit 1
-            fi
+            }
           else
             TARGET_ARGS=()
             if [ "$TAG_EXISTS" != "true" ]; then
               TARGET_ARGS=(--target "$GITHUB_SHA")
             fi
-            if ! OUT=$(gh release create "$TAG" "${FILES[@]}" \
+            OUT=$(gh release create "$TAG" "${FILES[@]}" \
+              --repo "$GITHUB_REPOSITORY" \
               --title "HM Shop ${TAG}" \
               --notes-file release-notes.md \
-              "${TARGET_ARGS[@]}" 2>&1); then
-              echo "::error::gh release create 失败：$(echo "$OUT" | tr '\n' ' ' | cut -c1-600)"
+              "${TARGET_ARGS[@]}" 2>&1) || {
+              echo "::error::gh release create 失败：$(echo "$OUT" | tr '\n' ' ' | cut -c1-800)"
               exit 1
-            fi
+            }
           fi
-          echo "::notice::Release 已发布：https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
-
-      - name: Report release url
-        run: echo "::notice::安装包已发布：https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
+          echo "::notice::安装包已发布：https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
 

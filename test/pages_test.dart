@@ -132,6 +132,58 @@ void main() {
       expect(find.text('购物车服务异常'), findsOneWidget);
       expect(find.text('重新加载'), findsOneWidget);
     });
+
+    testWidgets('点击商品进入商品详情页', (tester) async {
+      await login();
+      installMock((options) => envelope([cartItemJson()]));
+
+      final recorder = _RouteRecorder();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: CartView(isActive: true, onGoShopping: () {})),
+          navigatorObservers: [recorder],
+          onGenerateRoute: (settings) => MaterialPageRoute<void>(
+            settings: settings,
+            builder: (_) => const Scaffold(body: SizedBox.shrink()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('测试商品'));
+      await tester.pumpAndSettle();
+
+      // 购物车条目的 id 就是商品 id，详情页用它拼路由
+      expect(recorder.pushedNames, contains('/goods?id=goods-1'));
+    });
+
+    testWidgets('失效商品点击不跳转，只提示已失效', (tester) async {
+      await login();
+      installMock((options) => envelope([cartItemJson(isEffective: false)]));
+
+      final recorder = _RouteRecorder();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: CartView(isActive: true, onGoShopping: () {})),
+          navigatorObservers: [recorder],
+          onGenerateRoute: (settings) => MaterialPageRoute<void>(
+            settings: settings,
+            builder: (_) => const Scaffold(body: SizedBox.shrink()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('测试商品'));
+      await tester.pumpAndSettle();
+
+      // 初始路由本身也会被记为 '/'，这里只关心有没有跳去详情页
+      expect(
+        recorder.pushedNames.where((name) => name.startsWith('/goods')),
+        isEmpty,
+      );
+      expect(find.text('商品已失效，无法查看详情'), findsOneWidget);
+    });
   });
 
   group('登录页', () {
@@ -240,4 +292,16 @@ void main() {
       expect(adapter.requests.length, greaterThan(before));
     });
   });
+}
+
+/// 记录被 push 的路由名，用来断言页面跳转目标
+class _RouteRecorder extends NavigatorObserver {
+  final List<String> pushedNames = <String>[];
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    final name = route.settings.name;
+    if (name != null) pushedNames.add(name);
+    super.didPush(route, previousRoute);
+  }
 }

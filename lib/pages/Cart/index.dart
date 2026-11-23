@@ -302,6 +302,24 @@ class _CartViewState extends State<CartView> {
     );
   }
 
+  /// 点击条目进入商品详情页
+  ///
+  /// 失效商品（下架 / 无货）没有可展示的详情，只给一句提示；
+  /// 从详情页返回后刷新一次购物车，避免加购、库存变化后列表还是旧的。
+  Future<void> _openGoodsDetail(CartItem item) async {
+    if (!item.isEffective) {
+      ToastUtils.showToast(context, '商品已失效，无法查看详情');
+      return;
+    }
+    if (item.id.isEmpty) {
+      ToastUtils.showToast(context, '商品信息缺失，请稍后重试');
+      return;
+    }
+    await Navigator.pushNamed(context, AppRoutes.goods(item.id));
+    if (!mounted) return;
+    await _loadCart();
+  }
+
   @override
   Widget build(BuildContext context) {
     // 登录态变化（含 401 失效）时自动重绘为空购物车 / 未登录态
@@ -416,6 +434,7 @@ class _CartViewState extends State<CartView> {
               return HmCartTile(
                 item: item,
                 busy: _pending.contains(item.skuId),
+                onTap: () => _openGoodsDetail(item),
                 onSelectedChanged: (value) => _toggleSelected(item, value),
                 onCountChanged: (count) => _changeCount(item, count),
                 onDelete: () => _deleteItem(item),

@@ -7,6 +7,8 @@ import 'package:hm_shop/models/cart.dart';
 /// 购物车条目卡片
 ///
 /// 从左到右依次是：勾选框、商品图、商品信息（名称 / 规格 / 价格 / 数量步进器）。
+/// 点击商品图或商品信息会进入商品详情页（[onTap]），勾选框、删除与数量步进器
+/// 各自处理自己的点击，不会误触发跳转。
 /// 失效商品（下架或无货）会展示「商品已失效」并禁用勾选与数量操作。
 class HmCartTile extends StatelessWidget {
   final CartItem item;
@@ -17,6 +19,9 @@ class HmCartTile extends StatelessWidget {
 
   final VoidCallback onDelete;
 
+  /// 点击商品图 / 商品信息时的回调（进入详情页），为空则不可点
+  final VoidCallback? onTap;
+
   /// 该条目有请求在途时禁用交互
   final bool busy;
 
@@ -26,6 +31,7 @@ class HmCartTile extends StatelessWidget {
     required this.onSelectedChanged,
     required this.onCountChanged,
     required this.onDelete,
+    this.onTap,
     this.busy = false,
   });
 
@@ -48,20 +54,37 @@ class HmCartTile extends StatelessWidget {
                 ? (value) => onSelectedChanged(value ?? false)
                 : null,
           ),
-          ClipRRect(
-            borderRadius: const BorderRadius.all(
-              Radius.circular(AppRadius.image),
-            ),
-            child: AppNetworkImage(
-              url: item.picture,
-              width: _imageSize,
-              height: _imageSize,
-              decodeWidth: _imageSize,
-              placeholderIconSize: 24,
+          Expanded(
+            // 只有图片与文字区域可点，勾选框 / 步进器 / 删除各自独占手势
+            child: Material(
+              type: MaterialType.transparency,
+              child: InkWell(
+                onTap: onTap,
+                borderRadius: const BorderRadius.all(
+                  Radius.circular(AppRadius.image),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.all(
+                        Radius.circular(AppRadius.image),
+                      ),
+                      child: AppNetworkImage(
+                        url: item.picture,
+                        width: _imageSize,
+                        height: _imageSize,
+                        decodeWidth: _imageSize,
+                        placeholderIconSize: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(child: _buildInfo(enabled)),
+                  ],
+                ),
+              ),
             ),
           ),
-          const SizedBox(width: 10),
-          Expanded(child: _buildInfo(enabled)),
         ],
       ),
     );

@@ -1,17 +1,22 @@
 # 移动端打包工作流：
 # - Android：ubuntu runner 上产出 release APK（按 ABI 拆分）+ AAB
-# - iOS：macOS runner 上产出「未签名」的 Runner.app 压缩包
+# - iOS：macOS runner 上产出「未签名」的 Runner.app 压缩包；配好签名 Secrets 后
+#   打标签或手动触发还会额外产出可安装的 IPA
 #
-# 两个 job 相互独立，任一失败不影响另一个；产物都可从 Actions 运行页面的
-# Artifacts 区下载。
+# 各 job 相互独立，任一失败不影响其它 job；产物都在 Actions 运行页的 Artifacts 区下载。
 #
-# 关于签名：
-# - Android 走的是 `android/app/build.gradle.kts` 里的 debug 签名配置，
-#   CI 不需要任何密钥就能产出**可安装**的 APK；但要上架应用商店必须换成
-#   正式签名，届时把 keystore 用 base64 存进 Secrets，再在构建前解码。
-# - iOS 未配置 DEVELOPMENT_TEAM，因此只能做无签名构建（--no-codesign）：
-#   产物无法装到真机，仅用于验证「iOS 端能编译通过」。要产出可安装的
-#   IPA，需要 Apple 开发者账号的证书 + 描述文件 + 设备 UDID，见 README。
+# 需要的 Secrets（都是可选的，没配就自动降级）：
+#   ANDROID_KEYSTORE_BASE64      release keystore 的 base64（`base64 -w0 upload-keystore.jks`）
+#   ANDROID_STORE_PASSWORD       密钥库口令
+#   ANDROID_KEY_PASSWORD         密钥口令
+#   ANDROID_KEY_ALIAS            密钥别名，缺省 upload
+#   IOS_CERTIFICATE_BASE64       发布证书 .p12 的 base64
+#   IOS_CERTIFICATE_PASSWORD     .p12 导出时的口令
+#   IOS_PROVISIONING_PROFILE_BASE64  描述文件 .mobileprovision 的 base64
+#   IOS_TEAM_ID                  Apple 开发者 Team ID（10 位）
+# 可选变量（Repository variables，不是 Secret）：
+#   IOS_BUNDLE_ID                要替换成的 Bundle Identifier，缺省沿用 com.example.hmShop
+#   IOS_EXPORT_METHOD            导出方式，ad-hoc / app-store-connect，缺省 ad-hoc
 
 name: Build Mobile
 
@@ -58,6 +63,33 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Decode release keystore
+        # 有 ANDROID_KEYSTORE_BASE64 才写 key.properties；没有就跳过，构建自动退回 debug 签名
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || 'upload' }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          {
+            echo "storePassword=$STORE_PASSWORD"
+            echo "keyPassword=$KEY_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "storeFile=upload-keystore.jks"
+          } > android/key.properties
+          echo "::notice::已写入 android/key.properties，本次使用 release 签名"
+
+      - name: Report signing config
+        run: |
+          if [ -f android/key.properties ]; then
+            echo "::notice::签名配置：release（可上架应用商店）"
+          else
+            echo "::notice::签名配置：debug（可安装，不能上架；配置 ANDROID_KEYSTORE_BASE64 后自动切换）"
+          fi
+
       - name: Build release APKs (split per ABI)
         # 拆成 arm64-v8a / armeabi-v7a / x86_64 三个包，单个体积比通用包小很多
         run: flutter build apk --release --split-per-abi
@@ -65,6 +97,13 @@ jobs:
       - name: Build release App Bundle
         # 上传 Google Play 需要 AAB 而不是 APK
         run: flutter build appbundle --release
+
+      - name: Verify APK signature
+        # 把实际签名证书打出来，避免「以为配了正式签名、其实还走 debug」这种静默错误
+        run: |
+          set -euo pipefail
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort | tail -1)
+          "$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-arm64-v8a-release.apk | head -3
 
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
@@ -110,5 +149,105 @@ jobs:
         with:
           name: hm-shop-ios-unsigned
           path: build/ios/iphoneos/Runner.app.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  build-ios-signed:
+    name: iOS IPA (signed)
+    # 签名包只在打标签或手动触发时构建：平时 push 不浪费 macOS runner
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Notice when signing secrets are missing
+        if: ${{ secrets.IOS_CERTIFICATE_BASE64 == '' || secrets.IOS_PROVISIONING_PROFILE_BASE64 == '' || secrets.IOS_TEAM_ID == '' }}
+        run: echo "::notice::未配置 iOS 签名 Secrets（IOS_CERTIFICATE_BASE64 / IOS_PROVISIONING_PROFILE_BASE64 / IOS_TEAM_ID），本次跳过签名构建。"
+
+      - name: Set up Flutter
+        if: ${{ secrets.IOS_CERTIFICATE_BASE64 != '' && secrets.IOS_PROVISIONING_PROFILE_BASE64 != '' && secrets.IOS_TEAM_ID != '' }}
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          cache: true
+
+      - name: Install dependencies
+        if: ${{ secrets.IOS_CERTIFICATE_BASE64 != '' && secrets.IOS_PROVISIONING_PROFILE_BASE64 != '' && secrets.IOS_TEAM_ID != '' }}
+        run: flutter pub get
+
+      - name: Install certificate and provisioning profile
+        if: ${{ secrets.IOS_CERTIFICATE_BASE64 != '' && secrets.IOS_PROVISIONING_PROFILE_BASE64 != '' && secrets.IOS_TEAM_ID != '' }}
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 16)"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+
+          printf '%s' "$CERTIFICATE_BASE64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          # 允许 codesign 在无人值守环境下访问私钥
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" > /dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+
+          PROFILE_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILE_DIR"
+          printf '%s' "$PROFILE_BASE64" | base64 --decode > "$RUNNER_TEMP/profile.mobileprovision"
+          cp "$RUNNER_TEMP/profile.mobileprovision" "$PROFILE_DIR/profile.mobileprovision"
+
+          PROFILE_NAME=$(security cms -D -i "$RUNNER_TEMP/profile.mobileprovision" | plutil -extract Name raw -o - -)
+          echo "PROFILE_NAME=$PROFILE_NAME" >> "$GITHUB_ENV"
+          echo "::notice::已导入证书与描述文件：$PROFILE_NAME"
+
+      - name: Build signed IPA
+        if: ${{ secrets.IOS_CERTIFICATE_BASE64 != '' && secrets.IOS_PROVISIONING_PROFILE_BASE64 != '' && secrets.IOS_TEAM_ID != '' }}
+        env:
+          TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          BUNDLE_ID: ${{ vars.IOS_BUNDLE_ID }}
+          EXPORT_METHOD: ${{ vars.IOS_EXPORT_METHOD || 'ad-hoc' }}
+        run: |
+          set -euo pipefail
+
+          # 工程里没有 DEVELOPMENT_TEAM，自动签名必须补上；这一步只改行内构建配置，不动代码
+          /usr/bin/sed -i '' "s/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Automatic; DEVELOPMENT_TEAM = ${TEAM_ID};/g" \
+            ios/Runner.xcodeproj/project.pbxproj
+          if [ -n "${BUNDLE_ID}" ]; then
+            /usr/bin/sed -i '' "s/PRODUCT_BUNDLE_IDENTIFIER = com.example.hmShop;/PRODUCT_BUNDLE_IDENTIFIER = ${BUNDLE_ID};/g" \
+              ios/Runner.xcodeproj/project.pbxproj
+          fi
+
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>${EXPORT_METHOD}</string>
+            <key>teamID</key>
+            <string>${TEAM_ID}</string>
+            <key>signingStyle</key>
+            <string>automatic</string>
+            <key>stripSwiftSymbols</key>
+            <true/>
+          </dict>
+          </plist>
+          PLIST
+
+          flutter build ipa --release --export-options-plist="$RUNNER_TEMP/ExportOptions.plist"
+
+      - name: Upload IPA
+        if: ${{ secrets.IOS_CERTIFICATE_BASE64 != '' && secrets.IOS_PROVISIONING_PROFILE_BASE64 != '' && secrets.IOS_TEAM_ID != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: hm-shop-ios-ipa
+          path: build/ios/ipa/*.ipa
           if-no-files-found: error
           retention-days: 14

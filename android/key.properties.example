@@ -1,0 +1,13 @@
+# 正式签名的配置模板：复制成 android/key.properties 后填入自己的值。
+# key.properties、*.jks、*.keystore 都已被 android/.gitignore 忽略，不会进版本库。
+#
+# 生成密钥库（一次即可，把它备份好，丢了就没法给已上架的包升级）：
+#   keytool -genkey -v -keystore upload-keystore.jks -storetype JKS \
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+# 把 upload-keystore.jks 放到 android/app/ 下；storeFile 相对 android/app 解析，
+# 因此这里只写文件名。没有这个文件时构建会自动退回 debug 签名（可安装、不能上架）。
+storePassword=换成你的密钥库口令
+keyPassword=换成你的密钥口令
+keyAlias=upload
+storeFile=upload-keystore.jks

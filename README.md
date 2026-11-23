@@ -488,7 +488,7 @@ find build/web -name '*.symbols' -print -delete
 | --- | --- | --- |
 | `detect-signing` | `ubuntu-latest` | 先判断签名 Secrets 是否齐全，供后面的 job 决定跑不跑（几秒完成） |
 | `build-android` | `ubuntu-latest` + JDK 17 | `app-arm64-v8a-release.apk`（18.4 MB）、`app-armeabi-v7a-release.apk`（15.9 MB）、`app-x86_64-release.apk`（19.8 MB）、`app-release.aab`（51.0 MB） |
-| `build-ios` | `macos-15` | 未签名的 `Runner.app.zip`（只验证能否编译） |
+| `build-ios` | `macos-15` | 未签名的 `Runner.app.zip`（只验证能否编译；仅打标签 / PR / 手动触发时运行，分支 push 只跑 Android） |
 | `build-ios-signed` | `macos-15` | 配好签名 Secrets 后产出的可安装 `Runner.ipa`（仅打标签 / 手动触发、且 Secrets 齐全时运行） |
 
 触发方式是 push 到 `master`、打 `v*` 标签或手动 `workflow_dispatch`；同一分支只跑最新一次（`concurrency` 取消排队中的旧任务）。三点前提必须知道：
@@ -500,7 +500,8 @@ find build/web -name '*.symbols' -print -delete
 **macOS runner 排队排不到会以 `cancelled` 收场**（annotation 原文：`Due to capacity constraints, jobs targeting macOS arm64 runners may experience longer queue times.`），这会把整次运行染红。为此 `mobile.yml` 做了两层兜底：
 
 - `detect-signing` 先判断签名 Secrets 是否齐全，**缺 iOS 签名时 `build-ios-signed` 整个 job 直接 skip**，不再去申请 macOS runner 白占排队名额（此前 v1.0.5 / v1.0.6 都是因为这个 job 被 cancelled 导致运行失败）；
-- `publish-release` 改成 `always()` + 只要求 `build-android` 成功，iOS job 被 cancelled 时**照样发布 Android 产物**（说明里会如实标注「iOS 未签名产物：未包含」），而不是整次发布 skip 掉。
+- `build-ios` 只在**打标签 / PR / 手动触发**时跑，分支 push 只跑 Android——否则每次 push 都要抢 macOS runner，抢不到就把 master 的运行染红；
+- `publish-release` 改成 `always()` + 只要求 `build-android` 成功，iOS job 被 cancelled（或按上面的规则 skip）时**照样发布 Android 产物**（说明里会如实标注「iOS 未签名产物：未包含」），而不是整次发布 skip 掉。
 
 真要补 iOS 产物，在 Actions 页对该次 `Build Mobile` 点 `Re-run failed jobs` 即可（rerun 会重新申请 macOS runner）。
 

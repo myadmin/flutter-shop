@@ -1,8 +1,17 @@
 # 更新日志
 
-版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.7+8` 里 `1.0.7` 是 `versionName`，`8` 是 `versionCode`）。
+版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.8+9` 里 `1.0.8` 是 `versionName`，`9` 是 `versionCode`）。
 
 打 `v*` 标签时，[Build Mobile](.github/workflows/mobile.yml) 会把这里对应版本的「本次更新」自动写进 GitHub Release 说明，所以新增版本时记得在本文件补一段。
+
+## [1.0.8] - 2026-11-24
+
+继续收敛移动端流水线的红叉：
+
+- `build-ios` 改为只在「打标签 / PR / 手动触发」时运行，分支 push 只跑 Android——避免每次 push 都去抢 macOS runner，抢不到就把 `Build Mobile`（master）染红。
+- 发版路径不受影响：每次更新都会打 `v*` 标签，标签运行仍会编译 iOS 并产出 `Runner.app.zip`。
+- README 同步说明「分支 push 只跑 Android」。
+- 只改 CI 与文档，未改动应用代码；版本号提升到 `1.0.8+9`。
 
 ## [1.0.7] - 2026-11-24
 

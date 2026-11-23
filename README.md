@@ -1,4 +1,4 @@
-﻿# hm_shop
+# hm_shop
 
 基于 Flutter 的商城类 App 示例项目，采用「页面 / 组件 / API / 模型 / 状态」分层组织代码。已接入黑马 meikou 接口，完成首页（轮播图、分类、特惠推荐、爆款推荐、一站全买、推荐列表分页）、分类（一级导航 + 二级宫格 + 分类商品列表 + 推荐）、登录（token 持久化与请求鉴权）、商品详情、购物车、订单确认、订单列表与详情、「我的」页面（含我的收藏、我的足迹、客服中心、会员权益）。
 
@@ -487,10 +487,18 @@ flutter test --coverage
 
 #### 版本号与更新日志
 
-- 版本号的唯一来源是 `pubspec.yaml` 的 `version: 1.0.1+2`：`+` 前是 `versionName`、后是 `versionCode`，两者都会写进 APK / AAB / IPA。
-- 改版本号时同步在 [CHANGELOG.md](CHANGELOG.md) 顶部补一段 `## [1.0.1] - YYYY-MM-DD`，写清这个版本改了什么。
-- 打 `v1.0.1` 标签后，`publish-release` 会用 `awk` 从 CHANGELOG 里抽出该版本段落，放在 Release 说明开头作为「本次更新」，后面再接安装包表格与安装提示。段落缺失时只在日志里打一条 notice，不会阻断发布。
-- 手动触发时 tag 的缺省值也来自包内版本号（`v1.0.1-build.<run number>`），不再是写死的 `v1.0.0`。
+**发版约定：每次更新完成后都要发一个新版本。** 一轮改动做完、门禁全绿并推到 `master` 之后，按三步走：
+
+1. `pubspec.yaml` 的 `version` 最后一位 +1，`+` 后的 `versionCode` 也 +1（`1.0.2+3` → `1.0.3+4`）；
+2. 在 [CHANGELOG.md](CHANGELOG.md) 顶部补一段 `## [1.0.3] - YYYY-MM-DD`，写清这次改了什么；
+3. `git tag v1.0.3 && git push origin v1.0.3`，`Build Mobile` 自动打包并发布 Release（Android APK / AAB + iOS 产物）。
+
+细节：
+
+- 版本号的唯一来源是 `pubspec.yaml` 的 `version`：`+` 前是 `versionName`、后是 `versionCode`，两者都会写进 APK / AAB / IPA。
+- 打标签后，`publish-release` 会用 `awk` 从 CHANGELOG 里抽出该版本段落，放在 Release 说明开头作为「本次更新」，后面再接安装包表格与安装提示。段落缺失时只在日志里打一条 notice，不会阻断发布。
+- 手动触发时 tag 的缺省值也来自包内版本号（`v1.0.3-build.<run number>`），不再是写死的版本号。
+- 纯文档提交（README / CHANGELOG 之外没有代码改动）不必单独发版，提交信息加 `[skip ci]` 即可。
 
 ## 当前状态与已知问题
 

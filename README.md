@@ -442,7 +442,7 @@ flutter test --coverage
 
 另外两个可选 Repository variable（不是 Secret）：`IOS_BUNDLE_ID`（要替换成的 Bundle Identifier，缺省沿用 `com.example.hmShop`）、`IOS_EXPORT_METHOD`（`ad-hoc` 装指定设备，`app-store-connect` 传 App Store，缺省 `ad-hoc`）。
 
-本机实测（Windows + Flutter 3.47.9 + AGP 9.1.0 / Gradle 9.3.1）：干净检出后 `flutter build apk --release` 52.3 MB、`--split-per-abi` 三个包如上表、`flutter build appbundle --release` 51.0 MB，全部构建成功；把测试 keystore 放进 `android/app/` 后 `apksigner verify --print-certs` 输出 `CN=HM Shop Test`，删掉 `key.properties` 重新构建则回到 `CN=Android Debug`——有/无密钥两条路径都验证过。macOS 侧无法在本机验证，以 CI 结果为准。
+本机实测（Windows + Flutter 3.47.9 + AGP 9.1.0 / Gradle 9.3.1）：干净检出后 `flutter build apk --release` 52.3 MB、`--split-per-abi` 三个包如上表、`flutter build appbundle --release` 51.0 MB，全部构建成功；把测试 keystore 放进 `android/app/` 后 `apksigner verify --print-certs` 输出 `CN=HM Shop Test`，删掉 `key.properties` 重新构建则回到 `CN=Android Debug`——有/无密钥两条路径都验证过。CI 上也验证了降级路径：没配 Secrets 时 Android job 的「Decode release keystore」显示 skipped、「Verify APK signature」打印出 `CN=Android Debug`，iOS 签名 job 在 push 场景下整个 job 是 skipped。macOS 签名链路无法在本机验证，配上 Secrets 打 `v*` 标签即可验证。
 
 ## 当前状态与已知问题
 

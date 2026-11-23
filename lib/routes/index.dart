@@ -1,6 +1,7 @@
 // 路由配置
 import 'package:flutter/material.dart';
 import 'package:hm_shop/constants/app_theme.dart';
+import 'package:hm_shop/pages/Brand/index.dart';
 import 'package:hm_shop/pages/Collect/index.dart';
 import 'package:hm_shop/pages/CustomerService/index.dart';
 import 'package:hm_shop/pages/Footprint/index.dart';
@@ -162,5 +163,11 @@ Map<String, Widget Function(BuildContext)> getRootRoutes() {
     AppRoutes.footprintPath: (context) => const FootprintPage(), // 我的足迹路由
     AppRoutes.vipPath: (context) => const VipBenefitsPage(), // 会员权益路由
     AppRoutes.profilePath: (context) => const ProfilePage(), // 个人资料路由
+    AppRoutes.brandPath: (context) {
+      // 品牌详情：`/brand?id=<品牌 id>`
+      final arguments = ModalRoute.of(context)?.settings.arguments;
+      final params = arguments is Map ? arguments : <String, dynamic>{};
+      return BrandPage(brandId: params['id']?.toString() ?? '');
+    }, // 品牌详情路由
   };
 }

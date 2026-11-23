@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hm_shop/components/common/app_network_image.dart';
+import 'package:hm_shop/components/common/hm_section_header.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/home.dart';
 
@@ -89,29 +90,9 @@ class HmHot extends StatelessWidget {
         .toList();
   }
 
-  /// 构建模块标题区域
+  /// 构建模块标题区域（与其他首页模块共用同一套标题样式）
   Widget _buildHeader() {
-    return Row(
-      children: [
-        Text(
-          config.title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: AppColors.darkBrown,
-          ),
-        ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            config.subtitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 11, color: AppColors.lightBrown),
-          ),
-        ),
-      ],
-    );
+    return HmSectionHeader(title: config.title, subtitle: config.subtitle);
   }
 
   /// 构建单个商品卡片

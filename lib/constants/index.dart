@@ -22,6 +22,14 @@ class HttpConstants {
   static const String inVogueList = '/hot/inVogue';
   // 一站全买
   static const String oneStopList = '/hot/oneStop';
+  // 新品首发（首页横滑商品卡）
+  static const String newGoodsList = '/home/new';
+  // 人气好物榜（结构与 /hot/inVogue 相同）
+  static const String newRankList = '/hot/new';
+  // 品牌好店（列表）
+  static const String brandList = '/home/brand';
+  // 品牌详情（`/brand/<品牌 id>`）
+  static const String brandDetail = '/brand';
   // 推荐列表
   static const String recommendList = '/home/recommend';
   // 猜你喜欢

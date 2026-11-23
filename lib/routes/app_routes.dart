@@ -21,6 +21,7 @@ class AppRoutes {
   static const String footprintPath = '/footprint';
   static const String vipPath = '/vip';
   static const String profilePath = '/profile';
+  static const String brandPath = '/brand';
 
   /// 商品详情：`/goods?id=<商品 id>`
   static String goods(String goodsId) =>
@@ -42,4 +43,8 @@ class AppRoutes {
   /// 订单详情：`/orders/detail?id=<订单 id>`
   static String orderDetail(String orderId) =>
       '$orderDetailPath?id=${Uri.encodeQueryComponent(orderId)}';
+
+  /// 品牌详情：`/brand?id=<品牌 id>`
+  static String brand(String brandId) =>
+      '$brandPath?id=${Uri.encodeQueryComponent(brandId)}';
 }

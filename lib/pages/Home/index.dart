@@ -1,13 +1,18 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:hm_shop/api/brand.dart';
 import 'package:hm_shop/api/home.dart';
 import 'package:hm_shop/components/common/app_error_view.dart';
+import 'package:hm_shop/components/Home/hm_brand_strip.dart';
 import 'package:hm_shop/components/Home/hm_category.dart';
 import 'package:hm_shop/components/Home/hm_hot.dart';
 import 'package:hm_shop/components/Home/hm_more_list.dart';
+import 'package:hm_shop/components/Home/hm_new_goods.dart';
+import 'package:hm_shop/components/Home/hm_rank_list.dart';
 import 'package:hm_shop/components/Home/hm_slider.dart';
 import 'package:hm_shop/components/Home/hm_suggestion.dart';
+import 'package:hm_shop/models/brand.dart';
 import 'package:hm_shop/models/home.dart';
 import 'package:hm_shop/pages/Home/skeleton.dart';
 import 'package:hm_shop/routes/app_routes.dart';
@@ -71,6 +76,19 @@ class _HomeViewState extends State<HomeView> {
     subTypes: [],
   );
 
+  /// 新品首发（`/home/new`）
+  List<GoodsItem> _newGoodsList = [];
+
+  /// 人气好物榜（`/hot/new`，结构与爆款推荐相同）
+  SpecialRecommendResult _newRankResult = SpecialRecommendResult(
+    id: '',
+    title: '',
+    subTypes: [],
+  );
+
+  /// 品牌好店（`/home/brand`）
+  List<BrandItem> _brandList = [];
+
   List<GoodDetailItem> _recommendList = [];
   int _page = 1;
 
@@ -79,6 +97,9 @@ class _HomeViewState extends State<HomeView> {
 
   /// 整页刷新在途标记：刷新期间不接受滚动加载，否则会与首页首屏请求抢 limit
   bool _refreshing = false;
+
+  /// 第二批模块（新品 / 榜单 / 品牌）在途标记，避免刷新时叠加请求
+  bool _secondaryLoading = false;
 
   bool _hasMore = true;
 
@@ -155,6 +176,26 @@ class _HomeViewState extends State<HomeView> {
           ),
         ),
       ),
+      // 下面三个模块排在无限滚动之上；某个模块没数据时整块不渲染，
+      // 既不留空标题，也不白占 10px 间距
+      if (_newGoodsList.isNotEmpty) ...[
+        const SliverToBoxAdapter(child: SizedBox(height: 10)),
+        SliverToBoxAdapter(
+          child: HmNewGoods(goodsList: _newGoodsList, onGoodsTap: _onGoodsTap),
+        ),
+      ],
+      if (_newRankResult.subTypes.isNotEmpty) ...[
+        const SliverToBoxAdapter(child: SizedBox(height: 10)),
+        SliverToBoxAdapter(
+          child: HmRankList(result: _newRankResult, onGoodsTap: _onGoodsTap),
+        ),
+      ],
+      if (_brandList.isNotEmpty) ...[
+        const SliverToBoxAdapter(child: SizedBox(height: 10)),
+        SliverToBoxAdapter(
+          child: HmBrandStrip(brandList: _brandList, onBrandTap: _onBrandTap),
+        ),
+      ],
       const SliverToBoxAdapter(child: SizedBox(height: 10)),
       HmMoreList(recommendList: _recommendList, onItemTap: _onGoodsTap),
     ];
@@ -162,6 +203,11 @@ class _HomeViewState extends State<HomeView> {
 
   void _onGoodsTap(GoodsItem goods) {
     Navigator.pushNamed(context, AppRoutes.goods(goods.id));
+  }
+
+  /// 点品牌卡：进品牌详情页
+  void _onBrandTap(BrandItem brand) {
+    Navigator.pushNamed(context, AppRoutes.brand(brand.id));
   }
 
   /// 点轮播图：能解析出跳转目标就交给 [MainPage]，解析不出（外部链接、
@@ -176,11 +222,14 @@ class _HomeViewState extends State<HomeView> {
     handler(banner);
   }
 
-  /// 加载首页全部数据，全部完成后一次性刷新 UI
+  /// 加载首页首屏数据，全部完成后一次性刷新 UI
   ///
-  /// 六个模块并发发出请求，但只调用一次 setState：此前每个模块各自 setState，
-  /// 一次刷新最多触发 6 帧整页重建。单个模块失败只影响自身，只有全部模块都
-  /// 失败时才展示整页错误态。
+  /// 首屏六个模块并发发出请求，但只调用一次 setState：此前每个模块各自
+  /// setState，一次刷新最多触发六帧整页重建。单个模块失败只影响自身，只有
+  /// 全部模块都失败时才展示整页错误态。
+  ///
+  /// 新品首发 / 人气好物榜 / 品牌好店这三个模块排在首屏之下，等这批请求
+  /// 回来后再补（见 [_loadSecondaryModules]），不让它们拖慢首屏出图。
   Future<void> _loadHomeData() async {
     if (_refreshing) {
       return;
@@ -252,6 +301,54 @@ class _HomeViewState extends State<HomeView> {
       });
     } finally {
       _refreshing = false;
+    }
+    // 首屏已经出图，再补下面三个模块，不让它们拖慢骨架屏；
+    // 整页都失败时不补，省得再打三个注定失败的请求
+    if (successCount > 0) {
+      unawaited(_loadSecondaryModules());
+    }
+  }
+
+  /// 加载排在首屏之下的三个模块：新品首发 / 人气好物榜 / 品牌好店
+  ///
+  /// 这三个接口与首屏无关，单独成一批：先让轮播、分类、特惠、推荐出图，
+  /// 再把它们补上。单个接口失败只让对应模块不渲染，不影响其它内容。
+  Future<void> _loadSecondaryModules() async {
+    if (_secondaryLoading) {
+      return;
+    }
+    _secondaryLoading = true;
+
+    Future<T?> guard<T>(Future<T> Function() task, String label) async {
+      try {
+        return await task();
+      } catch (e) {
+        debugPrint('$label失败: $e');
+        return null;
+      }
+    }
+
+    try {
+      final (newGoodsList, newRankResult, brandList) = await (
+        guard(getNewGoodsListAPI, '获取新品首发'),
+        guard(getNewRankListAPI, '获取人气好物榜'),
+        guard(getBrandListAPI, '获取品牌好店'),
+      ).wait;
+
+      if (!mounted) return;
+      setState(() {
+        if (newGoodsList != null) {
+          _newGoodsList = newGoodsList;
+        }
+        if (newRankResult != null) {
+          _newRankResult = newRankResult;
+        }
+        if (brandList != null) {
+          _brandList = brandList;
+        }
+      });
+    } finally {
+      _secondaryLoading = false;
     }
   }
 

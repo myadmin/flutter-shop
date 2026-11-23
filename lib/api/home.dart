@@ -40,6 +40,24 @@ Future<SpecialRecommendResult> getOneStopListAPI() async {
   );
 }
 
+/// 新品首发（首页横滑商品卡）
+Future<List<GoodsItem>> getNewGoodsListAPI() async {
+  return asModelList(
+    await dioRequest.get(HttpConstants.newGoodsList),
+    GoodsItem.fromJson,
+  );
+}
+
+/// 人气好物榜
+///
+/// 结构与 `/hot/inVogue`、`/hot/oneStop` 相同（`title` + `subTypes[].goodsItems`），
+/// 所以复用 [SpecialRecommendResult]。
+Future<SpecialRecommendResult> getNewRankListAPI() async {
+  return SpecialRecommendResult.fromJson(
+    asMap(await dioRequest.get(HttpConstants.newRankList)),
+  );
+}
+
 /// 推荐列表
 ///
 /// 该接口只支持 `limit`，不支持 `page`/`pageSize`：每次返回前 limit 条，

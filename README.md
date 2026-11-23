@@ -1,6 +1,6 @@
 # hm_shop
 
-基于 Flutter 的商城类 App 示例项目，采用「页面 / 组件 / API / 模型 / 状态」分层组织代码。已接入黑马 meikou 接口，完成首页（轮播图、分类、特惠推荐、爆款推荐、一站全买、推荐列表分页）、分类（一级导航 + 二级宫格 + 分类商品列表 + 推荐）、登录（token 持久化与请求鉴权）、商品详情、购物车、订单确认、订单列表与详情、「我的」页面（含我的收藏、我的足迹、客服中心、会员权益）。
+基于 Flutter 的商城类 App 示例项目，采用「页面 / 组件 / API / 模型 / 状态」分层组织代码。已接入黑马 meikou 接口，完成首页（轮播图、分类、特惠推荐、爆款推荐、一站全买、新品首发、人气好物榜、品牌好店、推荐列表分页）、分类（一级导航 + 二级宫格 + 分类商品列表 + 推荐）、登录（token 持久化与请求鉴权）、商品详情、品牌详情、购物车、订单确认、订单列表与详情、「我的」页面（含我的收藏、我的足迹、客服中心、会员权益）。
 
 ## 功能概览
 
@@ -16,6 +16,10 @@
 - **分类快捷入口**：`/home/category/head` 获取分类，横向滚动列表展示图标与名称；点击某一项会切到底部的「分类」tab，并在分类页选中同一个一级分类（带水波纹反馈）
 - **特惠推荐**：`/hot/preference` 获取数据，展示第一个子类型的前 3 个商品，含本地背景图与价格标签
 - **爆款推荐 / 一站全买**：`/hot/inVogue`、`/hot/oneStop` 获取数据，左右两栏布局，复用 `HmHot` 组件，通过 `HmHotConfig` 区分场景样式
+- **新品首发**：`/home/new` 获取数据，`HmNewGoods` 以横滑商品卡展示（图片 132、名称固定两行、价格与销量同一行），点击进商品详情
+- **人气好物榜**：`/hot/new` 获取数据（结构与爆款推荐相同），`HmRankList` 取第一个子类型的前 4 件，按名次排列，前三名用主色区分
+- **品牌好店**：`/home/brand` 获取数据，`HmBrandStrip` 横滑展示品牌 logo 与名称，点击进品牌详情页 `/brand?id=<品牌 id>`
+- **内容模块的加载策略**：三个新模块属于「首屏之外的补充内容」，不占用首屏 6 个并发请求——首屏数据出图后，在 `_loadSecondaryModules()` 里并发补拉（`_secondaryLoading` 防重入、单个失败静默降级）；首屏全部失败时不发这批请求，避免错误态下再打 3 个必然失败的接口
 - **推荐列表**：`/home/recommend` 获取数据，`HmMoreList` 以 `SliverGrid` 双列展示，滚动到底部时递增 `limit` 加载更多
 - **生命周期安全**：滚动监听器单次绑定，并在组件销毁时及时释放 `ScrollController`
 
@@ -35,6 +39,13 @@
 - **商品网格**：`HmGoodsCard` 复用首页推荐卡片（图片按显示宽度解码、价格缩放不溢出），宽屏下内容收进 600 的阅读宽度并与手机端保持同样的列间距
 - **数据量**：`/category/sub/filter?id=` 不分页，一次返回该分类全部商品（实测最多 16 件），因此页面不做分页、只提供下拉刷新
 - **状态与容错**：加载中、接口失败（`AppErrorView` + 重试）、空分类（「该分类下还没有商品」）三种状态齐备；缺少 `categoryId` 时直接提示而不发请求
+
+### 品牌详情
+
+- **进入方式**：首页「品牌好店」点击品牌卡，或直接访问深链 `/brand?id=<品牌 id>`
+- **品牌信息**：`/brand/{id}` 返回的 logo、中英文名、产地、口号与关注人数在头部卡片展示，品牌故事单独一张卡片
+- **数据缺口**：后端没有「按品牌查商品」的接口（`/brand/{id}/goods`、`/home/brand/goods` 均 404），所以本页只做品牌介绍，不放商品列表
+- **状态与容错**：加载中、接口失败（`AppErrorView` + 重试）、缺少 `brandId`（直接提示「品牌信息缺失，请返回重新进入」，不发请求）；品牌故事为空时展示「暂无品牌故事」
 
 ### 商品详情
 
@@ -154,7 +165,7 @@
 - **并发与容错**：购物车件数与购物车列表请求都做了在途去重（同一时刻只发一次）；首页整页刷新期间不接受滚动加载（`_refreshing`），避免与首屏请求抢 `limit`；401 跳转登录页带重入保护；滚动触发的加载在本地吞掉异常，不会冒泡成未捕获异步错误；`PlatformDispatcher.onError` 兜底记录漏网的异步异常
 - **加载弹窗**：`LoadingDialog` 持有 `DialogRoute` 引用，`hide()` 精确移除自身路由，不会误弹页面
 - **Toast 工具**：`ToastUtils` 基于 `SnackBar`，宽度随文案自适应；只有**相同文案**在 2 秒内重复时才节流，不同提示不会被吞掉，新提示会顶掉正在展示的旧提示
-- **自动化测试**：210 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、金额整数累加、分页状态机（追加 / 无更多 / 加载更多失败不清列表 / 清空）、全局用户态与购物车件数、本地足迹存储（去重 / 上限 / 损坏数据）、足迹分组、骨架屏、商品聚合组件、规格选择弹层、订单组件、「我的」页面组件、分类页组件、购物车组件、收藏卡片、未知路由兜底与深链解析，以及首页 / 购物车 / 登录 / 分类 / 分类商品列表 / 商品详情 / 订单确认 / 订单列表 / 订单详情 / 我的收藏 / 客服中心 / 我的足迹 / 会员权益 / 个人资料十四个页面的页面级交互、「我的」页快捷入口接线与订单角标、首页分类入口切 tab 并选中分类、底部 tab 懒加载（首屏只发首页请求 / 切 tab 才加载对应页 / 来回切不重复请求 / 轮播随 tab 暂停与恢复）、购物车条目点击进详情（含失效商品不跳转）、首页轮播图点击（分类跳转 / 商品跳转 / 无跳转提示）（用 `MockAdapter` 替换 Dio 适配器，不发真实请求）
+- **自动化测试**：221 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、金额整数累加、分页状态机（追加 / 无更多 / 加载更多失败不清列表 / 清空）、全局用户态与购物车件数、本地足迹存储（去重 / 上限 / 损坏数据）、足迹分组、骨架屏、商品聚合组件、规格选择弹层、订单组件、「我的」页面组件、分类页组件、购物车组件、收藏卡片、未知路由兜底与深链解析，以及首页 / 购物车 / 登录 / 分类 / 分类商品列表 / 商品详情 / 品牌详情 / 订单确认 / 订单列表 / 订单详情 / 我的收藏 / 客服中心 / 我的足迹 / 会员权益 / 个人资料十五个页面的页面级交互、「我的」页快捷入口接线与订单角标、首页分类入口切 tab 并选中分类、底部 tab 懒加载（首屏只发首页请求 / 切 tab 才加载对应页 / 来回切不重复请求 / 轮播随 tab 暂停与恢复）、购物车条目点击进详情（含失效商品不跳转）、首页轮播图点击（分类跳转 / 商品跳转 / 无跳转提示）、首页新增的三个内容模块（新品首发 / 人气好物榜 / 品牌好店，含空数据不渲染、点击跳转、品牌详情页三态）（用 `MockAdapter` 替换 Dio 适配器，不发真实请求）
 - **代码规范与 CI**：`dart format`、`flutter analyze --fatal-infos`（已开启 `strict-casts` / `strict-inference` / `strict-raw-types`）、`flutter test --coverage`（覆盖率低于 80% 直接失败）、`flutter build web --release`（构建冒烟）在 CI 中全部强制通过
 
 ## 技术栈
@@ -176,12 +187,13 @@
 ```text
 lib/
 ├── api/                        # 接口调用
-│   ├── home.dart               # 首页 6 个接口的请求函数
+│   ├── home.dart               # 首页 9 个接口的请求函数（含新品首发 / 人气好物榜）
 │   ├── goods.dart              # 商品详情
 │   ├── order.dart              # 结算信息 / 提交订单 / 订单列表与详情 / 删除订单
 │   ├── collect.dart            # 我的收藏列表
 │   ├── cart.dart               # 购物车列表 / 件数 / 增删改
 │   ├── category.dart           # 分类下的商品
+│   ├── brand.dart              # 品牌列表 / 品牌详情
 │   ├── mine.dart               # 猜你喜欢分页接口
 │   └── user.dart               # 登录 / 用户信息接口
 ├── components/
@@ -191,12 +203,16 @@ lib/
 │   │   ├── hm_empty_view.dart  # 通用空态（图标 / 标题 / 说明 / 按钮）
 │   │   ├── app_network_image.dart # 统一网络图片（带解码尺寸与占位）
 │   │   ├── app_error_view.dart # 统一错误态 + 重试
+│   │   ├── hm_section_header.dart # 模块标题 + 副标题（首页各内容模块共用）
 │   │   └── hm_list_footer.dart # 分页列表底部状态条（加载更多 / 没有更多了）
 │   ├── Home/                   # 首页业务组件
 │   │   ├── hm_slider.dart      # 轮播图 + 搜索框 + 指示点
 │   │   ├── hm_category.dart    # 分类横向列表
 │   │   ├── hm_suggestion.dart  # 特惠推荐区
 │   │   ├── hm_hot.dart         # 爆款推荐 / 一站全买通用组件
+│   │   ├── hm_new_goods.dart   # 新品首发：横滑商品卡
+│   │   ├── hm_rank_list.dart   # 人气好物榜：竖排名次列表
+│   │   ├── hm_brand_strip.dart # 品牌好店：横滑品牌 logo
 │   │   └── hm_more_list.dart   # 双列商品网格（首页推荐 / 猜你喜欢共用）
 │   ├── Category/               # 分类页组件
 │   │   ├── hm_category_search.dart    # 顶部搜索入口
@@ -244,6 +260,7 @@ lib/
 │   ├── parsers.dart            #  反序列化取值工具（asString / asInt / asAmount / asList
 │   │                           #  以及结构校验版 asMap / asModelList / asMapOrEmpty）
 │   ├── home.dart               # 首页数据模型
+│   ├── brand.dart              # 品牌列表与品牌详情模型
 │   ├── goods.dart              # 商品详情模型
 │   ├── order.dart              # 结算与订单模型
 │   ├── order_list.dart         # 订单列表 / 详情模型与状态枚举（OrderState）
@@ -258,6 +275,7 @@ lib/
 │   │   ├── index.dart          # 首页数据加载与模块拼装
 │   │   └── skeleton.dart       # 首页骨架屏
 │   ├── GoodsDetail/index.dart  # 商品详情页
+│   ├── Brand/index.dart        # 品牌详情页：品牌信息 + 品牌故事
 │   ├── OrderConfirm/index.dart # 订单确认页
 │   ├── OrderList/index.dart    # 订单列表：状态筛选 + 分页 + 删除
 │   ├── OrderDetail/index.dart  # 订单详情：状态 / 地址 / 金额明细 / 删除
@@ -324,6 +342,7 @@ test/
 ├── category_selection_test.dart # 首页分类入口 → 分类页选中（组件回调 / 外部选中 / 切 tab）
 ├── main_tabs_test.dart         # 底部 tab 懒加载 / 保活 / 轮播随 tab 暂停
 ├── banner_tap_test.dart        # 轮播图点击：分类跳转 / 商品跳转 / 无跳转提示
+├── home_modules_test.dart      # 首页新品首发 / 人气好物榜 / 品牌好店 + 品牌详情页
 ├── paged_list_test.dart        # 分页状态机：追加 / 无更多 / 失败 / 清空 + 列表底部状态条
 ├── unknown_route_test.dart     # 未知路由兜底、深链解析、地址构造
 └── widget_test.dart            # 首页骨架屏、订单组件、商品聚合组件
@@ -339,6 +358,7 @@ Web 端启用了 `usePathUrlStrategy`，地址栏是真实路径（`/goods?id=40
 | `/login` | `LoginPage` | 无 |
 | `/goods?id=<商品 id>` | `GoodsDetailPage` | `id` |
 | `/goods/list?categoryId=<分类 id>&title=<分类名>` | `GoodsListPage` | `categoryId`、`title` |
+| `/brand?id=<品牌 id>` | `BrandPage` | `id` |
 | `/order/confirm?skuId=<sku>&count=<数量>` | `OrderConfirmPage` | `skuId`、`count` |
 | `/orders?state=<订单状态>` | `OrderListPage` | `state`（缺省为 0，即全部） |
 | `/orders/detail?id=<订单 id>` | `OrderDetailPage` | `id` |
@@ -370,6 +390,10 @@ Web 端启用了 `usePathUrlStrategy`，地址栏是真实路径（`/goods?id=40
 | GET | `/hot/preference` | 特惠推荐，映射为 `SpecialRecommendResult` |
 | GET | `/hot/inVogue` | 爆款推荐，映射为 `SpecialRecommendResult` |
 | GET | `/hot/oneStop` | 一站全买，映射为 `SpecialRecommendResult` |
+| GET | `/home/new` | 新品首发列表，条目结构与 `/home/recommend` 相同，映射为 `GoodsItem` |
+| GET | `/hot/new` | 人气好物榜，结构与 `/hot/inVogue` 相同，映射为 `SpecialRecommendResult` |
+| GET | `/home/brand` | 品牌列表（`id` / `name` / `nameEn` / `logo` / `desc` / `place`），映射为 `BrandItem` |
+| GET | `/brand/{id}` | 品牌详情，返回 `slogan` / `productionPlace` / `brandStory` / `collectNum` 等，映射为 `BrandDetail`；**没有「按品牌查商品」的接口** |
 | GET | `/home/recommend` | 推荐列表，仅支持 `limit` 参数（**不支持 `page`/`pageSize`**），返回稳定前缀序，因此用递增 `limit` 累积加载 |
 | GET | `/home/goods/guessLike` | 猜你喜欢分页列表，参数 `page`、`pageSize`，映射为 `GoodsDetailsItems` |
 | GET | `/goods` | 商品详情，参数 `id` |
@@ -414,7 +438,7 @@ flutter test --coverage
 1. `dart format --output=none --set-exit-if-changed lib test`
 2. `flutter analyze --fatal-infos`（info 级问题同样视为失败）
 3. `flutter test --coverage`
-4. 覆盖率阈值：整体可执行行覆盖率低于 **80%** 直接失败（当前 3167 / 3623 行 = 87.4%）。注意 lcov 只统计「被测试真正加载过」的文件，新增一个 import 就会改变分母——路由测试 import 了 `routes/index.dart`，把全部页面一起纳入统计
+4. 覆盖率阈值：整体可执行行覆盖率低于 **80%** 直接失败（当前 3426 / 3886 行 = 88.2%）。注意 lcov 只统计「被测试真正加载过」的文件，新增一个 import 就会改变分母——路由测试 import 了 `routes/index.dart`，把全部页面一起纳入统计
 5. `flutter build web --release` 构建冒烟 —— 资源路径、条件导入这类问题 analyze 与 test 都发现不了
 
 同一分支连续推送时，`concurrency` 会取消上一次仍在跑的检查，避免队列堆积。`.github/workflows/web.yml` 另行构建 Web 产物并通过 GitHub Pages 部署。

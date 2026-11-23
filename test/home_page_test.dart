@@ -45,14 +45,22 @@ ResponseBody _homeResponse(RequestOptions options) {
         goodsItemJson(),
         goodsItemJson(id: 'goods-2', name: '推荐商品二'),
       ]);
+    case '/home/new':
+      return envelope([goodsItemJson(id: 'new-1', name: '新品一')]);
+    case '/hot/new':
+      return envelope(hotResultJson());
+    case '/home/brand':
+      return envelope([brandItemJson()]);
     default:
       return envelope(null);
   }
 }
 
 /// 轮播图带自动播放，`pumpAndSettle` 会一直等不到静止，这里手动推进几帧
+///
+/// 多推几帧是为了让「首屏出图后再补三个模块」的第二批请求也跑完
 Future<void> _settle(WidgetTester tester) async {
-  for (var i = 0; i < 6; i++) {
+  for (var i = 0; i < 12; i++) {
     await tester.pump(const Duration(milliseconds: 20));
   }
 }
@@ -74,8 +82,8 @@ void main() {
 
       expect(find.byType(HomeSkeleton), findsNothing);
       expect(find.byType(AppErrorView), findsNothing);
-      // 六个模块各请求一次，推荐列表不会重复拉取
-      expect(adapter.requests.length, 6);
+      // 首屏 6 个接口 + 首屏出图后补的 3 个（新品 / 榜单 / 品牌）
+      expect(adapter.requests.length, 9);
       expect(
         adapter.requests.where((option) => option.path == '/home/recommend'),
         hasLength(1),

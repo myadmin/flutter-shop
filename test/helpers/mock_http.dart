@@ -360,6 +360,79 @@ Map<String, dynamic> collectListJson({
   };
 }
 
+/// 品牌列表项（结构对齐 `/home/brand` 的数组元素）
+Map<String, dynamic> brandItemJson({
+  String id = 'brand-1',
+  String name = '测试品牌',
+  String nameEn = 'TestBrand',
+  String logo = '',
+  String desc = '品牌简介',
+  String place = '中国',
+}) {
+  return {
+    'id': id,
+    'name': name,
+    'nameEn': nameEn,
+    'logo': logo,
+    'picture': logo,
+    'desc': desc,
+    'place': place,
+  };
+}
+
+/// 品牌详情（结构对齐 `/brand/{id}` 的 result）
+Map<String, dynamic> brandDetailJson({
+  String id = 'brand-1',
+  String name = '测试品牌',
+  String nameEn = 'TestBrand',
+  String logo = '',
+  String brandImage = '',
+  String slogan = '为热爱而造',
+  String productionPlace = '中国',
+  String brandStory = '品牌故事正文',
+  int collectNum = 0,
+  bool isCollect = false,
+}) {
+  return {
+    'id': id,
+    'name': name,
+    'nameEn': nameEn,
+    'logo': logo,
+    'brandImage': brandImage,
+    'slogan': slogan,
+    'productionPlace': productionPlace,
+    'brandStory': brandStory,
+    'collectNum': collectNum,
+    'isCollect': isCollect,
+  };
+}
+
+/// 首页「人气好物榜」数据（结构对齐 `/hot/new`，与 `/hot/inVogue` 相同）
+Map<String, dynamic> hotResultJson({
+  String id = 'rank-1',
+  String title = '新鲜好物',
+  String subTypeTitle = '抢先尝鲜',
+  List<Map<String, dynamic>>? items,
+}) {
+  return {
+    'id': id,
+    'title': title,
+    'subTypes': [
+      {
+        'id': 'sub-1',
+        'title': subTypeTitle,
+        'goodsItems': {
+          'counts': 1,
+          'pageSize': 10,
+          'pages': 1,
+          'page': 1,
+          'items': items ?? [goodsItemJson()],
+        },
+      },
+    ],
+  };
+}
+
 /// 个人资料（结构对齐 `/member/profile` 的 result）
 Map<String, dynamic> userProfileJson({
   String id = 'u-1',

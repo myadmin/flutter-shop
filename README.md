@@ -458,7 +458,9 @@ flutter test --coverage
 
 - Release 里带 `app-arm64-v8a-release.apk`（首选）、`app-armeabi-v7a-release.apk`、`app-x86_64-release.apk`、`app-release.aab`、`Runner.app.zip`，配了 iOS 签名时再加 `Runner.ipa`；
 - 同一个 tag 重复发版时会走 `gh release upload --clobber` 覆盖资产，不会报错；
-- 这个 job 需要 `contents: write` 权限（workflow 里已显式声明）；如果仓库 Settings → Actions → General 的 Workflow permissions 被设成「Read repository contents」，需要在那边改成 Read and write，否则 `gh release create` 会 403。
+- 这个 job 需要 `contents: write` 权限（workflow 里已显式声明）。**注意仓库级开关**：Settings → Actions → General → Workflow permissions 如果是「Read repository contents」，`GITHUB_TOKEN` 会被钉死成只读，工作流里再怎么声明 `permissions: contents: write` 也提不上去，`gh release create` 直接 403。本仓库已调整为「Read and write permissions」；
+- 两个容易踩的实现细节，都已在 workflow 里处理：① `actions/download-artifact` 下载时会**保留上传时的相对路径**（`flutter-apk/`、`bundle/release/`），所以收集文件必须用 `find dist -type f -name '*.apk'`，用 `dist/*.apk` 只能匹配到平铺的 `Runner.app.zip`；② `gh release` 必须在 git 仓库里执行，job 里要先 `actions/checkout`（或者给 gh 传 `--repo owner/name`），否则报 `fatal: not a git repository`。
+
 
 
 ## 当前状态与已知问题

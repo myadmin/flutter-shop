@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:hm_shop/api/user.dart';
 import 'package:hm_shop/constants/app_assets.dart';
 import 'package:hm_shop/constants/app_theme.dart';
+import 'package:hm_shop/models/home.dart';
 import 'package:hm_shop/pages/Cart/index.dart';
 import 'package:hm_shop/pages/Category/index.dart';
 import 'package:hm_shop/pages/Home/index.dart';
@@ -53,7 +54,19 @@ class _MainPageState extends State<MainPage> {
   /// 购物车在底部 tab 中的下标
   static const int _cartTabIndex = 2;
 
+  /// 「分类」在底部 tab 中的下标
+  static const int _categoryTabIndex = 1;
+
   int _currentIndex = 0;
+
+  /// 首页分类入口请求选中的一级分类 id
+  String? _categoryRequestId;
+
+  /// 分类选中请求的版本号
+  ///
+  /// 每次从首页点分类都自增：同一个分类点第二次时 id 不变，只靠 id
+  /// 无法让分类页重新应用这次请求。
+  int _categoryRequestTicket = 0;
 
   late final Worker _userWatcher;
 
@@ -111,6 +124,15 @@ class _MainPageState extends State<MainPage> {
     await _cartController.refreshCount();
   }
 
+  /// 首页点了某个一级分类：切到「分类」tab 并让分类页选中同一分类
+  void _onHomeCategoryTap(CategoryItem category) {
+    setState(() {
+      _categoryRequestId = category.id;
+      _categoryRequestTicket++;
+      _currentIndex = _categoryTabIndex;
+    });
+  }
+
   /// 购物车图标：有商品时叠加件数角标
   Widget _buildCartIcon(String path) {
     final Widget icon = Image.asset(path, width: 30, height: 30);
@@ -159,8 +181,11 @@ class _MainPageState extends State<MainPage> {
           child: IndexedStack(
             index: _currentIndex,
             children: [
-              const HomeView(),
-              const CategoryView(),
+              HomeView(onCategoryTap: _onHomeCategoryTap),
+              CategoryView(
+                selectedCategoryId: _categoryRequestId,
+                selectionTicket: _categoryRequestTicket,
+              ),
               CartView(
                 isActive: _currentIndex == _cartTabIndex,
                 onGoShopping: () => setState(() => _currentIndex = 0),

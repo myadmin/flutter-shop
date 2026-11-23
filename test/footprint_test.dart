@@ -150,12 +150,22 @@ void main() {
     });
 
     testWidgets('有足迹时按分组展示，点击进入商品详情', (tester) async {
+      // 分组依赖「今天 / 昨天 / 更早」，时间点必须相对当前时间算，
+      // 写死日期的话测试会在某一天之后失效
+      final DateTime now = DateTime.now();
+      final DateTime yesterday = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        20,
+      ).subtract(const Duration(days: 1));
+      final DateTime earlier = now.subtract(const Duration(days: 30));
       SharedPreferences.setMockInitialValues({
         GlobalConstants.footprintKey:
             '[{"goodsId":"goods-1","name":"昨天看的商品","picture":"",'
-            '"price":"89.00","viewedAt":"2026-11-21T20:00:00.000"},'
+            '"price":"89.00","viewedAt":"${yesterday.toIso8601String()}"},'
             '{"goodsId":"goods-2","name":"更早看的商品","picture":"",'
-            '"price":"59.00","viewedAt":"2026-11-01T08:00:00.000"}]',
+            '"price":"59.00","viewedAt":"${earlier.toIso8601String()}"}]',
       });
       final recorder = _RouteRecorder();
 

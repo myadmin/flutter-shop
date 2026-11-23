@@ -12,9 +12,16 @@ class HmCategoryRail extends StatelessWidget {
     required this.categories,
     required this.selectedIndex,
     required this.onSelected,
-    this.itemHeight = 56,
+    this.controller,
+    this.itemHeight = defaultItemHeight,
     this.width = 92,
   });
+
+  /// 单项默认高度
+  ///
+  /// 分类页在「外部指定选中项」时需要按这个高度算出要滚动到哪个偏移，
+  /// 所以把默认值提成常量，避免两处写死后不同步。
+  static const double defaultItemHeight = 56;
 
   /// 一级分类列表
   final List<CategoryItem> categories;
@@ -24,6 +31,9 @@ class HmCategoryRail extends StatelessWidget {
 
   /// 点击某一级分类时回调下标
   final ValueChanged<int> onSelected;
+
+  /// 列表滚动控制器；由分类页持有，用于把外部选中的分类滚到可视区
+  final ScrollController? controller;
 
   /// 单项高度
   final double itemHeight;
@@ -37,6 +47,7 @@ class HmCategoryRail extends StatelessWidget {
       width: width,
       color: AppColors.pageBackground,
       child: ListView.builder(
+        controller: controller,
         padding: EdgeInsets.zero,
         itemCount: categories.length,
         itemBuilder: (BuildContext context, int index) {

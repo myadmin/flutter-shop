@@ -50,9 +50,21 @@ jobs:
         # main.dart.js 小约 15%，Chrome 下实测可正常渲染。但 skwasm 的多线程
         # 渲染需要 COOP/COEP 响应头，GitHub Pages 无法自定义响应头，因此默认
         # 仍用 JS 产物（详见 README 的「关于 --wasm」）。
+        #
+        # `--no-wasm-dry-run`：构建末尾的 wasm dry-run 只用于提前提示 wasm 兼容性，
+        # 会把提示写到 stderr，导致 CI 日志里出现「警告」、本地 PowerShell 甚至
+        # 把它当失败（exit 1）。这里不需要它，直接关掉。
         run: |
           REPO_NAME="${GITHUB_REPOSITORY#*/}"
-          flutter build web --release --base-href "/${REPO_NAME}/"
+          flutter build web --release --base-href "/${REPO_NAME}/" --no-wasm-dry-run
+
+      - name: Strip engine symbol files
+        # canvaskit 目录下的 6 个 *.js.symbols 合计约 8 MB，只在开发时用来把引擎
+        # 堆栈还原成函数名（flutter symbolize / DevTools），部署产物完全用不到。
+        # 删掉后 Web 产物从约 40 MB 降到约 32 MB。
+        run: |
+          find build/web -name '*.symbols' -print -delete
+          du -sh build/web
 
       - name: Add SPA fallback for deep links
         # 应用启用了真实路径策略（/goods 而非 #/goods），GitHub Pages 是把

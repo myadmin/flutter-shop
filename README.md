@@ -425,6 +425,31 @@ flutter test --coverage
 
 但默认构建仍然保留 JS，原因是：skwasm 要多线程渲染需要 `Cross-Origin-Opener-Policy` + `Cross-Origin-Embedder-Policy` 两个响应头，而 GitHub Pages 不支持自定义响应头；同时 wasm 产物会把 canvaskit 的各套变体和 JS 兜底一起带上，目录体积反而从 40.29 MB 涨到 42.65 MB。等换成支持自定义头部的托管再切，命令只需给 CI 的构建步骤加上 `--wasm`。
 
+### Web 产物体积
+
+`flutter build web --release` 的产物从 **40.41 MB 降到 32.22 MB**（-8.19 MB / -20%），靠的是 `web.yml` 里新增的 `Strip engine symbol files` 步骤：
+
+```bash
+find build/web -name '*.symbols' -print -delete
+```
+
+`canvaskit/` 下的 6 个 `*.js.symbols`（canvaskit 1.29 MB、wimp 1.73 MB、skwasm_heavy 1.59 MB、skwasm 1.47 MB，另有 chromium / webparagraph 各一份）只在 `flutter symbolize`、DevTools 还原引擎堆栈时使用，部署产物里没有任何代码会请求它们，删掉不影响运行（删完在无头浏览器里实测首页、分类、详情、购物车均正常渲染）。
+
+剩下的 32.22 MB 构成：
+
+| 内容 | 大小 | 说明 |
+| --- | --- | --- |
+| `canvaskit/` 各变体 | 约 24 MB | `canvaskit.wasm` 6.95、`chromium/canvaskit.wasm` 5.18、`skwasm_heavy.wasm` 4.97、`webparagraph/canvaskit.wasm` 3.56、`skwasm.wasm` 3.43、`wimp.wasm` 3.42 |
+| `main.dart.js` | 2.91 MB | 应用代码（release + tree-shaking 后） |
+| `assets/` | 1.36 MB | 其中 `NOTICES` 占 1.25 MB，实际图片资源只有 74 KB |
+
+两个「看着能省但其实不能省」的选项：
+
+- **不能删 canvaskit 的某个变体目录**：`flutter_bootstrap.js` 里 `canvaskit` / `chromium` / `webparagraph` / `wimp` / `skwasm` 都会被引擎按运行时条件挑（实测出现次数分别为 12 / 4 / 3 / 2 / 15），删掉任意一个都可能让某类浏览器白屏。
+- **没有启用 `--web-resources-cdn`**：加上它会让引擎从 `www.gstatic.com` 拉 canvaskit，产物能降到 6 MB 左右，但 gstatic 在国内网络基本不可达，页面会停在白屏。这个项目面向中文用户，宁可自己托管。
+
+另外 `web.yml` 的构建命令加了 `--no-wasm-dry-run`：构建末尾的 wasm 兼容性 dry-run 会把提示写到 stderr，本地 PowerShell 会把它当失败（exit 1）、CI 日志里也只是一条警告，关掉更干净。
+
 ### 移动端打包（Android / iOS）
 
 `.github/workflows/mobile.yml` 与 Web 流水线互不影响，单独产出移动端安装包：产物既在 Actions 运行页的 Artifacts 区，也会在**打 `v*` 标签时汇总发布到 GitHub Releases**（Releases 页面直接点 apk 就能下载安装）。

@@ -1,8 +1,17 @@
 # 更新日志
 
-版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.2+3` 里 `1.0.2` 是 `versionName`，`3` 是 `versionCode`）。
+版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.3+4` 里 `1.0.3` 是 `versionName`，`4` 是 `versionCode`）。
 
 打 `v*` 标签时，[Build Mobile](.github/workflows/mobile.yml) 会把这里对应版本的「本次更新」自动写进 GitHub Release 说明，所以新增版本时记得在本文件补一段。
+
+## [1.0.3] - 2026-11-23
+
+Web 产物体积与构建脚本：
+
+- Web 产物从 **40.41 MB 降到 32.22 MB**（-8.19 MB / -20%）：`web.yml` 新增 `Strip engine symbol files` 步骤，删掉 `canvaskit/` 下 6 个 `*.js.symbols`。这些文件只在 `flutter symbolize` / DevTools 还原引擎堆栈时用，部署产物不会请求它们；删完在无头浏览器里验证首页、分类、详情、购物车均正常渲染。
+- 构建命令加 `--no-wasm-dry-run`：末尾的 wasm 兼容性 dry-run 只把提示写到 stderr，本地 PowerShell 会把它当失败（exit 1），CI 日志里也只是一条警告。
+- 版本号提升到 `1.0.3+4`；README 新增「Web 产物体积」小节，写清 32 MB 的构成，以及为什么不能删 canvaskit 变体目录、为什么不启用 `--web-resources-cdn`（gstatic 在国内不可达会导致白屏）。
+- 本轮没有 Dart 代码改动，用例数 194 与覆盖率 86.9% 不变。
 
 ## [1.0.2] - 2026-11-23
 

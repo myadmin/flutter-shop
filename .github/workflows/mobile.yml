@@ -1,0 +1,114 @@
+# 移动端打包工作流：
+# - Android：ubuntu runner 上产出 release APK（按 ABI 拆分）+ AAB
+# - iOS：macOS runner 上产出「未签名」的 Runner.app 压缩包
+#
+# 两个 job 相互独立，任一失败不影响另一个；产物都可从 Actions 运行页面的
+# Artifacts 区下载。
+#
+# 关于签名：
+# - Android 走的是 `android/app/build.gradle.kts` 里的 debug 签名配置，
+#   CI 不需要任何密钥就能产出**可安装**的 APK；但要上架应用商店必须换成
+#   正式签名，届时把 keystore 用 base64 存进 Secrets，再在构建前解码。
+# - iOS 未配置 DEVELOPMENT_TEAM，因此只能做无签名构建（--no-codesign）：
+#   产物无法装到真机，仅用于验证「iOS 端能编译通过」。要产出可安装的
+#   IPA，需要 Apple 开发者账号的证书 + 描述文件 + 设备 UDID，见 README。
+
+name: Build Mobile
+
+on:
+  push:
+    branches: [ "master" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "master" ]
+  # 只改了文档/Web 的提交也想跳过移动端构建时，可在提交信息里加 [skip ci]
+  workflow_dispatch:
+
+# 同一分支只保留最新一次移动端构建，推送频繁时不至于把 runner 排队排满
+concurrency:
+  group: mobile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-android:
+    name: Android APK / AAB
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        # AGP 9 / Kotlin 2.4 要求 JDK 17 及以上；runner 自带的 JDK 版本不固定，显式指定
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          # 与 dart.yml / web.yml 保持一致：固定 SDK 版本，避免 stable 漂移
+          flutter-version: '3.47.9'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build release APKs (split per ABI)
+        # 拆成 arm64-v8a / armeabi-v7a / x86_64 三个包，单个体积比通用包小很多
+        run: flutter build apk --release --split-per-abi
+
+      - name: Build release App Bundle
+        # 上传 Google Play 需要 AAB 而不是 APK
+        run: flutter build appbundle --release
+
+      - name: Upload Android artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hm-shop-android
+          path: |
+            build/app/outputs/flutter-apk/*.apk
+            build/app/outputs/bundle/release/*.aab
+          if-no-files-found: error
+          retention-days: 14
+
+  build-ios:
+    name: iOS (unsigned)
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build iOS (no codesign)
+        # 项目使用 Swift Package Manager（无 Podfile），无需 pod install。
+        # --no-codesign：没有开发者证书也能验证编译产物。
+        run: flutter build ios --release --no-codesign
+
+      - name: Package Runner.app
+        # .app 是目录，直接 zip 便于下载；用 zip -y 保留符号链接（框架里有）
+        run: |
+          cd build/ios/iphoneos
+          zip -qry Runner.app.zip Runner.app
+          ls -lh Runner.app.zip
+
+      - name: Upload iOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hm-shop-ios-unsigned
+          path: build/ios/iphoneos/Runner.app.zip
+          if-no-files-found: error
+          retention-days: 14

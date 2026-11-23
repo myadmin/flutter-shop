@@ -413,6 +413,23 @@ flutter test --coverage
 
 但默认构建仍然保留 JS，原因是：skwasm 要多线程渲染需要 `Cross-Origin-Opener-Policy` + `Cross-Origin-Embedder-Policy` 两个响应头，而 GitHub Pages 不支持自定义响应头；同时 wasm 产物会把 canvaskit 的各套变体和 JS 兜底一起带上，目录体积反而从 40.29 MB 涨到 42.65 MB。等换成支持自定义头部的托管再切，命令只需给 CI 的构建步骤加上 `--wasm`。
 
+### 移动端打包（Android / iOS）
+
+`.github/workflows/mobile.yml` 与 Web 流水线互不影响，单独产出移动端安装包，产物都能在 Actions 运行页的 Artifacts 区下载：
+
+| Job | Runner | 产物 |
+| --- | --- | --- |
+| `build-android` | `ubuntu-latest` + JDK 17 | `app-arm64-v8a-release.apk`（18.4 MB）、`app-armeabi-v7a-release.apk`（15.9 MB）、`app-x86_64-release.apk`（19.8 MB）、`app-release.aab`（51.0 MB） |
+| `build-ios` | `macos-15` | 未签名的 `Runner.app.zip` |
+
+触发方式是 push 到 `master`、打 `v*` 标签或手动 `workflow_dispatch`；同一分支只跑最新一次（`concurrency` 取消排队中的旧任务）。三点前提必须知道：
+
+1. **Gradle 必须 ≥ 9.3.1。** Flutter 3.47.9 模板里的 AGP 是 `9.1.0`，它在 apply 阶段就会校验 Gradle 版本，用 8.x 会直接失败（`Minimum supported Gradle version is 9.3.1. Current version is 8.14.`）。`android/gradle/wrapper/gradle-wrapper.properties` 已指向腾讯镜像的 `gradle-9.3.1-all.zip`（换成官方 `services.gradle.org` 同理，镜像只是国内下载快）。
+2. **Android 用的是 debug 签名。** `android/app/build.gradle.kts` 里 `release.signingConfig = signingConfigs.getByName("debug")`，所以 CI 不需要任何密钥就能产出**能装进手机**的 APK；但要上传应用商店必须换正式签名（keystore 转 base64 存 Secrets，构建前解码）。另外 `android/gradle.properties` 的 JVM 参数从 `-Xmx8G` 降到 `-Xmx4G`、并关掉 `kotlin.incremental`（Windows 上会遇到 `Could not close incremental caches` 导致 release 构建失败，关掉更稳）。
+3. **iOS 目前只能无签名构建。** 项目使用 Swift Package Manager（没有 `Podfile`），因此不需要 `pod install`；但 pbxproj 里没有 `DEVELOPMENT_TEAM`，`flutter build ios --release --no-codesign` 的产物装不进真机，只用于验证「iOS 侧编译通过」。要拿到可安装的 IPA，需要 Apple 开发者账号：把 `.p12` 证书与 `.mobileprovision` 描述文件存进 Secrets，构建时导入钥匙串，再把 `DEVELOPMENT_TEAM` 写进签名配置并执行不带 `--no-codesign` 的 `flutter build ipa`。
+
+本机实测（Windows + Flutter 3.47.9 + AGP 9.1.0 / Gradle 9.3.1）：干净检出后 `flutter build apk --release` 52.3 MB、`--split-per-abi` 三个包如上表、`flutter build appbundle --release` 51.0 MB，全部构建成功。macOS 侧无法在本机验证，以 CI 结果为准。
+
 ## 当前状态与已知问题
 
 - 顶部搜索框仍为静态占位，点击提示「功能开发中」（接口侧没有搜索端点）。
@@ -428,3 +445,4 @@ flutter test --coverage
 - 首页分类入口只能跳到「分类」页的对应一级分类，不能直达商品列表：分类商品接口 `/category/sub/filter?id=` 只接受**二级分类 id**，一级分类没有对应的商品列表接口。
 - 覆盖率只统计「被测试真正加载过」的文件（lcov 的统计口径）。首页轮播、首页装饰区块、分类左栏、商品详情的品牌与参数区块等纯展示组件仍未被测试加载，`lib/pages/Main/index.dart` 现已由首页分类入口用例覆盖到 tab 切换与选中项下传（`lib/pages/Mine/index.dart` 现已由快捷入口接线用例覆盖到列表加载、快捷入口与资料页入口）；CI 的 80% 阈值只约束已纳入统计的部分。
 - `cupertino_icons` 在代码里没有被直接引用，但 GetX 内部组件引用其字体，删除后 `flutter build web` 会告警缺字体，因此保留（tree-shaking 后仅 1.4 KB）。
+- 移动端产物只解决了「能编译、能安装」：Android release 走 debug 签名（可装进手机，不能上架应用商店），iOS 只有未签名的 `Runner.app`（装不进真机）。正式发布需要的证书与描述文件属于仓库外的凭证，见「移动端打包（Android / iOS）」。

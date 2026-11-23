@@ -4,13 +4,56 @@ class BannerItem {
   String id;
   String imageUrl;
 
-  BannerItem({required this.id, required this.imageUrl});
+  /// 点击后要去的地址，形如 `/category/1181622006`、`/goods/1602922`
+  String hrefUrl;
+
+  /// 跳转类型：`1` 商品分类、`2` 商品详情、`3` 外部链接
+  String type;
+
+  BannerItem({
+    required this.id,
+    required this.imageUrl,
+    this.hrefUrl = '',
+    this.type = '',
+  });
 
   factory BannerItem.fromJson(Map<String, dynamic> json) {
     return BannerItem(
       id: asString(json['id']),
       imageUrl: asString(json['imgUrl']),
+      hrefUrl: asString(json['hrefUrl']),
+      type: asString(json['type']),
     );
+  }
+
+  /// 要跳转的分类 id：`hrefUrl` 形如 `/category/<id>` 时才有值
+  ///
+  /// 接口下发的都是**一级分类** id（与首页分类入口同一批），分类页能直接选中。
+  String? get categoryId {
+    if (type.isNotEmpty && type != '1') {
+      return null;
+    }
+    return _pathValue('category');
+  }
+
+  /// 要跳转的商品 id：`type` 为 2 且 `hrefUrl` 形如 `/goods/<id>` 时才有值
+  String? get goodsId {
+    if (type != '2') {
+      return null;
+    }
+    return _pathValue('goods');
+  }
+
+  /// 从 `/category/1181622006` 这类路径里取出第二段
+  String? _pathValue(String name) {
+    final List<String> segments = hrefUrl
+        .split('/')
+        .where((String segment) => segment.isNotEmpty)
+        .toList();
+    if (segments.length < 2 || segments.first != name) {
+      return null;
+    }
+    return segments[1].isEmpty ? null : segments[1];
   }
 }
 

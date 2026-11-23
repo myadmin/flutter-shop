@@ -15,7 +15,18 @@ class HmSlider extends StatefulWidget {
   /// 会调用 handleAutoPlay 重新决定是否起定时器）。
   final bool autoPlay;
 
-  const HmSlider({super.key, required this.bannerList, this.autoPlay = true});
+  /// 点击某张轮播图时的回调
+  ///
+  /// 轮播本身不决定跳哪里：banner 上的 `hrefUrl` / `type` 由调用方解释
+  /// （首页会按类型切分类 tab 或进商品详情），传 null 时点击给出提示。
+  final ValueChanged<BannerItem>? onBannerTap;
+
+  const HmSlider({
+    super.key,
+    required this.bannerList,
+    this.autoPlay = true,
+    this.onBannerTap,
+  });
 
   @override
   State<HmSlider> createState() => _HmSliderState();
@@ -30,10 +41,17 @@ class _HmSliderState extends State<HmSlider> {
     return CarouselSlider(
       carouselController: _controller,
       items: List.generate(widget.bannerList.length, (int index) {
-        return AppNetworkImage(
-          url: widget.bannerList[index].imageUrl,
-          fit: BoxFit.cover,
-          decodeWidth: MediaQuery.sizeOf(context).width,
+        final BannerItem banner = widget.bannerList[index];
+        final ValueChanged<BannerItem>? onBannerTap = widget.onBannerTap;
+        return GestureDetector(
+          // opaque：图片本身不可点也要占住整块区域，否则点在图片留白处没反应
+          behavior: HitTestBehavior.opaque,
+          onTap: onBannerTap == null ? null : () => onBannerTap(banner),
+          child: AppNetworkImage(
+            url: banner.imageUrl,
+            fit: BoxFit.cover,
+            decodeWidth: MediaQuery.sizeOf(context).width,
+          ),
         );
       }),
       options: CarouselOptions(

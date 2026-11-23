@@ -140,7 +140,27 @@ class _MainPageState extends State<MainPage> {
 
   /// 首页点了某个一级分类：切到「分类」tab 并让分类页选中同一分类
   void _onHomeCategoryTap(CategoryItem category) {
-    _categoryRequestId = category.id;
+    _requestCategory(category.id);
+  }
+
+  /// 首页点了轮播图：分类类 banner 与分类入口同一条路径，商品类 banner 进详情
+  void _onHomeBannerTap(BannerItem banner) {
+    final String? categoryId = banner.categoryId;
+    if (categoryId != null) {
+      _requestCategory(categoryId);
+      return;
+    }
+    final String? goodsId = banner.goodsId;
+    if (goodsId != null) {
+      Navigator.pushNamed(context, AppRoutes.goods(goodsId));
+      return;
+    }
+    ToastUtils.showToast(context, '该活动暂未开放，敬请期待');
+  }
+
+  /// 请求分类页选中某个一级分类：自增版本号，同一个分类点第二次也能重新应用
+  void _requestCategory(String categoryId) {
+    _categoryRequestId = categoryId;
     _categoryRequestTicket++;
     _selectTab(_categoryTabIndex);
   }
@@ -175,6 +195,7 @@ class _MainPageState extends State<MainPage> {
       default:
         return HomeView(
           onCategoryTap: _onHomeCategoryTap,
+          onBannerTap: _onHomeBannerTap,
           // 只在首页可见时让轮播自动播放：IndexedStack 会把首页留在树上，
           // 不传这个标记的话切到其它 tab 后定时器仍在跑。
           isActive: _currentIndex == _homeTabIndex,

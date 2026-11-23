@@ -1,8 +1,19 @@
 # 更新日志
 
-版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.4+5` 里 `1.0.4` 是 `versionName`，`5` 是 `versionCode`）。
+版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.5+6` 里 `1.0.5` 是 `versionName`，`6` 是 `versionCode`）。
 
 打 `v*` 标签时，[Build Mobile](.github/workflows/mobile.yml) 会把这里对应版本的「本次更新」自动写进 GitHub Release 说明，所以新增版本时记得在本文件补一段。
+
+## [1.0.5] - 2026-11-23
+
+首页轮播图现在可以点击了：
+
+- `BannerItem` 增加 `hrefUrl`（跳转地址）与 `type`（1 商品分类 / 2 商品详情 / 3 外部链接）两个字段，并提供 `categoryId`、`goodsId` 两个解析 getter。
+- `HmSlider` 增加 `onBannerTap` 回调，每张轮播图用 `HitTestBehavior.opaque` 的 `GestureDetector` 包住，图片留白处也能点。
+- 点分类类 banner 会切到「分类」tab 并选中该一级分类（与首页分类入口共用同一套「请求选中」逻辑，`hrefUrl` 里下发的正是一级分类 id）；点商品类 banner 直接进商品详情页。
+- 外部链接 banner 或后端没配 `hrefUrl` 时提示「该活动暂未开放，敬请期待」，不再点了毫无反应。
+- 新增 7 个用例（模型解析 3 个 + 轮播回调 / 首页转发 / 无跳转提示 / 切 tab 选中分类 4 个），用例数 203 → 210，覆盖率 87.4%。
+- 版本号提升到 `1.0.5+6`。
 
 ## [1.0.4] - 2026-11-23
 

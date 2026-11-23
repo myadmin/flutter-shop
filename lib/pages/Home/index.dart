@@ -12,19 +12,31 @@ import 'package:hm_shop/models/home.dart';
 import 'package:hm_shop/pages/Home/skeleton.dart';
 import 'package:hm_shop/routes/app_routes.dart';
 import 'package:hm_shop/utils/api_exception.dart';
+import 'package:hm_shop/utils/toast_utils.dart';
 
 /// 首页视图
 ///
 /// 负责并行拉取首页各模块数据（轮播图、分类、推荐等），
 /// 加载期间展示骨架屏，加载完成后渲染真实内容。
 class HomeView extends StatefulWidget {
-  const HomeView({super.key, this.onCategoryTap, this.isActive = true});
+  const HomeView({
+    super.key,
+    this.onCategoryTap,
+    this.onBannerTap,
+    this.isActive = true,
+  });
 
   /// 点击顶部一级分类的回调
   ///
   /// 首页本身没有跳分类页的能力（分类页挂在底部 tab 容器里），
   /// 由 [MainPage] 传进来负责切 tab 并选中对应分类。
   final ValueChanged<CategoryItem>? onCategoryTap;
+
+  /// 点击轮播图的回调
+  ///
+  /// banner 自带 `hrefUrl` 与 `type`，跳转目标由 [MainPage] 决定：
+  /// 分类类 banner 切到「分类」tab 并选中该分类，商品类 banner 进详情页。
+  final ValueChanged<BannerItem>? onBannerTap;
 
   /// 首页当前是否可见
   ///
@@ -97,7 +109,11 @@ class _HomeViewState extends State<HomeView> {
   List<Widget> _getScrollChildren() {
     return [
       SliverToBoxAdapter(
-        child: HmSlider(bannerList: _bannerList, autoPlay: widget.isActive),
+        child: HmSlider(
+          bannerList: _bannerList,
+          autoPlay: widget.isActive,
+          onBannerTap: _onBannerTap,
+        ),
       ),
       const SliverToBoxAdapter(child: SizedBox(height: 10)),
       SliverToBoxAdapter(
@@ -146,6 +162,18 @@ class _HomeViewState extends State<HomeView> {
 
   void _onGoodsTap(GoodsItem goods) {
     Navigator.pushNamed(context, AppRoutes.goods(goods.id));
+  }
+
+  /// 点轮播图：能解析出跳转目标就交给 [MainPage]，解析不出（外部链接、
+  /// 或后端没配 hrefUrl）时给出提示，避免点了完全没反应。
+  void _onBannerTap(BannerItem banner) {
+    final ValueChanged<BannerItem>? handler = widget.onBannerTap;
+    final bool hasTarget = banner.categoryId != null || banner.goodsId != null;
+    if (handler == null || !hasTarget) {
+      ToastUtils.showToast(context, '该活动暂未开放，敬请期待');
+      return;
+    }
+    handler(banner);
   }
 
   /// 加载首页全部数据，全部完成后一次性刷新 UI

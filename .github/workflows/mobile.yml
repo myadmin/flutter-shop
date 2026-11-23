@@ -274,7 +274,8 @@ jobs:
     name: Publish GitHub Release
     needs: [ build-android, build-ios ]
     # 打 v* 标签自动发版；也可以在 Actions 页手动触发并勾选 publish_release
-    if: startsWith(github.ref, 'refs/tags/') || inputs.publish_release == 'true'
+    # 注意：inputs.publish_release 是 boolean 类型，不能跟字符串 'true' 比较（会被转成 NaN 而恒为 false）
+    if: startsWith(github.ref, 'refs/tags/') || inputs.publish_release == true
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

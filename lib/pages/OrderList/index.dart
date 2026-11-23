@@ -6,12 +6,14 @@ import 'package:hm_shop/components/Order/hm_order_status_tabs.dart';
 import 'package:hm_shop/components/common/app_error_view.dart';
 import 'package:hm_shop/components/common/hm_bottom_bar.dart';
 import 'package:hm_shop/components/common/hm_empty_view.dart';
+import 'package:hm_shop/components/common/hm_list_footer.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/order_list.dart';
 import 'package:hm_shop/routes/app_routes.dart';
 import 'package:hm_shop/stores/user_controller.dart';
 import 'package:hm_shop/utils/api_exception.dart';
 import 'package:hm_shop/utils/order_actions.dart';
+import 'package:hm_shop/utils/paged_list.dart';
 import 'package:hm_shop/utils/toast_utils.dart';
 
 /// 我的订单列表页
@@ -37,22 +39,32 @@ class _OrderListPageState extends State<OrderListPage> {
   final UserController _userController = Get.find<UserController>();
   final ScrollController _scrollController = ScrollController();
 
-  final List<OrderItem> _items = [];
-
   /// 正在删除 / 加购的订单 id，用于禁用重复点击
   final Set<String> _pending = {};
 
   late int _state = widget.initialTab;
 
-  int _page = 1;
-
-  bool _isLoading = true;
-
-  bool _loadingMore = false;
-
-  bool _hasMore = false;
-
-  String _errorMessage = '';
+  /// 分页状态机：切 tab 时先 clear 再 refresh，保证展示的是当前筛选的数据
+  late final PagedListController<OrderItem> _orders =
+      PagedListController<OrderItem>(
+        pageSize: _pageSize,
+        loader: (int page) async {
+          final OrderListResult result = await getOrderListAPI(
+            orderState: _state,
+            page: page,
+            pageSize: _pageSize,
+          );
+          return PageResult<OrderItem>(
+            items: result.items,
+            page: result.page,
+            hasMore: result.hasMore,
+          );
+        },
+        firstPageErrorFallback: '订单加载失败',
+        onLoadMoreError: (String message) {
+          if (mounted) ToastUtils.showToast(context, message);
+        },
+      );
 
   late final Worker _userWatcher;
 
@@ -60,87 +72,33 @@ class _OrderListPageState extends State<OrderListPage> {
   void initState() {
     super.initState();
     // 登录 / 退出登录后重新拉取，避免展示上一个账号的订单
-    _userWatcher = ever(_userController.user, (_) => _load(reset: true));
+    _userWatcher = ever(_userController.user, (_) => _syncWithLoginState());
     _scrollController.addListener(_onScroll);
-    _load(reset: true);
+    _syncWithLoginState();
   }
 
   @override
   void dispose() {
     _userWatcher.dispose();
+    _orders.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
-  void _onScroll() {
-    if (!_scrollController.hasClients) return;
-    final position = _scrollController.position;
-    if (position.pixels >= position.maxScrollExtent - 200) {
-      _load(reset: false);
-    }
-  }
-
-  /// 拉取订单列表
-  ///
-  /// [reset] 为 true 时回到第一页并清空旧数据（首次进入、下拉刷新、切换 tab），
-  /// 为 false 时追加下一页。
-  Future<void> _load({required bool reset}) async {
+  /// 未登录时清空列表（页面会切到「登录后查看订单」），登录后重新加载
+  void _syncWithLoginState() {
     if (!_userController.isLoggedIn) {
-      if (!mounted) return;
-      setState(() {
-        _items.clear();
-        _isLoading = false;
-        _loadingMore = false;
-        _hasMore = false;
-        _errorMessage = '';
-      });
+      _orders.clear();
       return;
     }
+    _orders.refresh();
+  }
 
-    if (reset) {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = '';
-      });
-    } else {
-      if (_loadingMore || !_hasMore) return;
-      setState(() => _loadingMore = true);
-    }
-
-    try {
-      final result = await getOrderListAPI(
-        orderState: _state,
-        page: reset ? 1 : _page + 1,
-        pageSize: _pageSize,
-      );
-      if (!mounted) return;
-      setState(() {
-        if (reset) {
-          _items
-            ..clear()
-            ..addAll(result.items);
-          _page = 1;
-        } else {
-          _items.addAll(result.items);
-          _page += 1;
-        }
-        _hasMore = result.hasMore;
-        _isLoading = false;
-        _loadingMore = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _loadingMore = false;
-        if (reset) _errorMessage = resolveErrorMessage(e, fallback: '订单加载失败');
-      });
-      if (!reset) {
-        ToastUtils.showToast(
-          context,
-          resolveErrorMessage(e, fallback: '加载更多失败'),
-        );
-      }
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final ScrollPosition position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 200) {
+      _orders.loadMore();
     }
   }
 
@@ -148,34 +106,33 @@ class _OrderListPageState extends State<OrderListPage> {
     if (state == _state) return;
     setState(() {
       _state = state;
-      _items.clear();
-      _hasMore = false;
     });
+    _orders.clear();
     if (_scrollController.hasClients) _scrollController.jumpTo(0);
-    _load(reset: true);
+    _orders.refresh();
   }
 
   /// 进入详情页；详情页里删除订单后会回传 `true`，据此刷新列表
   Future<void> _openDetail(OrderItem order) async {
-    final changed = await Navigator.pushNamed<bool>(
+    final bool? changed = await Navigator.pushNamed<bool>(
       context,
       AppRoutes.orderDetail(order.id),
     );
     if (!mounted || changed != true) return;
-    await _load(reset: true);
+    await _orders.refresh();
   }
 
   Future<void> _deleteOrder(OrderItem order) async {
     if (_pending.contains(order.id)) return;
 
-    final confirmed = await confirmDeleteOrder(context);
+    final bool confirmed = await confirmDeleteOrder(context);
     if (!confirmed || !mounted) return;
 
     setState(() => _pending.add(order.id));
     try {
       await deleteOrderAPI([order.id]);
       if (!mounted) return;
-      setState(() => _items.removeWhere((item) => item.id == order.id));
+      _orders.removeWhere((OrderItem item) => item.id == order.id);
       ToastUtils.showToast(context, '订单已删除');
     } catch (e) {
       if (!mounted) return;
@@ -199,17 +156,24 @@ class _OrderListPageState extends State<OrderListPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.pageBackground,
-      appBar: AppBar(
-        title: const Text('我的订单'),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      body: Obx(() => _buildScaffold(_userController.isLoggedIn)),
-    );
+    return Obx(() {
+      // 在 Obx 作用域内读一次登录态，登录 / 退出后整页重建
+      final bool loggedIn = _userController.isLoggedIn;
+      return ListenableBuilder(
+        listenable: _orders,
+        builder: (BuildContext context, Widget? child) => Scaffold(
+          backgroundColor: AppColors.pageBackground,
+          appBar: AppBar(
+            title: const Text('我的订单'),
+            centerTitle: true,
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
+            elevation: 0,
+          ),
+          body: _buildScaffold(loggedIn),
+        ),
+      );
+    });
   }
 
   Widget _buildScaffold(bool loggedIn) {
@@ -232,7 +196,7 @@ class _OrderListPageState extends State<OrderListPage> {
   }
 
   Widget _buildContent(bool loggedIn) {
-    if (_isLoading) {
+    if (_orders.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -246,14 +210,14 @@ class _OrderListPageState extends State<OrderListPage> {
       );
     }
 
-    if (_errorMessage.isNotEmpty) {
+    if (_orders.errorMessage.isNotEmpty) {
       return AppErrorView(
-        message: _errorMessage,
-        onRetry: () => _load(reset: true),
+        message: _orders.errorMessage,
+        onRetry: _orders.refresh,
       );
     }
 
-    if (_items.isEmpty) {
+    if (_orders.isEmpty) {
       return HmEmptyView(
         icon: Icons.receipt_long_outlined,
         title: _state == OrderState.all
@@ -271,16 +235,22 @@ class _OrderListPageState extends State<OrderListPage> {
           maxWidth: HmBottomBar.maxContentWidth,
         ),
         child: RefreshIndicator(
-          onRefresh: () => _load(reset: true),
+          onRefresh: _orders.refresh,
           child: ListView.builder(
             controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 16),
-            itemCount: _items.length + 1,
-            itemBuilder: (context, index) {
-              if (index == _items.length) return _buildFooter();
+            itemCount: _orders.length + 1,
+            itemBuilder: (BuildContext context, int index) {
+              if (index == _orders.length) {
+                return HmListFooter(
+                  loadingMore: _orders.loadingMore,
+                  hasMore: _orders.hasMore,
+                  noMoreText: '没有更多订单了',
+                );
+              }
 
-              final order = _items[index];
+              final OrderItem order = _orders[index];
               return HmOrderCard(
                 order: order,
                 onTap: () => _openDetail(order),
@@ -291,33 +261,6 @@ class _OrderListPageState extends State<OrderListPage> {
               );
             },
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFooter() {
-    if (_loadingMore) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 16),
-        child: Center(
-          child: SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-      );
-    }
-
-    if (_hasMore) return const SizedBox(height: 8);
-
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 14),
-      child: Center(
-        child: Text(
-          '没有更多订单了',
-          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
       ),
     );

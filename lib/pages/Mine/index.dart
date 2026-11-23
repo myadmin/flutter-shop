@@ -13,6 +13,7 @@ import 'package:hm_shop/models/order_list.dart';
 import 'package:hm_shop/routes/app_routes.dart';
 import 'package:hm_shop/stores/token_manager.dart';
 import 'package:hm_shop/stores/user_controller.dart';
+import 'package:hm_shop/utils/paged_list.dart';
 import 'package:hm_shop/utils/toast_utils.dart';
 
 /// 「我的」页面
@@ -32,12 +33,25 @@ class _MineViewState extends State<MineView> {
   final UserController _userController = Get.find();
   final ScrollController _controller = ScrollController();
 
-  final List<GoodDetailItem> _list = [];
-
-  /// 用强类型字段保存分页下标，避免对 Map 取值做 dynamic 比较
-  int _page = 1;
-  bool _isLoading = false;
-  bool _hasMore = true;
+  /// 「猜你喜欢」列表的分页状态机
+  ///
+  /// 首页推荐用的是另一套「递增 limit」逻辑，这里是真的按页码翻页。
+  late final PagedListController<GoodDetailItem> _guess =
+      PagedListController<GoodDetailItem>(
+        pageSize: _pageSize,
+        loader: (int page) async {
+          final GoodsDetailsItems result = await getGuessListAPI({
+            'page': page,
+            'pageSize': _pageSize,
+          });
+          return PageResult<GoodDetailItem>(
+            items: result.items,
+            page: result.page,
+            hasMore: result.page < result.pages,
+          );
+        },
+        firstPageErrorFallback: '猜你喜欢加载失败',
+      );
 
   /// 订单入口角标：键为入口名称（「待付款」等），值为订单数量
   Map<String, int> _orderCounts = const {};
@@ -47,7 +61,7 @@ class _MineViewState extends State<MineView> {
   @override
   void initState() {
     super.initState();
-    _getGuessList();
+    _guess.refresh();
     _registerEvent();
     _loadOrderCounts();
     // 登录 / 退出后重新拉一次角标，避免残留上一个账号的数字
@@ -57,6 +71,7 @@ class _MineViewState extends State<MineView> {
   @override
   void dispose() {
     _userWatcher.dispose();
+    _guess.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -184,35 +199,12 @@ class _MineViewState extends State<MineView> {
   /// 滚动到底部时加载下一页
   void _registerEvent() {
     _controller.addListener(() {
-      if (_controller.position.pixels >=
-          _controller.position.maxScrollExtent - 50) {
-        _getGuessList();
+      if (!_controller.hasClients) return;
+      final ScrollPosition position = _controller.position;
+      if (position.pixels >= position.maxScrollExtent - 50) {
+        _guess.loadMore();
       }
     });
-  }
-
-  Future<void> _getGuessList() async {
-    if (_isLoading || !_hasMore) {
-      return;
-    }
-    _isLoading = true;
-    try {
-      final res = await getGuessListAPI({'page': _page, 'pageSize': _pageSize});
-      if (!mounted) return;
-      // 列表与分页状态都在 setState 内更新，保证一帧内完成并触发重建
-      setState(() {
-        _list.addAll(res.items);
-        if (_page >= res.pages) {
-          _hasMore = false;
-        } else {
-          _page++;
-        }
-      });
-    } catch (e) {
-      debugPrint('获取猜你喜欢列表失败: $e');
-    } finally {
-      _isLoading = false;
-    }
   }
 
   void _onGoodsTap(GoodDetailItem goods) {
@@ -221,38 +213,41 @@ class _MineViewState extends State<MineView> {
 
   @override
   Widget build(BuildContext context) {
-    return CustomScrollView(
-      controller: _controller,
-      slivers: [
-        SliverToBoxAdapter(
-          child: Obx(
-            () => HmMineHeader(
-              user: _userController.user.value,
-              onLoginTap: () => Navigator.pushNamed(context, AppRoutes.login),
-              onLogoutTap: _confirmLogout,
-              // 资料页保存后会直接更新 UserController，Obx 会自动刷新头像与昵称
-              onProfileTap: () =>
-                  Navigator.pushNamed(context, AppRoutes.profilePath),
+    return ListenableBuilder(
+      listenable: _guess,
+      builder: (BuildContext context, Widget? child) => CustomScrollView(
+        controller: _controller,
+        slivers: [
+          SliverToBoxAdapter(
+            child: Obx(
+              () => HmMineHeader(
+                user: _userController.user.value,
+                onLoginTap: () => Navigator.pushNamed(context, AppRoutes.login),
+                onLogoutTap: _confirmLogout,
+                // 资料页保存后会直接更新 UserController，Obx 会自动刷新头像与昵称
+                onProfileTap: () =>
+                    Navigator.pushNamed(context, AppRoutes.profilePath),
+              ),
             ),
           ),
-        ),
-        SliverToBoxAdapter(
-          child: HmMineVipCard(
-            onOpenTap: () => Navigator.pushNamed(context, AppRoutes.vipPath),
+          SliverToBoxAdapter(
+            child: HmMineVipCard(
+              onOpenTap: () => Navigator.pushNamed(context, AppRoutes.vipPath),
+            ),
           ),
-        ),
-        SliverToBoxAdapter(
-          child: HmMineQuickActions(onEntryTap: _onQuickEntryTap),
-        ),
-        SliverToBoxAdapter(
-          child: HmMineOrderModule(
-            onEntryTap: _onOrderEntryTap,
-            counts: _orderCounts,
+          SliverToBoxAdapter(
+            child: HmMineQuickActions(onEntryTap: _onQuickEntryTap),
           ),
-        ),
-        const SliverPersistentHeader(pinned: true, delegate: HmGuess()),
-        HmMoreList(recommendList: _list, onItemTap: _onGoodsTap),
-      ],
+          SliverToBoxAdapter(
+            child: HmMineOrderModule(
+              onEntryTap: _onOrderEntryTap,
+              counts: _orderCounts,
+            ),
+          ),
+          const SliverPersistentHeader(pinned: true, delegate: HmGuess()),
+          HmMoreList(recommendList: _guess.items, onItemTap: _onGoodsTap),
+        ],
+      ),
     );
   }
 }

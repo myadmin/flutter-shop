@@ -5,11 +5,12 @@ import 'package:hm_shop/components/Collect/hm_collect_tile.dart';
 import 'package:hm_shop/components/common/app_error_view.dart';
 import 'package:hm_shop/components/common/hm_bottom_bar.dart';
 import 'package:hm_shop/components/common/hm_empty_view.dart';
+import 'package:hm_shop/components/common/hm_list_footer.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/collect.dart';
 import 'package:hm_shop/routes/app_routes.dart';
 import 'package:hm_shop/stores/user_controller.dart';
-import 'package:hm_shop/utils/api_exception.dart';
+import 'package:hm_shop/utils/paged_list.dart';
 import 'package:hm_shop/utils/toast_utils.dart';
 
 /// 我的收藏
@@ -27,93 +28,64 @@ class _CollectPageState extends State<CollectPage> {
   static const int _pageSize = 10;
   static const int _collectType = 1;
 
-  final UserController _userController = Get.find();
+  final UserController _userController = Get.find<UserController>();
   final ScrollController _scrollController = ScrollController();
-  final List<CollectItem> _items = [];
 
-  int _page = 1;
-  bool _isLoading = true;
-  bool _loadingMore = false;
-  bool _hasMore = true;
-  String _errorMessage = '';
+  /// 分页状态机：加载中 / 加载更多 / 无更多 / 错误都由它维护
+  late final PagedListController<CollectItem> _collect =
+      PagedListController<CollectItem>(
+        pageSize: _pageSize,
+        loader: (int page) async {
+          final CollectListResult result = await getCollectListAPI(
+            collectType: _collectType,
+            page: page,
+            pageSize: _pageSize,
+          );
+          return PageResult<CollectItem>(
+            items: result.items,
+            page: result.page,
+            hasMore: result.hasMore,
+          );
+        },
+        firstPageErrorFallback: '收藏列表加载失败',
+        onLoadMoreError: (String message) {
+          if (mounted) ToastUtils.showToast(context, message);
+        },
+      );
+
+  late final Worker _userWatcher;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    ever(_userController.user, (_) => _load(reset: true));
-    _load(reset: true);
+    // 登录 / 退出登录后重新拉取，避免展示上一个账号的收藏
+    _userWatcher = ever(_userController.user, (_) => _syncWithLoginState());
+    _syncWithLoginState();
   }
 
   @override
   void dispose() {
+    _userWatcher.dispose();
+    _collect.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
-  void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      _load(reset: false);
-    }
-  }
-
-  /// 取收藏列表：`reset` 为 true 时回到第一页并覆盖，否则追加下一页
-  Future<void> _load({required bool reset}) async {
+  /// 未登录时清空列表（页面会切到「登录后查看收藏」），登录后重新加载
+  void _syncWithLoginState() {
     if (!_userController.isLoggedIn) {
-      if (!mounted) return;
-      setState(() {
-        _items.clear();
-        _isLoading = false;
-        _hasMore = false;
-      });
+      _collect.clear();
       return;
     }
-    if (reset) {
-      setState(() {
-        _isLoading = _items.isEmpty;
-        _errorMessage = '';
-        _hasMore = true;
-      });
-    } else {
-      if (_isLoading || _loadingMore || !_hasMore) return;
-      _loadingMore = true;
-    }
-    try {
-      final result = await getCollectListAPI(
-        collectType: _collectType,
-        page: reset ? 1 : _page + 1,
-        pageSize: _pageSize,
-      );
-      if (!mounted) return;
-      setState(() {
-        if (reset) {
-          _items
-            ..clear()
-            ..addAll(result.items);
-        } else {
-          _items.addAll(result.items);
-        }
-        _page = result.page;
-        _hasMore = result.hasMore && result.items.isNotEmpty;
-        _isLoading = false;
-      });
-    } catch (e) {
-      debugPrint('获取收藏列表失败: $e');
-      if (!mounted) return;
-      final message = resolveErrorMessage(e, fallback: '收藏列表加载失败');
-      if (reset) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = message;
-        });
-      } else {
-        ToastUtils.showToast(context, message);
-      }
-    } finally {
-      if (mounted) {
-        _loadingMore = false;
-      }
+    _collect.refresh();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final ScrollPosition position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 200) {
+      _collect.loadMore();
     }
   }
 
@@ -123,23 +95,28 @@ class _CollectPageState extends State<CollectPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () => Scaffold(
-        backgroundColor: AppColors.pageBackground,
-        appBar: AppBar(
-          title: const Text('我的收藏'),
-          centerTitle: true,
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          elevation: 0,
+    return Obx(() {
+      // 在 Obx 作用域内读一次登录态，登录 / 退出后整页重建
+      final bool loggedIn = _userController.isLoggedIn;
+      return ListenableBuilder(
+        listenable: _collect,
+        builder: (BuildContext context, Widget? child) => Scaffold(
+          backgroundColor: AppColors.pageBackground,
+          appBar: AppBar(
+            title: const Text('我的收藏'),
+            centerTitle: true,
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
+            elevation: 0,
+          ),
+          body: _buildBody(loggedIn),
         ),
-        body: _buildBody(_userController.isLoggedIn),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildBody(bool loggedIn) {
-    if (_isLoading) {
+    if (_collect.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
     if (!loggedIn) {
@@ -151,13 +128,13 @@ class _CollectPageState extends State<CollectPage> {
         onAction: () => Navigator.pushNamed(context, AppRoutes.login),
       );
     }
-    if (_errorMessage.isNotEmpty) {
+    if (_collect.errorMessage.isNotEmpty) {
       return AppErrorView(
-        message: _errorMessage,
-        onRetry: () => _load(reset: true),
+        message: _collect.errorMessage,
+        onRetry: _collect.refresh,
       );
     }
-    if (_items.isEmpty) {
+    if (_collect.isEmpty) {
       return HmEmptyView(
         icon: Icons.favorite_border,
         title: '还没有收藏',
@@ -172,53 +149,31 @@ class _CollectPageState extends State<CollectPage> {
           maxWidth: HmBottomBar.maxContentWidth,
         ),
         child: RefreshIndicator(
-          onRefresh: () => _load(reset: true),
+          onRefresh: _collect.refresh,
           child: ListView.separated(
             controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 16),
-            itemCount: _items.length + 1,
-            separatorBuilder: (_, index) => index < _items.length - 1
+            itemCount: _collect.length + 1,
+            separatorBuilder: (BuildContext context, int index) =>
+                index < _collect.length - 1
                 ? const SizedBox(height: 10)
                 : const SizedBox.shrink(),
-            itemBuilder: (context, index) {
-              if (index == _items.length) {
-                return _buildFooter();
+            itemBuilder: (BuildContext context, int index) {
+              if (index == _collect.length) {
+                return HmListFooter(
+                  loadingMore: _collect.loadingMore,
+                  hasMore: _collect.hasMore,
+                  noMoreText: '没有更多收藏了',
+                );
               }
-              final item = _items[index];
+              final CollectItem item = _collect[index];
               return HmCollectTile(
                 item: item,
                 onTap: item.canOpenGoods ? () => _openGoods(item) : null,
               );
             },
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFooter() {
-    if (_loadingMore) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 14),
-        child: Center(
-          child: SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-      );
-    }
-    if (_hasMore) {
-      return const SizedBox(height: 8);
-    }
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 14),
-      child: Center(
-        child: Text(
-          '没有更多收藏了',
-          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
       ),
     );

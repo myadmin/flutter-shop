@@ -143,6 +143,7 @@
 - **轮播随 tab 暂停**：首页被 `IndexedStack` 保活，`HmSlider` 通过 `HomeView(isActive: ...)` 拿到可见性，切到其它 tab 时把 `autoPlay` 置 false，`carousel_slider` 会在 `didUpdateWidget` 里取消定时器，回到首页再恢复
 - **应用标识**：三端应用名统一为「美荟商城」，图标是品牌橙渐变 + 白色购物袋（母版 `docs/icon/app_icon_1024.png`，由 `tool/generate_icons.py` 生成三端全部尺寸），替换掉 Flutter 模板默认图标；详见「移动端打包」里的「应用名与图标」
 - **状态管理分工**：跨页面共享的用户态与购物车件数放在 GetX 控制器（`UserController` / `CartController`，页面通过 `Obx` 响应式刷新），且仅在 `main()` 中注册一次；页面私有的列表数据、加载态与错误文案用 `State` + `setState`
+- **分页列表统一**：订单列表、我的收藏、「我的」页猜你喜欢三个分页页共用 `lib/utils/paged_list.dart` 的 `PagedListController<T>`（`ChangeNotifier`）：`refresh()` 回到第一页并覆盖、`loadMore()` 追加下一页并自带重入保护、首页失败写 `errorMessage` 供错误态展示、加载更多失败只回调 toast 不清已有列表、`clear()` 用于切换筛选或退出登录；页面只提供 `loader` 与渲染，底部状态条用 `HmListFooter`。此前每个页面各写一套 `_isLoading` / `_loadingMore` / `_hasMore` / `_errorMessage`，三个页面合计约 90 行重复代码
 - **登录态管理**：`TokenManager` 基于 `shared_preferences` 持久化 token（写盘 `await` 落盘完成）；启动时若已登录则请求 `/member/profile` 恢复用户信息，失效时自动清理并降级
 - **网络层**：Dio 单例封装，统一超时与请求头注入；异常被翻译为 `ApiException`（业务错误，带 `code`）或 `NetworkException`（网络 / 超时 / 401），页面统一用 `resolveErrorMessage` 提取可展示文案
 - **金额计算**：`lib/utils/money.dart` 把金额以「分」为单位的整数累加（`parseCents` / `formatCents`），避免多条商品按 `double` 相加后差一分
@@ -152,7 +153,7 @@
 - **并发与容错**：购物车件数与购物车列表请求都做了在途去重（同一时刻只发一次）；首页整页刷新期间不接受滚动加载（`_refreshing`），避免与首屏请求抢 `limit`；401 跳转登录页带重入保护；滚动触发的加载在本地吞掉异常，不会冒泡成未捕获异步错误；`PlatformDispatcher.onError` 兜底记录漏网的异步异常
 - **加载弹窗**：`LoadingDialog` 持有 `DialogRoute` 引用，`hide()` 精确移除自身路由，不会误弹页面
 - **Toast 工具**：`ToastUtils` 基于 `SnackBar`，宽度随文案自适应；只有**相同文案**在 2 秒内重复时才节流，不同提示不会被吞掉，新提示会顶掉正在展示的旧提示
-- **自动化测试**：194 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、金额整数累加、全局用户态与购物车件数、本地足迹存储（去重 / 上限 / 损坏数据）、足迹分组、骨架屏、商品聚合组件、规格选择弹层、订单组件、「我的」页面组件、分类页组件、购物车组件、收藏卡片、未知路由兜底与深链解析，以及首页 / 购物车 / 登录 / 分类 / 分类商品列表 / 商品详情 / 订单确认 / 订单列表 / 订单详情 / 我的收藏 / 客服中心 / 我的足迹 / 会员权益 / 个人资料十四个页面的页面级交互、「我的」页快捷入口接线与订单角标、首页分类入口切 tab 并选中分类、底部 tab 懒加载（首屏只发首页请求 / 切 tab 才加载对应页 / 来回切不重复请求 / 轮播随 tab 暂停与恢复）、购物车条目点击进详情（含失效商品不跳转）（用 `MockAdapter` 替换 Dio 适配器，不发真实请求）
+- **自动化测试**：203 个用例，覆盖网络层拦截与业务码、模型反序列化容错与接口结构校验、金额整数累加、分页状态机（追加 / 无更多 / 加载更多失败不清列表 / 清空）、全局用户态与购物车件数、本地足迹存储（去重 / 上限 / 损坏数据）、足迹分组、骨架屏、商品聚合组件、规格选择弹层、订单组件、「我的」页面组件、分类页组件、购物车组件、收藏卡片、未知路由兜底与深链解析，以及首页 / 购物车 / 登录 / 分类 / 分类商品列表 / 商品详情 / 订单确认 / 订单列表 / 订单详情 / 我的收藏 / 客服中心 / 我的足迹 / 会员权益 / 个人资料十四个页面的页面级交互、「我的」页快捷入口接线与订单角标、首页分类入口切 tab 并选中分类、底部 tab 懒加载（首屏只发首页请求 / 切 tab 才加载对应页 / 来回切不重复请求 / 轮播随 tab 暂停与恢复）、购物车条目点击进详情（含失效商品不跳转）（用 `MockAdapter` 替换 Dio 适配器，不发真实请求）
 - **代码规范与 CI**：`dart format`、`flutter analyze --fatal-infos`（已开启 `strict-casts` / `strict-inference` / `strict-raw-types`）、`flutter test --coverage`（覆盖率低于 80% 直接失败）、`flutter build web --release`（构建冒烟）在 CI 中全部强制通过
 
 ## 技术栈
@@ -188,7 +189,8 @@ lib/
 │   │   ├── hm_goods_card.dart  # 商品卡片（图片 / 标题 / 价格 / 付款人数）
 │   │   ├── hm_empty_view.dart  # 通用空态（图标 / 标题 / 说明 / 按钮）
 │   │   ├── app_network_image.dart # 统一网络图片（带解码尺寸与占位）
-│   │   └── app_error_view.dart # 统一错误态 + 重试
+│   │   ├── app_error_view.dart # 统一错误态 + 重试
+│   │   └── hm_list_footer.dart # 分页列表底部状态条（加载更多 / 没有更多了）
 │   ├── Home/                   # 首页业务组件
 │   │   ├── hm_slider.dart      # 轮播图 + 搜索框 + 指示点
 │   │   ├── hm_category.dart    # 分类横向列表
@@ -283,6 +285,7 @@ lib/
 │   ├── money.dart              # 金额按「分」整数累加（parseCents / formatCents）
 │   ├── loading_dialog.dart     # 统一加载中对话框
 │   ├── order_actions.dart      # 订单删除确认与主操作（再次购买）复用逻辑
+│   ├── paged_list.dart         # 分页列表状态机（首次加载 / 刷新 / 加载更多）
 │   ├── web_url_strategy.dart   # Web 真实路径策略的跨平台门面（条件导入）
 │   └── toast_utils.dart        # 自适应宽度 Toast
 ├── assets/                     # 底部导航图标、我的页图标、首页装饰图（WebP）等资源
@@ -319,6 +322,7 @@ test/
 ├── home_page_test.dart         # 首页并发加载、部分失败降级、整页错误重试
 ├── category_selection_test.dart # 首页分类入口 → 分类页选中（组件回调 / 外部选中 / 切 tab）
 ├── main_tabs_test.dart         # 底部 tab 懒加载 / 保活 / 轮播随 tab 暂停
+├── paged_list_test.dart        # 分页状态机：追加 / 无更多 / 失败 / 清空 + 列表底部状态条
 ├── unknown_route_test.dart     # 未知路由兜底、深链解析、地址构造
 └── widget_test.dart            # 首页骨架屏、订单组件、商品聚合组件
 ```
@@ -408,7 +412,7 @@ flutter test --coverage
 1. `dart format --output=none --set-exit-if-changed lib test`
 2. `flutter analyze --fatal-infos`（info 级问题同样视为失败）
 3. `flutter test --coverage`
-4. 覆盖率阈值：整体可执行行覆盖率低于 **80%** 直接失败（当前 3082 / 3547 行 = 86.9%）。注意 lcov 只统计「被测试真正加载过」的文件，新增一个 import 就会改变分母——路由测试 import 了 `routes/index.dart`，把全部页面一起纳入统计
+4. 覆盖率阈值：整体可执行行覆盖率低于 **80%** 直接失败（当前 3134 / 3587 行 = 87.4%）。注意 lcov 只统计「被测试真正加载过」的文件，新增一个 import 就会改变分母——路由测试 import 了 `routes/index.dart`，把全部页面一起纳入统计
 5. `flutter build web --release` 构建冒烟 —— 资源路径、条件导入这类问题 analyze 与 test 都发现不了
 
 同一分支连续推送时，`concurrency` 会取消上一次仍在跑的检查，避免队列堆积。`.github/workflows/web.yml` 另行构建 Web 产物并通过 GitHub Pages 部署。

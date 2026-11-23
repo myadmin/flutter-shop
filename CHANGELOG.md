@@ -1,8 +1,19 @@
 # 更新日志
 
-版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.3+4` 里 `1.0.3` 是 `versionName`，`4` 是 `versionCode`）。
+版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.4+5` 里 `1.0.4` 是 `versionName`，`5` 是 `versionCode`）。
 
 打 `v*` 标签时，[Build Mobile](.github/workflows/mobile.yml) 会把这里对应版本的「本次更新」自动写进 GitHub Release 说明，所以新增版本时记得在本文件补一段。
+
+## [1.0.4] - 2026-11-23
+
+代码重构，界面与接口行为不变：
+
+- 新增 `lib/utils/paged_list.dart`：`PageResult<T>` + `PagedListController<T>` 统一分页列表的「首次加载 / 下拉刷新 / 上拉加载更多」状态机（`isLoading` / `loadingMore` / `hasMore` / `errorMessage`），加载更多自带重入保护、列表为空时不会去请求第二页、加载更多失败只回调 toast 不清已有数据。
+- 新增 `lib/components/common/hm_list_footer.dart`：分页列表底部状态条（加载中转圈 / 还有下一页 / 没有更多了）。
+- 订单列表、我的收藏、「我的」页猜你喜欢三个页面改用统一状态机，删掉各自那套 `_page` / `_isLoading` / `_loadingMore` / `_hasMore` / `_errorMessage` 与重复的底部状态条代码。首页推荐仍是「递增 limit」逻辑，未改动。
+- 顺带修掉一个资源泄漏：收藏页与订单列表页监听全局用户态的 `ever(...)` 之前没有 `dispose`，离开页面后仍在监听；现在与控制器一起释放。
+- 新增 9 个用例（7 个状态机 + 2 个底部状态条），用例数 194 → 203，覆盖率 86.9% → 87.4%。
+- 版本号提升到 `1.0.4+5`。
 
 ## [1.0.3] - 2026-11-23
 

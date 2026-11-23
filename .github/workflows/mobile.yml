@@ -354,7 +354,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
+          set -eo pipefail
           shopt -s nullglob
           FILES=(dist/*.apk dist/*.aab dist/*.zip dist/*.ipa)
           if [ ${#FILES[@]} -eq 0 ]; then
@@ -364,19 +364,35 @@ jobs:
           printf '待上传文件：\n'
           printf '  %s\n' "${FILES[@]}"
 
+          # 先确认 token 真的有写权限：否则 gh 只会给出一个难以定位的 403
+          PUSH_PERM=$(curl -sS -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}" | jq -r '.permissions.push // false')
+          echo "token 对仓库的 permissions.push = ${PUSH_PERM}"
+          if [ "$PUSH_PERM" != "true" ]; then
+            echo "::error::GITHUB_TOKEN 没有写权限（permissions.push=${PUSH_PERM}），创建 Release 会被拒绝。请到仓库 Settings → Actions → General → Workflow permissions 选择「Read and write permissions」，然后重跑本工作流。"
+            exit 1
+          fi
+
           if gh release view "$TAG" > /dev/null 2>&1; then
-            echo "release $TAG 已存在，改为覆盖上传资产"
-            gh release upload "$TAG" "${FILES[@]}" --clobber
+            echo "release ${TAG} 已存在，改为覆盖上传资产"
+            if ! OUT=$(gh release upload "$TAG" "${FILES[@]}" --clobber 2>&1); then
+              echo "::error::gh release upload 失败：$(echo "$OUT" | tr '\n' ' ' | cut -c1-600)"
+              exit 1
+            fi
           else
             TARGET_ARGS=()
             if [ "$TAG_EXISTS" != "true" ]; then
               TARGET_ARGS=(--target "$GITHUB_SHA")
             fi
-            gh release create "$TAG" "${FILES[@]}" \
+            if ! OUT=$(gh release create "$TAG" "${FILES[@]}" \
               --title "HM Shop ${TAG}" \
               --notes-file release-notes.md \
-              "${TARGET_ARGS[@]}"
+              "${TARGET_ARGS[@]}" 2>&1); then
+              echo "::error::gh release create 失败：$(echo "$OUT" | tr '\n' ' ' | cut -c1-600)"
+              exit 1
+            fi
           fi
+          echo "::notice::Release 已发布：https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
 
       - name: Report release url
         run: echo "::notice::安装包已发布：https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"

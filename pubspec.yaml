@@ -17,7 +17,7 @@ dependencies:
   # 删掉这个依赖后 `flutter build web` 会告警
   # "Expected to find fonts for (MaterialIcons, packages/cupertino_icons/CupertinoIcons)"，
   # 且相关图标会缺字形。tree-shaking 后仅占 1.4 KB，因此保留。
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^2.0.0
   # 仅用于 Web 的 URL 策略（把地址栏从 #/goods 换成 /goods），
   # 由 lib/utils/web_url_strategy.dart 做条件导入，非 Web 平台不会编译到。
   flutter_web_plugins:

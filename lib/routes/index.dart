@@ -48,7 +48,8 @@ Widget getRootWidget() {
 ///
 /// 注意路由名保留完整查询串（而不是只留 path）：地址栏的 URL 就是取
 /// `RouteSettings.name`，保留查询串才能让「刷新/分享」还原到同一件商品。
-Route<dynamic>? buildRoute(RouteSettings settings) {
+/// 返回值非空：路径查不到时也会生成兜底页路由，调用方不必再判空。
+Route<dynamic> buildRoute(RouteSettings settings) {
   final name = settings.name ?? '/';
   final uri = Uri.tryParse(name);
   final path = uri != null && uri.path.isNotEmpty ? uri.path : name;
@@ -76,20 +77,16 @@ List<Route<dynamic>> buildInitialRoutes(String initialRoute) {
   final home = buildRoute(const RouteSettings(name: AppRoutes.home));
   final path = Uri.tryParse(initialRoute)?.path ?? initialRoute;
   if (path.isEmpty || path == AppRoutes.home) {
-    return home == null ? const [] : [home];
+    return [home];
   }
-  final target = buildRoute(RouteSettings(name: initialRoute));
-  if (target == null) {
-    return home == null ? const [] : [home];
-  }
-  return [?home, target];
+  return [home, buildRoute(RouteSettings(name: initialRoute))];
 }
 
 /// 未知路由兜底
 ///
 /// 单独抽成函数而不是内联闭包，方便测试直接断言这层「路由表未命中 →
-/// 展示兜底页」的接线是否正确。
-Route<dynamic>? buildUnknownRoute(RouteSettings settings) {
+/// 展示兜底页」的接线是否正确。返回值非空，`onUnknownRoute` 不会拿到 null。
+Route<dynamic> buildUnknownRoute(RouteSettings settings) {
   return MaterialPageRoute<void>(
     builder: (_) => UnknownRoutePage(location: settings.name),
     settings: settings,

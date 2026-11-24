@@ -1,8 +1,17 @@
 # 更新日志
 
-版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.11+12` 里 `1.0.11` 是 `versionName`，`12` 是 `versionCode`）。
+版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.12+13` 里 `1.0.12` 是 `versionName`，`13` 是 `versionCode`）。
 
 打 `v*` 标签时，[Build Mobile](.github/workflows/mobile.yml) 会把这里对应版本的「本次更新」自动写进 GitHub Release 说明，所以新增版本时记得在本文件补一段。
+
+## [1.0.12] - 2026-11-24
+
+补齐审查报告里覆盖率最薄弱的两块（路由层与购物车页），顺带收紧两处返回类型：
+
+- `buildRoute` 与 `buildUnknownRoute` 的返回类型从 `Route<dynamic>?` 改成 `Route<dynamic>`：路径查不到时一定会生成兜底页路由，原来的 `home == null ? const [] : [home]` 分支根本走不到，去掉后 `buildInitialRoutes` 不再需要判空。
+- 新增 `test/routes_test.dart`（18 个用例）：`getRootWidget` 的装配（路由表 / 深链解析 / 兜底页 / 主题）、13 条路由逐条接线（`/goods`、`/goods/list`、`/brand`、`/order/confirm`、`/orders`、`/orders/detail` 的参数解析与缺参默认值，以及 5 个无参页面各自打开对应页面）、订单列表与订单详情地址构造。`lib/routes/index.dart` 覆盖率 33.3% → 97.0%，`lib/routes/app_routes.dart` 64.3% → 92.9%。
+- 新增 `test/cart_actions_test.dart`（20 个用例）：改数量、数量下界禁用、改数量失败回滚、删除二次确认与取消、全选串行提交与失败重拉、结算的三种分支（未勾选 / 多选 / 单件跳转）、下拉刷新、未登录跳登录、详情页返回后刷新、失效商品不可勾选、勾选与删除失败回滚、缺商品 id 只提示、在途去重、切 tab 与登录态变化重新拉取。`lib/pages/Cart/index.dart` 覆盖率 58.9% → 98.5%。
+- 整体覆盖率 88.2% → **91.5%**（3554 / 3884 行），用例数 221 → **259**；`.github/workflows/dart.yml` 的基线注释与 README 同步。
 
 ## [1.0.11] - 2026-11-24
 

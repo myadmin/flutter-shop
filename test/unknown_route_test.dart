@@ -80,7 +80,7 @@ void main() {
       final route = buildRoute(const RouteSettings(name: '/goods?id=42'));
       expect(route, isA<MaterialPageRoute<void>>());
 
-      final settings = route!.settings;
+      final settings = route.settings;
       // 路由名保留完整查询串：地址栏 URL 取的就是 name，保留才能刷新还原
       expect(settings.name, '/goods?id=42');
       expect(settings.arguments, isA<Map<String, dynamic>>());
@@ -91,7 +91,7 @@ void main() {
       final route = buildRoute(
         const RouteSettings(name: '/order/confirm?skuId=sku-9&count=3'),
       );
-      final arguments = route!.settings.arguments as Map<String, dynamic>;
+      final arguments = route.settings.arguments as Map<String, dynamic>;
       expect(route.settings.name, '/order/confirm?skuId=sku-9&count=3');
       expect(arguments['skuId'], 'sku-9');
       expect(arguments['count'], '3');
@@ -101,7 +101,7 @@ void main() {
       final route = buildRoute(
         const RouteSettings(name: '/goods', arguments: 'sku-from-list'),
       );
-      expect(route!.settings.arguments, 'sku-from-list');
+      expect(route.settings.arguments, 'sku-from-list');
       expect(route.settings.name, '/goods');
     });
 
@@ -117,7 +117,7 @@ void main() {
 
     test('根路径照常命中首页路由', () {
       final route = buildRoute(const RouteSettings(name: '/'));
-      expect(route!.settings.name, '/');
+      expect(route.settings.name, '/');
       expect(route.settings.arguments, isNull);
     });
   });
@@ -161,7 +161,7 @@ void main() {
       expect(AppRoutes.goods('42'), '/goods?id=42');
 
       final route = buildRoute(RouteSettings(name: AppRoutes.goods('42')));
-      expect(route!.settings.name, '/goods?id=42');
+      expect(route.settings.name, '/goods?id=42');
       expect((route.settings.arguments as Map<String, dynamic>)['id'], '42');
     });
 
@@ -171,7 +171,7 @@ void main() {
 
       final route = buildRoute(RouteSettings(name: url));
       expect(
-        (route!.settings.arguments as Map<String, dynamic>)['id'],
+        (route.settings.arguments as Map<String, dynamic>)['id'],
         'a b&c=d',
       );
     });
@@ -185,7 +185,7 @@ void main() {
       final route = buildRoute(
         RouteSettings(name: AppRoutes.orderConfirm('sku-9', 3)),
       );
-      final arguments = route!.settings.arguments as Map<String, dynamic>;
+      final arguments = route.settings.arguments as Map<String, dynamic>;
       expect(route.settings.name, '/order/confirm?skuId=sku-9&count=3');
       expect(arguments['skuId'], 'sku-9');
       expect(arguments['count'], '3');

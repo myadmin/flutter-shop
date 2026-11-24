@@ -1,8 +1,25 @@
 # 更新日志
 
-版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.10+11` 里 `1.0.10` 是 `versionName`，`11` 是 `versionCode`）。
+版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.11+12` 里 `1.0.11` 是 `versionName`，`12` 是 `versionCode`）。
 
 打 `v*` 标签时，[Build Mobile](.github/workflows/mobile.yml) 会把这里对应版本的「本次更新」自动写进 GitHub Release 说明，所以新增版本时记得在本文件补一段。
+
+## [1.0.11] - 2026-11-24
+
+修掉 Web 流水线在多个 PR 并存时成片 `cancelled` 的问题：
+
+- `web.yml` 的 `concurrency.group` 从写死的 `pages` 改成 `pages-${{ github.ref }}`：以前所有 PR 共用一个组，`cancel-in-progress: false` 只保留一个 pending，后到的会把排队中的构建取消掉——依赖机器人一次开 6 个 PR 时，`Build and Deploy Web` 出现 5 个 `cancelled`。现在 PR 各用各的组，master 上的部署仍然串行。
+- README 同步说明 `concurrency` 的分组方式。
+- 版本号提升到 `1.0.11+12`。
+
+## [1.0.10] - 2026-11-24
+
+继续压低 CI 消耗，不改应用行为：
+
+- `mobile.yml` 不再在 `pull_request` 上触发：依赖机器人一次会开好几个 PR，每个都排一遍 Android + macOS 构建太浪费；Android 打包正确性由每次发版的标签运行兜住。
+- `dependabot.yml` 把同一周的 Action 版本更新合并成一个 PR（`groups`），`open-pull-requests-limit` 从 5 收到 3——否则 `checkout` / `upload-artifact` / `configure-pages` 各开一个 PR，各自触发一轮 CI。
+- README 同步 `build-ios` 的触发条件（打标签 / 手动触发）。
+- 版本号提升到 `1.0.10+11`。
 
 ## [1.0.9] - 2026-11-24
 
@@ -16,15 +33,6 @@
 - 三个 workflow 的 job 补齐 `timeout-minutes`（CI 20 分钟、Web 构建 20 分钟、部署 10 分钟、`mobile.yml` 原本已有），卡住时不会占满 GitHub 默认的 6 小时上限。
 - README 补充上述配置文件说明与「纯文档改动不触发 CI」的行为，目录结构补 `.github/` 与根目录配置；AGENTS.md 的发版约定同步。
 - 版本号提升到 `1.0.9+10`。
-
-## [1.0.10] - 2026-11-24
-
-继续压低 CI 消耗，不改应用行为：
-
-- `mobile.yml` 不再在 `pull_request` 上触发：依赖机器人一次会开好几个 PR，每个都排一遍 Android + macOS 构建太浪费；Android 打包正确性由每次发版的标签运行兜住。
-- `dependabot.yml` 把同一周的 Action 版本更新合并成一个 PR（`groups`），`open-pull-requests-limit` 从 5 收到 3——否则 `checkout` / `upload-artifact` / `configure-pages` 各开一个 PR，各自触发一轮 CI。
-- README 同步 `build-ios` 的触发条件（打标签 / 手动触发）。
-- 版本号提升到 `1.0.10+11`。
 
 ## [1.0.8] - 2026-11-24
 

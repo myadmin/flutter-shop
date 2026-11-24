@@ -58,7 +58,7 @@ jobs:
         run: flutter pub get
 
       - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - name: Build web
         # 项目站点地址为 https://<owner>.github.io/<repo>/，需要匹配仓库名子路径

@@ -12,12 +12,19 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Asia/Shanghai"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     commit-message:
       prefix: "ci"
     labels:
       - "dependencies"
       - "github-actions"
+    # 把同一周的所有 Action 版本更新合并成一个 PR，
+    # 避免 checkout / upload-artifact / configure-pages 各开一个 PR 各自跑一遍 CI
+    groups:
+      github-actions:
+        applies-to: version-updates
+        patterns:
+          - "*"
 
   - package-ecosystem: "pub"
     directory: "/"

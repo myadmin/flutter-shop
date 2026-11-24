@@ -14,6 +14,8 @@
 - 新增 `LICENSE`（MIT）。
 - `dart.yml` 与 `web.yml` 的 `push` / `pull_request` 加 `paths-ignore`（`**.md`、`docs/**`、`LICENSE`、`.gitignore`、`.gitattributes`、`.editorconfig`）：纯文档改动不再白跑一轮 CI，也不用再手工加 `[skip ci]`。
 - 三个 workflow 的 job 补齐 `timeout-minutes`（CI 20 分钟、Web 构建 20 分钟、部署 10 分钟、`mobile.yml` 原本已有），卡住时不会占满 GitHub 默认的 6 小时上限。
+- `mobile.yml` 不再在 `pull_request` 上触发：依赖机器人一次会开好几个 PR，每个都排一遍 Android + macOS 构建太浪费；Android 打包正确性由每次发版的标签运行兜住。
+- `dependabot.yml` 把同一周的 Action 版本更新合并成一个 PR（`groups`），并把 `open-pull-requests-limit` 收到 3。
 - README 补充上述配置文件说明与「纯文档改动不触发 CI」的行为，目录结构补 `.github/` 与根目录配置；AGENTS.md 的发版约定同步。
 - 版本号提升到 `1.0.9+10`。
 

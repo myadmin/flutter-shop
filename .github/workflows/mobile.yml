@@ -26,8 +26,9 @@ on:
   push:
     branches: [ "master" ]
     tags: [ "v*" ]
-  pull_request:
-    branches: [ "master" ]
+  # 不在 pull_request 上跑：依赖机器人（dependabot）一次会开好几个 PR，
+  # 每个都排一次 Android + macOS 构建太浪费；Android 打包正确性由每次发版的
+  # 标签运行兜住（每轮更新都会打标签）
   # 只改了文档/Web 的提交也想跳过移动端构建时，可在提交信息里加 [skip ci]
   workflow_dispatch:
     inputs:

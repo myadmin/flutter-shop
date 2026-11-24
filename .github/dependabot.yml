@@ -1,0 +1,42 @@
+version: 2
+
+# 依赖与 CI Action 的版本自动跟进：
+# - 每周检查一次 GitHub Actions 的版本（当前都是 @v4 / @v3 这类大版本标签）
+# - Flutter SDK 由各 workflow 里写死的 flutter-version 控制，升级要连代码迁移一起做，
+#   因此这里只开 PR 提示、不自动合并（见 dart.yml 里关于 3.48 的说明）
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+      - "github-actions"
+
+  - package-ecosystem: "pub"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore"
+    labels:
+      - "dependencies"
+      - "dart"
+    # Flutter SDK 自身的约束由 pubspec.yaml 的 environment.sdk 决定，
+    # 这里只跟随普通依赖的小版本，避免出现需要改代码的大版本升级
+    groups:
+      pub-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"

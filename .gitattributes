@@ -1,0 +1,35 @@
+# 统一换行符：仓库内文本文件一律 LF，检出到 Windows 也不自动转 CRLF，
+# 避免每次提交都出现 `warning: LF will be replaced by CRLF`，也避免整文件 diff。
+* text=auto eol=lf
+
+# Windows 批处理必须 CRLF，否则 cmd 解析会出问题
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# 构建脚本保持 LF（在 Linux CI 与 macOS 上执行）
+*.sh text eol=lf
+gradlew text eol=lf
+
+# 二进制文件不要做换行转换，也不要在 diff 里尝试按文本合并
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.jar binary
+*.jks binary
+*.keystore binary
+*.zip binary
+*.aab binary
+*.apk binary
+*.ipa binary
+
+# 语言统计：文档与生成物不计入
+*.md linguist-documentation
+docs/** linguist-documentation

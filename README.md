@@ -185,6 +185,17 @@
 ## 目录结构
 
 ```text
+.github/
+├── workflows/{dart,web,mobile}.yml  # CI / Web 部署 / 移动端打包
+└── dependabot.yml                   # 每周依赖与 Action 版本检查
+.gitattributes                       # 换行符与二进制文件规则（文本一律 LF）
+.editorconfig                        # 缩进 / 编码 / 行尾统一
+AGENTS.md                            # 发版约定与提交前门禁
+CHANGELOG.md                         # 版本更新日志（Release 说明来源）
+LICENSE                              # MIT
+```
+
+```text
 lib/
 ├── api/                        # 接口调用
 │   ├── home.dart               # 首页 9 个接口的请求函数（含新品首发 / 人气好物榜）
@@ -443,6 +454,17 @@ flutter test --coverage
 
 同一分支连续推送时，`concurrency` 会取消上一次仍在跑的检查，避免队列堆积。`.github/workflows/web.yml` 另行构建 Web 产物并通过 GitHub Pages 部署。
 
+**纯文档改动不触发 CI**：`dart.yml` 与 `web.yml` 的 `push` / `pull_request` 都配了 `paths-ignore`（`**.md`、`docs/**`、`LICENSE`、`.gitignore`、`.gitattributes`、`.editorconfig`），改 README / CHANGELOG 不会再白跑一轮（以前得在提交信息里手工加 `[skip ci]`）。两个 workflow 的 job 也都设了 `timeout-minutes`（CI 20 分钟、Web 构建 20 分钟、部署 10 分钟），卡住时不会占满 GitHub 默认的 6 小时上限。
+
+仓库还带了几个协作配置：
+
+| 文件 | 作用 |
+| --- | --- |
+| `.gitattributes` | 文本文件一律 `eol=lf`（Windows 检出也不转 CRLF），消除每次提交的 `LF will be replaced by CRLF` 警告与整文件 diff；`*.bat` / `*.cmd` / `*.ps1` 保留 CRLF；图片、字体、`*.jks`、`*.apk` 等按二进制处理 |
+| `.editorconfig` | 2 空格缩进、LF、文件末尾换行、去尾随空格（Markdown 例外，行尾两空格是硬换行） |
+| `.github/dependabot.yml` | 每周一检查 `github-actions` 与 `pub` 依赖，只对 minor / patch 开 PR；Flutter SDK 版本仍由各 workflow 写死，升级要连代码迁移一起做（见上一节） |
+| `LICENSE` | MIT |
+
 ### 关于 SDK 版本
 
 两个 workflow 都固定 `flutter-version: '3.47.9'`，而不是跟着 `channel: stable` 走。
@@ -562,7 +584,7 @@ find build/web -name '*.symbols' -print -delete
 - 版本号的唯一来源是 `pubspec.yaml` 的 `version`：`+` 前是 `versionName`、后是 `versionCode`，两者都会写进 APK / AAB / IPA。
 - 打标签后，`publish-release` 会用 `awk` 从 CHANGELOG 里抽出该版本段落，放在 Release 说明开头作为「本次更新」，后面再接安装包表格与安装提示。段落缺失时只在日志里打一条 notice，不会阻断发布。
 - 手动触发时 tag 的缺省值也来自包内版本号（`v1.0.3-build.<run number>`），不再是写死的版本号。
-- 纯文档提交（README / CHANGELOG 之外没有代码改动）不必单独发版，提交信息加 `[skip ci]` 即可。
+- 纯文档提交（README / CHANGELOG 之外没有代码改动）不必单独发版：`dart.yml` 与 `web.yml` 已用 `paths-ignore` 跳过纯文档改动，提交信息里加 `[skip ci]` 仍可作为兜底手段。
 
 ## 当前状态与已知问题
 

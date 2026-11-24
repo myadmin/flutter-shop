@@ -1,0 +1,26 @@
+# 统一各编辑器的缩进与换行，避免 Windows / macOS / Linux 协作时出现整文件 diff
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Markdown 里行尾两个空格是硬换行，不能删
+[*.md]
+trim_trailing_whitespace = false
+
+# Gradle / Kotlin 习惯 4 空格
+[*.{gradle,kts,kt}]
+indent_size = 4
+
+# Windows 脚本保持 CRLF
+[*.{bat,cmd,ps1}]
+end_of_line = crlf
+
+# 生成物与第三方产物不参与格式检查
+[{pubspec.lock,package-lock.json,*.g.dart}]
+generated_code = true

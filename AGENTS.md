@@ -10,7 +10,7 @@
 2. `CHANGELOG.md` 顶部补 `## [<versionName>] - YYYY-MM-DD`，分条写清改动；
 3. `git tag v<versionName> && git push origin v<versionName>`，`Build Mobile` 会自动打包并发布 GitHub Release（Release 说明从 CHANGELOG 抽取）。
 
-只有纯文档改动可以跳过发版，提交信息加 `[skip ci]`。
+只有纯文档改动可以跳过发版：`dart.yml` / `web.yml` 已用 `paths-ignore` 自动跳过纯文档提交，提交信息里加 `[skip ci]` 作为兜底。
 
 ## 提交前门禁
 

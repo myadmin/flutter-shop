@@ -1,8 +1,21 @@
 # 更新日志
 
-版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.8+9` 里 `1.0.8` 是 `versionName`，`9` 是 `versionCode`）。
+版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.9+10` 里 `1.0.9` 是 `versionName`，`10` 是 `versionCode`）。
 
 打 `v*` 标签时，[Build Mobile](.github/workflows/mobile.yml) 会把这里对应版本的「本次更新」自动写进 GitHub Release 说明，所以新增版本时记得在本文件补一段。
+
+## [1.0.9] - 2026-11-24
+
+工程卫生与 CI 成本优化，不改应用行为：
+
+- 新增 `.gitattributes`：文本文件统一 `eol=lf`，Windows 检出也不再转 CRLF——此前每次提交都会刷一串 `warning: LF will be replaced by CRLF`，且换行符变化容易造成整文件 diff。`*.bat` / `*.cmd` / `*.ps1` 保留 CRLF，图片、字体、`*.jks` / `*.apk` / `*.aab` / `*.ipa` 按二进制处理。
+- 新增 `.editorconfig`：2 空格缩进、UTF-8、LF、文件末尾换行、去尾随空格（Markdown 保留行尾空格，那是硬换行）。
+- 新增 `.github/dependabot.yml`：每周一检查 `github-actions` 与 `pub` 依赖，只对 minor / patch 开 PR；Flutter SDK 版本仍由各 workflow 写死，不自动跟。
+- 新增 `LICENSE`（MIT）。
+- `dart.yml` 与 `web.yml` 的 `push` / `pull_request` 加 `paths-ignore`（`**.md`、`docs/**`、`LICENSE`、`.gitignore`、`.gitattributes`、`.editorconfig`）：纯文档改动不再白跑一轮 CI，也不用再手工加 `[skip ci]`。
+- 三个 workflow 的 job 补齐 `timeout-minutes`（CI 20 分钟、Web 构建 20 分钟、部署 10 分钟、`mobile.yml` 原本已有），卡住时不会占满 GitHub 默认的 6 小时上限。
+- README 补充上述配置文件说明与「纯文档改动不触发 CI」的行为，目录结构补 `.github/` 与根目录配置；AGENTS.md 的发版约定同步。
+- 版本号提升到 `1.0.9+10`。
 
 ## [1.0.8] - 2026-11-24
 

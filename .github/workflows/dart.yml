@@ -7,8 +7,24 @@ name: Flutter CI
 on:
   push:
     branches: [ "master" ]
+    # 纯文档改动（README / CHANGELOG / docs / AGENTS.md）不跑 CI：
+    # 以前靠提交信息里手工加 [skip ci]，漏加就白跑一轮
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "LICENSE"
+      - ".gitignore"
+      - ".gitattributes"
+      - ".editorconfig"
   pull_request:
     branches: [ "master" ]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "LICENSE"
+      - ".gitignore"
+      - ".gitattributes"
+      - ".editorconfig"
 
 # 同一分支的新提交推送后，取消仍在跑的上一次检查，避免队列堆积浪费额度
 concurrency:
@@ -18,6 +34,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # 正常一轮（pub get + format + analyze + test + build web）约 3-5 分钟，
+    # 卡住时不要让 job 占满 GitHub 默认的 6 小时上限
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v4

@@ -452,7 +452,7 @@ flutter test --coverage
 4. 覆盖率阈值：整体可执行行覆盖率低于 **80%** 直接失败（当前 3426 / 3886 行 = 88.2%）。注意 lcov 只统计「被测试真正加载过」的文件，新增一个 import 就会改变分母——路由测试 import 了 `routes/index.dart`，把全部页面一起纳入统计
 5. `flutter build web --release` 构建冒烟 —— 资源路径、条件导入这类问题 analyze 与 test 都发现不了
 
-同一分支连续推送时，`concurrency` 会取消上一次仍在跑的检查，避免队列堆积。`.github/workflows/web.yml` 另行构建 Web 产物并通过 GitHub Pages 部署。
+同一分支连续推送时，`concurrency` 会取消上一次仍在跑的检查，避免队列堆积。`.github/workflows/web.yml` 另行构建 Web 产物并通过 GitHub Pages 部署，它的 `concurrency` 按 `ref` 分组（`pages-${{ github.ref }}`）——之前所有 PR 共用一个 `pages` 组，后到的会把排队中的取消掉，依赖机器人一次开多个 PR 时就会出现成片 `cancelled`。
 
 **纯文档改动不触发 CI**：`dart.yml` 与 `web.yml` 的 `push` / `pull_request` 都配了 `paths-ignore`（`**.md`、`docs/**`、`LICENSE`、`.gitignore`、`.gitattributes`、`.editorconfig`），改 README / CHANGELOG 不会再白跑一轮（以前得在提交信息里手工加 `[skip ci]`）。两个 workflow 的 job 也都设了 `timeout-minutes`（CI 20 分钟、Web 构建 20 分钟、部署 10 分钟），卡住时不会占满 GitHub 默认的 6 小时上限。
 

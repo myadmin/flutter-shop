@@ -34,7 +34,10 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  # 按 ref 分组：以前统一用 `pages`，所有 PR 的构建挤在同一组里，
+  # 后到的会把排队中的取消掉，依赖机器人一次开多个 PR 时就会出现成片 cancelled。
+  # 部署只发生在 master，因此 master 上的部署仍然串行。
+  group: pages-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:

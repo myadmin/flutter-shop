@@ -111,6 +111,16 @@ class AppUpdateService {
     }
   }
 
+  /// 打开 GitHub Release 页面（Web / iOS 上手动下载安装包用）
+  Future<bool> openReleasesPage() async {
+    try {
+      return await _launchUrl(Uri.parse(GlobalConstants.releasesPageUrl));
+    } catch (e) {
+      debugPrint('打开 Release 页面失败: $e');
+      return false;
+    }
+  }
+
   /// 距离上次检查是否还在间隔内
   bool _checkedRecently(SharedPreferences prefs) {
     final String? raw = prefs.getString(_lastCheckKey);

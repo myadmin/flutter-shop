@@ -262,7 +262,7 @@ class _MainPageState extends State<MainPage> {
           onGoShopping: () => _selectTab(_homeTabIndex),
         );
       case _mineTabIndex:
-        return const MineView();
+        return MineView(updateService: widget.updateService);
       case _homeTabIndex:
       default:
         return HomeView(

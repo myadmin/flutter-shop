@@ -1,8 +1,19 @@
 # 更新日志
 
-版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.13+14` 里 `1.0.13` 是 `versionName`，`14` 是 `versionCode`）。
+版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.14+15` 里 `1.0.14` 是 `versionName`，`15` 是 `versionCode`）。
 
 打 `v*` 标签时，[Build Mobile](.github/workflows/mobile.yml) 会把这里对应版本的「本次更新」自动写进 GitHub Release 说明，所以新增版本时记得在本文件补一段。
+
+## [1.0.14] - 2026-11-25
+
+「我的」页补一个「关于」卡片，让用户能自己确认版本、手动检查更新、直接下载安卓安装包：
+
+- 新增 `lib/components/Mine/hm_mine_about.dart`：展示当前版本（`package_info_plus` 读，读不到显示 `--`），下面是「检查更新」与「下载 Android 安装包」两行（右侧带箭头）。
+- `MineView` 新增可注入的 `AppUpdateService`：`_loadVersion()` 在 `initState` 读版本；「检查更新」调 `check(force: true)` 绕过 6 小时间隔——有新版复用 `showAppUpdateDialog`（点「立即更新」按平台打开 APK 或 Release 页，点「跳过此版本」写本地），无新版 toast「当前已是最新版本 vX」。
+- `AppUpdateService` 新增 `openReleasesPage()`；「下载 Android 安装包」在 Web / iOS 上打开 Release 页面，安卓端不展示这一行（本身就是安装包）。之前版本号只写在构建产物里，用户既看不到自己装的是哪一版，也没有手动更新的入口。
+- 新增 `test/mine_about_test.dart`（10 个用例）：组件渲染（版本 / `--` / 下载行显隐 / 箭头数量）、页面接入（版本展示、无新版提示、有新版弹窗与跳过、下载入口按平台显隐、打开失败提示）。
+- 整体覆盖率 91.6% → **91.7%**（3943 / 4300 行），用例数 295 → **305**；README 补「关于卡片」与「版本更新 - 手动入口」两条，目录树与基线注释同步。
+- 版本号提升到 `1.0.14+15`。
 
 ## [1.0.13] - 2026-11-25
 

@@ -1,16 +1,21 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hm_shop/api/mine.dart';
 import 'package:hm_shop/api/order.dart';
 import 'package:hm_shop/components/Home/hm_more_list.dart';
 import 'package:hm_shop/components/Mine/hm_guess.dart';
+import 'package:hm_shop/components/Mine/hm_mine_about.dart';
 import 'package:hm_shop/components/Mine/hm_mine_header.dart';
 import 'package:hm_shop/components/Mine/hm_mine_order_module.dart';
 import 'package:hm_shop/components/Mine/hm_mine_quick_actions.dart';
 import 'package:hm_shop/components/Mine/hm_mine_vip_card.dart';
+import 'package:hm_shop/components/common/hm_update_dialog.dart';
+import 'package:hm_shop/models/app_release.dart';
 import 'package:hm_shop/models/home.dart';
 import 'package:hm_shop/models/order_list.dart';
 import 'package:hm_shop/routes/app_routes.dart';
+import 'package:hm_shop/services/app_update_service.dart';
 import 'package:hm_shop/stores/token_manager.dart';
 import 'package:hm_shop/stores/user_controller.dart';
 import 'package:hm_shop/utils/paged_list.dart';
@@ -21,7 +26,10 @@ import 'package:hm_shop/utils/toast_utils.dart';
 /// 组合用户信息头部、会员卡、快捷入口、订单管理与「猜你喜欢」列表；
 /// 用户信息来自全局 `UserController`，列表数据由本页自身的 `setState` 管理。
 class MineView extends StatefulWidget {
-  const MineView({super.key});
+  const MineView({super.key, this.updateService});
+
+  /// 版本更新服务；为空时用全局单例（测试里注入假实现）
+  final AppUpdateService? updateService;
 
   @override
   State<MineView> createState() => _MineViewState();
@@ -56,6 +64,16 @@ class _MineViewState extends State<MineView> {
   /// 订单入口角标：键为入口名称（「待付款」等），值为订单数量
   Map<String, int> _orderCounts = const {};
 
+  /// 当前版本号，读不到时为空串（「关于」卡片展示为 `--`）
+  String _versionText = '';
+
+  AppUpdateService get _updateService =>
+      widget.updateService ?? AppUpdateService.instance;
+
+  /// 安卓端本身就是安装包，其余平台给一个下载页入口
+  bool get _needsDownloadPage =>
+      kIsWeb || defaultTargetPlatform != TargetPlatform.android;
+
   late final Worker _userWatcher;
 
   @override
@@ -64,6 +82,7 @@ class _MineViewState extends State<MineView> {
     _guess.refresh();
     _registerEvent();
     _loadOrderCounts();
+    _loadVersion();
     // 登录 / 退出后重新拉一次角标，避免残留上一个账号的数字
     _userWatcher = ever(_userController.user, (_) => _loadOrderCounts());
   }
@@ -79,6 +98,44 @@ class _MineViewState extends State<MineView> {
   /// 尚未开放的功能统一给出提示，避免点击后毫无反馈
   void _showComingSoon(String feature) {
     ToastUtils.showToast(context, '$feature功能开发中，敬请期待');
+  }
+
+  /// 读取当前版本号，用于「关于」卡片展示
+  Future<void> _loadVersion() async {
+    final String version = await _updateService.currentVersion();
+    if (!mounted) return;
+    setState(() {
+      _versionText = version;
+    });
+  }
+
+  /// 手动检查更新：有新版就弹窗，没有就提示已是最新
+  Future<void> _checkUpdateManually() async {
+    final AppRelease? release = await _updateService.check(force: true);
+    if (!mounted) return;
+    if (release == null) {
+      final String current = _versionText.isEmpty ? '' : ' v$_versionText';
+      ToastUtils.showToast(context, '当前已是最新版本$current');
+      return;
+    }
+    await showAppUpdateDialog(
+      context,
+      release: release,
+      currentVersion: _versionText,
+      onUpdate: () async {
+        await _updateService.openDownload(release);
+      },
+      onSkip: () async {
+        await _updateService.skip(release);
+      },
+    );
+  }
+
+  /// 打开安装包下载页（Web / iOS 用；安卓端不展示这个入口）
+  Future<void> _downloadAndroid() async {
+    final bool opened = await _updateService.openReleasesPage();
+    if (!mounted || opened) return;
+    ToastUtils.showToast(context, '打开下载页失败，请稍后再试');
   }
 
   /// 订单管理入口与列表页 tab 的对应关系
@@ -242,6 +299,16 @@ class _MineViewState extends State<MineView> {
             child: HmMineOrderModule(
               onEntryTap: _onOrderEntryTap,
               counts: _orderCounts,
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: HmMineAbout(
+                versionText: _versionText,
+                onCheckUpdate: _checkUpdateManually,
+                onDownload: _needsDownloadPage ? _downloadAndroid : null,
+              ),
             ),
           ),
           const SliverPersistentHeader(pinned: true, delegate: HmGuess()),

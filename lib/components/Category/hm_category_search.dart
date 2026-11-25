@@ -23,33 +23,36 @@ class HmCategorySearch extends StatelessWidget {
         AppSpacing.page,
         AppSpacing.small,
       ),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Container(
-          height: 38,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: const BoxDecoration(
-            color: AppColors.inputFill,
-            borderRadius: BorderRadius.all(Radius.circular(AppRadius.pill)),
-          ),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.search,
-                size: 18,
+      // 读屏时把整条读成一个「搜索商品」按钮，而不是图标 + 文字两个碎片
+      child: MergeSemantics(
+        child: Semantics(button: onTap != null, child: _buildField()),
+      ),
+    );
+  }
+
+  Widget _buildField() {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        height: 38,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: const BoxDecoration(
+          color: AppColors.inputFill,
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.pill)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.search, size: 18, color: AppColors.textSecondary),
+            const SizedBox(width: AppSpacing.small),
+            Text(
+              hintText,
+              style: const TextStyle(
+                fontSize: 13,
                 color: AppColors.textSecondary,
               ),
-              const SizedBox(width: AppSpacing.small),
-              Text(
-                hintText,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

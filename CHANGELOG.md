@@ -1,8 +1,20 @@
 # 更新日志
 
-版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.15+16` 里 `1.0.15` 是 `versionName`，`16` 是 `versionCode`）。
+版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.16+17` 里 `1.0.16` 是 `versionName`，`17` 是 `versionCode`）。
 
 打 `v*` 标签时，[Build Mobile](.github/workflows/mobile.yml) 会把这里对应版本的「本次更新」自动写进 GitHub Release 说明，所以新增版本时记得在本文件补一段。
+
+## [1.0.16] - 2026-11-25
+
+第二轮代码体检的第 ④ 项：给可点元素补读屏语义，并让固定高度模块在大字号下不再裁字。
+
+- 应用根节点加 `clampTextScale`（`MediaQuery.withClampedTextScaling`），把系统字号缩放夹在 **1.0～1.3**。首页金刚区、横滑小卡、底部操作栏都是固定高度，系统字号拉到 2 倍以上时文字会被裁掉半截，钳制后既能放大又不会破版。
+- 商品卡、首页横滑小卡、收藏/足迹条目、首页分类块、品牌卡统一用 `MergeSemantics` + `Semantics(button: …)` 合并成一个节点——此前读屏软件会把一张卡拆成「图片 / 名称 / 价格 / 已售」四五个焦点，逐条朗读却拼不出完整信息；无点击回调时不标按钮标记。
+- 纯图标按钮补动作名：购物车加减按钮带 `tooltip`「减少数量 / 增加数量」，删除按钮带「删除商品」，数量数字读成「数量 3」而不是孤零零一个「3」。
+- `HmGoodsCompactCard.heightFor(context, imageHeight)` 改为按当前字号缩放：名称区固定两行的高度同比放大，大字号下第二行不再被裁（两个调用方 `hm_new_goods.dart` / `hm_home_floor.dart` 同步传 `context`）。
+- 新增 `test/accessibility_test.dart`（9 个用例）：字号钳制（3.0 → 1.3、0.5 → 1.0、1.2 原样）、商品卡与摘要条目的按钮语义与标签、无回调时不标按钮、分类块标签、加减按钮 tooltip、数量标签。
+- 用例数 313 → **322**，整体覆盖率 91.7%（3956 / 4312 行）；README 补「无障碍」「大字号适配」两条，目录树与 CI 基线注释同步。
+- 版本号提升到 `1.0.16+17`。
 
 ## [1.0.15] - 2026-11-25
 

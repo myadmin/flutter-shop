@@ -110,15 +110,24 @@ class HmCartTile extends StatelessWidget {
                 ),
               ),
             ),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: busy ? null : onDelete,
-              child: const Padding(
-                padding: EdgeInsets.only(left: 6, top: 2),
-                child: Icon(
-                  Icons.delete_outline,
-                  size: 18,
-                  color: AppColors.textSecondary,
+            // 只有一个垃圾桶图标，读屏和长按提示都需要明确动作名
+            Semantics(
+              button: true,
+              enabled: !busy,
+              label: '删除商品',
+              child: Tooltip(
+                message: '删除',
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: busy ? null : onDelete,
+                  child: const Padding(
+                    padding: EdgeInsets.only(left: 6, top: 2),
+                    child: Icon(
+                      Icons.delete_outline,
+                      size: 18,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                 ),
               ),
             ),

@@ -32,7 +32,22 @@ Widget getRootWidget() {
     onGenerateInitialRoutes: buildInitialRoutes,
     // 连路径都对不上时展示兜底页，而不是白屏
     onUnknownRoute: buildUnknownRoute,
+    // 系统字号过大时把缩放比夹住，避免固定高度的模块把文字裁掉
+    builder: clampTextScale,
     theme: buildAppTheme(),
+  );
+}
+
+/// 限制系统字号缩放范围（1.0 ～ 1.3）
+///
+/// 首页金刚区、底部操作栏、tab 栏等不少地方是固定高度，系统字号拉到 2.0
+/// 以上时文字会被裁掉。这里把缩放比夹在 1.0～1.3：仍然尊重用户「调大字号」
+/// 的意愿，但不会把布局撑破。单独抽成函数便于测试直接断言夹取结果。
+Widget clampTextScale(BuildContext context, Widget? child) {
+  return MediaQuery.withClampedTextScaling(
+    minScaleFactor: 1,
+    maxScaleFactor: 1.3,
+    child: child ?? const SizedBox.shrink(),
   );
 }
 

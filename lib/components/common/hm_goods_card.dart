@@ -19,66 +19,73 @@ class HmGoodsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            // 按实际可用宽度解码，避免手机网格里按原图尺寸解码白占内存
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.image),
-                  child: AppNetworkImage(
-                    url: item.picture,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    decodeWidth: constraints.maxWidth,
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: AppSpacing.small),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Text(
-              item.name,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 14, color: Colors.black),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.small),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Row(
-              children: [
-                // 价格占满剩余宽度并等比缩小，避免窄屏横向溢出
-                Expanded(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text.rich(
-                      TextSpan(
-                        text: '￥${item.price}',
-                        style: AppTextStyles.pageTitle,
+    // 读屏软件把「图片 + 标题 + 价格 + 付款人数」当成一个按钮朗读，
+    // 而不是逐个碎片读，避免整页几十个商品卡时焦点乱跳
+    return MergeSemantics(
+      child: Semantics(
+        button: onTap != null,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                // 按实际可用宽度解码，避免手机网格里按原图尺寸解码白占内存
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.image),
+                      child: AppNetworkImage(
+                        url: item.picture,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        decodeWidth: constraints.maxWidth,
                       ),
-                      maxLines: 1,
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: AppSpacing.small),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Text(
+                  item.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 14, color: Colors.black),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.small),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Row(
+                  children: [
+                    // 价格占满剩余宽度并等比缩小，避免窄屏横向溢出
+                    Expanded(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text.rich(
+                          TextSpan(
+                            text: '￥${item.price}',
+                            style: AppTextStyles.pageTitle,
+                          ),
+                          maxLines: 1,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: AppSpacing.small),
+                    Text(
+                      '${item.soldCount}人付款',
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: AppSpacing.small),
-                Text(
-                  '${item.soldCount}人付款',
-                  style: const TextStyle(color: Colors.grey),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

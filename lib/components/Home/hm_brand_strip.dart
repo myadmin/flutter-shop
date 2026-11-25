@@ -40,7 +40,13 @@ class HmBrandStrip extends StatelessWidget {
             separatorBuilder: (BuildContext context, int index) =>
                 const SizedBox(width: 10),
             itemBuilder: (BuildContext context, int index) {
-              return _buildCard(brandList[index]);
+              // 每个品牌卡读成一个按钮（品牌名），logo 不单独成为焦点
+              return MergeSemantics(
+                child: Semantics(
+                  button: onBrandTap != null,
+                  child: _buildCard(brandList[index]),
+                ),
+              );
             },
           ),
         ),

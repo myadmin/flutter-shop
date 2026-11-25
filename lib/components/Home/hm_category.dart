@@ -24,45 +24,52 @@ class HmCategory extends StatelessWidget {
         itemCount: categoryList.length,
         itemBuilder: (BuildContext context, int index) {
           final category = categoryList[index];
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            // 用 Material + InkWell 而不是 GestureDetector：点击时有水波纹，
-            // 分类块是圆角胶囊，墨水必须裁到圆角内才不会溢出
-            child: Material(
-              color: AppColors.categoryTile,
-              borderRadius: BorderRadius.circular(40),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: onCategoryTap == null
-                    ? null
-                    : () => onCategoryTap!(category),
-                child: SizedBox(
-                  width: 80,
-                  height: 100,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      AppNetworkImage(
-                        url: category.picture,
-                        width: 40,
-                        height: 40,
-                        decodeWidth: 40,
-                        placeholderIconSize: 32,
-                      ),
-                      Text(
-                        category.name,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+          // 每个分类块读成一个按钮（「女装」），图片不单独成为焦点
+          return MergeSemantics(
+            child: Semantics(
+              button: onCategoryTap != null,
+              child: _buildItem(category),
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildItem(CategoryItem category) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      // 用 Material + InkWell 而不是 GestureDetector：点击时有水波纹，
+      // 分类块是圆角胶囊，墨水必须裁到圆角内才不会溢出
+      child: Material(
+        color: AppColors.categoryTile,
+        borderRadius: BorderRadius.circular(40),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onCategoryTap == null ? null : () => onCategoryTap!(category),
+          child: SizedBox(
+            width: 80,
+            height: 100,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AppNetworkImage(
+                  url: category.picture,
+                  width: 40,
+                  height: 40,
+                  decodeWidth: 40,
+                  placeholderIconSize: 32,
+                ),
+                Text(
+                  category.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12, color: Colors.black),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

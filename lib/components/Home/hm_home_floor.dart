@@ -62,7 +62,7 @@ class HmHomeFloor extends StatelessWidget {
           ],
           const SizedBox(height: 8),
           SizedBox(
-            height: HmGoodsCompactCard.heightFor(_imageHeight),
+            height: HmGoodsCompactCard.heightFor(context, _imageHeight),
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 10),

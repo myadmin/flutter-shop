@@ -31,19 +31,27 @@ class HmCartQuantityStepper extends StatelessWidget {
       children: [
         _StepperButton(
           icon: Icons.remove,
+          label: '减少数量',
           enabled: enabled && count > 1,
           onTap: () => onChanged(count - 1),
         ),
         Container(
           constraints: const BoxConstraints(minWidth: 34),
           alignment: Alignment.center,
-          child: Text(
-            '$count',
-            style: const TextStyle(fontSize: 13, color: Colors.black),
+          // 读屏时读成「数量 2」，而不是孤零零的一个数字
+          child: Semantics(
+            container: true,
+            excludeSemantics: true,
+            label: '数量 $count',
+            child: Text(
+              '$count',
+              style: const TextStyle(fontSize: 13, color: Colors.black),
+            ),
           ),
         ),
         _StepperButton(
           icon: Icons.add,
+          label: '增加数量',
           enabled: enabled && count < stock,
           onTap: () => onChanged(count + 1),
         ),
@@ -56,33 +64,45 @@ class HmCartQuantityStepper extends StatelessWidget {
 class _StepperButton extends StatelessWidget {
   final IconData icon;
 
+  /// 读屏与悬停提示用的动作名（「减少数量」/「增加数量」）
+  final String label;
+
   final bool enabled;
 
   final VoidCallback onTap;
 
   const _StepperButton({
     required this.icon,
+    required this.label,
     required this.enabled,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: enabled ? onTap : null,
-      child: Container(
-        width: 26,
-        height: 26,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.divider),
-          borderRadius: const BorderRadius.all(Radius.circular(4)),
-        ),
-        child: Icon(
-          icon,
-          size: 14,
-          color: enabled ? Colors.black87 : AppColors.divider,
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: label,
+      child: Tooltip(
+        message: label,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: enabled ? onTap : null,
+          child: Container(
+            width: 26,
+            height: 26,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.divider),
+              borderRadius: const BorderRadius.all(Radius.circular(4)),
+            ),
+            child: Icon(
+              icon,
+              size: 14,
+              color: enabled ? Colors.black87 : AppColors.divider,
+            ),
+          ),
         ),
       ),
     );

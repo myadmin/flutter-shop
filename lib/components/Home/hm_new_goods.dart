@@ -32,7 +32,7 @@ class HmNewGoods extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         SizedBox(
-          height: HmGoodsCompactCard.heightFor(_imageHeight),
+          height: HmGoodsCompactCard.heightFor(context, _imageHeight),
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 10),

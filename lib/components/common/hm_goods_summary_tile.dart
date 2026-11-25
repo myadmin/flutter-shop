@@ -44,6 +44,13 @@ class HmGoodsSummaryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 读屏软件把整条读成一个按钮：名称、价格、附注合成一句，而不是三段碎片
+    return MergeSemantics(
+      child: Semantics(button: onTap != null, child: _buildTile()),
+    );
+  }
+
+  Widget _buildTile() {
     final bool hasInfo = name.isNotEmpty;
     return Material(
       color: Colors.white,

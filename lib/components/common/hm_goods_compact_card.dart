@@ -25,17 +25,32 @@ class HmGoodsCompactCard extends StatelessWidget {
   final double width;
   final double imageHeight;
 
-  /// 名称固定占两行的高度，保证每张卡的价格行在同一水平线上
+  /// 名称固定占两行的高度（1 倍字号下的基准值）
   static const double _nameHeight = 33;
 
-  /// 图片 + 名称区 + 价格行
+  /// 图片 + 名称区 + 价格行（1 倍字号下的基准值）
   static const double _textAreaHeight = 72;
 
+  /// 当前字号相对 1 倍的缩放比（应用根节点已把缩放夹在 1.0～1.3）
+  ///
+  /// 名称区高度是写死的（保证一排卡片的价签在同一水平线），字号变大后
+  /// 两行字会超出这个固定高度被裁掉，所以按缩放比同比放大。
+  static double _scaleOf(BuildContext context) =>
+      MediaQuery.textScalerOf(context).scale(12) / 12;
+
   /// 卡片总高度：外层横滑列表要按这个值定高
-  static double heightFor(double imageHeight) => imageHeight + _textAreaHeight;
+  static double heightFor(BuildContext context, double imageHeight) =>
+      imageHeight + _textAreaHeight * _scaleOf(context);
 
   @override
   Widget build(BuildContext context) {
+    // 读屏软件把整张卡读成一个按钮，避免图片 / 名称 / 价格被拆成多个焦点
+    return MergeSemantics(
+      child: Semantics(button: onTap != null, child: _buildCard(context)),
+    );
+  }
+
+  Widget _buildCard(BuildContext context) {
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(AppRadius.card),
@@ -62,7 +77,7 @@ class HmGoodsCompactCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(
-                      height: _nameHeight,
+                      height: _nameHeight * _scaleOf(context),
                       child: Text(
                         goods.name,
                         maxLines: 2,

@@ -1,14 +1,19 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hm_shop/api/user.dart';
+import 'package:hm_shop/components/common/hm_update_banner.dart';
+import 'package:hm_shop/components/common/hm_update_dialog.dart';
 import 'package:hm_shop/constants/app_assets.dart';
 import 'package:hm_shop/constants/app_theme.dart';
+import 'package:hm_shop/models/app_release.dart';
 import 'package:hm_shop/models/home.dart';
 import 'package:hm_shop/pages/Cart/index.dart';
 import 'package:hm_shop/pages/Category/index.dart';
 import 'package:hm_shop/pages/Home/index.dart';
 import 'package:hm_shop/pages/Mine/index.dart';
 import 'package:hm_shop/routes/app_routes.dart';
+import 'package:hm_shop/services/app_update_service.dart';
 import 'package:hm_shop/stores/cart_controller.dart';
 import 'package:hm_shop/stores/token_manager.dart';
 import 'package:hm_shop/stores/user_controller.dart';
@@ -40,7 +45,10 @@ final List<({String icon, String activeIcon, String label})> _tabList = [
 ];
 
 class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+  const MainPage({super.key, this.updateService});
+
+  /// 版本更新检查服务；不传时用全局默认实例（测试可注入假数据）
+  final AppUpdateService? updateService;
 
   @override
   State<MainPage> createState() => _MainPageState();
@@ -84,6 +92,13 @@ class _MainPageState extends State<MainPage> {
 
   late final Worker _userWatcher;
 
+  /// 检查到的新版本；为空表示不需要提示更新
+  AppRelease? _updateRelease;
+
+  /// 更新检查服务（测试注入用）
+  AppUpdateService get _updateService =>
+      widget.updateService ?? AppUpdateService.instance;
+
   @override
   void initState() {
     super.initState();
@@ -96,6 +111,8 @@ class _MainPageState extends State<MainPage> {
     );
     // 初始化用户
     _initUser();
+    // 检查新版本（失败静默，不打扰用户）
+    _checkUpdate();
   }
 
   @override
@@ -136,6 +153,61 @@ class _MainPageState extends State<MainPage> {
       }
     }
     await _cartController.refreshCount();
+  }
+
+  /// 安卓用弹窗（能直接下安装包），其它平台用顶部横幅（只能去发布页）
+  bool get _usesUpdateDialog =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+  /// 检查新版本：有更新时网页端显示横幅，安卓弹窗提示
+  Future<void> _checkUpdate() async {
+    AppRelease? latest;
+    try {
+      latest = await _updateService.check();
+    } catch (e) {
+      debugPrint('检查更新失败: $e');
+      return;
+    }
+    if (!mounted || latest == null) {
+      return;
+    }
+    final AppRelease release = latest;
+    final String currentVersion = await _updateService.currentVersion();
+    if (!mounted) {
+      return;
+    }
+    setState(() => _updateRelease = release);
+    if (_usesUpdateDialog) {
+      await showAppUpdateDialog(
+        context,
+        release: release,
+        currentVersion: currentVersion,
+        onUpdate: () => _openUpdate(release),
+        onSkip: () => _skipUpdate(release),
+      );
+    }
+  }
+
+  /// 打开发布地址：安卓直接下安装包，其它平台打开 Release 页面
+  Future<void> _openUpdate(AppRelease release) async {
+    final bool opened = await _updateService.openDownload(release);
+    if (!opened && mounted) {
+      ToastUtils.showToast(context, '打开更新地址失败，请稍后重试');
+    }
+  }
+
+  /// 跳过这个版本：记到本地，之后同一个版本号不再提示
+  Future<void> _skipUpdate(AppRelease release) async {
+    await _updateService.skip(release);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _updateRelease = null);
+  }
+
+  /// 关掉横幅（只在本次运行内隐藏）
+  void _dismissUpdate() {
+    setState(() => _updateRelease = null);
   }
 
   /// 首页点了某个一级分类：切到「分类」tab 并让分类页选中同一分类
@@ -235,6 +307,7 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    final AppRelease? update = _updateRelease;
     return PopScope(
       // 停在非首页 tab 时，返回键先回到首页，再按一次才退出
       canPop: _currentIndex == _homeTabIndex,
@@ -246,11 +319,24 @@ class _MainPageState extends State<MainPage> {
       },
       child: Scaffold(
         body: SafeArea(
-          child: IndexedStack(
-            index: _currentIndex,
+          child: Column(
             children: [
-              for (var index = 0; index < _tabList.length; index++)
-                _buildTabPage(index),
+              // 有新版本时在顶部挂一条横幅（安卓走弹窗，这里不重复提示）
+              if (update != null && !_usesUpdateDialog)
+                HmUpdateBanner(
+                  versionName: update.versionName,
+                  onUpdate: () => _openUpdate(update),
+                  onClose: _dismissUpdate,
+                ),
+              Expanded(
+                child: IndexedStack(
+                  index: _currentIndex,
+                  children: [
+                    for (var index = 0; index < _tabList.length; index++)
+                      _buildTabPage(index),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

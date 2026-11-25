@@ -457,3 +457,52 @@ Map<String, dynamic> userProfileJson({
     'token': token,
   };
 }
+
+/// 首页「专题精选」条目（结构对齐 `/home/special` 的数组元素）
+Map<String, dynamic> specialTopicJson({
+  String id = 'special-1',
+  String title = '测试专题',
+  String summary = '专题简介',
+  num lowestPrice = 59,
+  String cover = '',
+  int collectNum = 0,
+  int viewNum = 0,
+  int replyNum = 0,
+}) {
+  return {
+    'id': id,
+    'classificationId': '1',
+    'title': title,
+    'summary': summary,
+    'lowestPrice': lowestPrice,
+    'cover': cover,
+    'detailsUrl': cover,
+    'collectNum': collectNum,
+    'viewNum': viewNum,
+    'replyNum': replyNum,
+  };
+}
+
+/// 首页分类楼层（结构对齐 `/home/goods` 的数组元素）
+Map<String, dynamic> homeFloorJson({
+  String id = 'floor-1',
+  String name = '测试楼层',
+  String picture = '',
+  String saleInfo = '全场3件8折',
+  List<Map<String, dynamic>>? children,
+  List<Map<String, dynamic>>? goods,
+}) {
+  return {
+    'id': id,
+    'name': name,
+    'picture': picture,
+    'saleInfo': saleInfo,
+    'children':
+        children ??
+        [
+          {'id': 'sub-a', 'name': '子分类A', 'layer': 2, 'parent': id},
+          {'id': 'sub-b', 'name': '子分类B', 'layer': 2, 'parent': id},
+        ],
+    'goods': goods ?? [goodsItemJson()],
+  };
+}

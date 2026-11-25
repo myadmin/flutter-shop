@@ -6,6 +6,21 @@ class GlobalConstants {
   static const String tokenKey = 'hm_shop_token';
   // 本地足迹（后端无足迹接口，浏览记录只存在本机）
   static const String footprintKey = 'hm_shop_footprint';
+
+  // 仓库地址：版本更新检查直接读 GitHub Release，与商城接口无关
+  static const String repoOwner = 'myadmin';
+  static const String repoName = 'flutter-shop';
+
+  /// 最新 Release 接口（未登录调用，每小时 60 次的限额按出口 IP 算）
+  static const String latestReleaseUrl =
+      'https://api.github.com/repos/$repoOwner/$repoName/releases/latest';
+
+  /// Release 页面地址（iOS / Web 的更新入口）
+  static const String releasesPageUrl =
+      'https://github.com/$repoOwner/$repoName/releases/latest';
+
+  /// 距离上次检查更新的最小间隔，避免每次启动都请求 GitHub
+  static const int updateCheckHours = 6;
 }
 
 // 请求接口地址常量
@@ -30,6 +45,10 @@ class HttpConstants {
   static const String brandList = '/home/brand';
   // 品牌详情（`/brand/<品牌 id>`）
   static const String brandDetail = '/brand';
+  // 专题精选（首页大图专题卡，只有列表、没有详情接口）
+  static const String specialList = '/home/special';
+  // 分类楼层（首页按一级分类分层的商品）
+  static const String homeFloors = '/home/goods';
   // 推荐列表
   static const String recommendList = '/home/recommend';
   // 猜你喜欢

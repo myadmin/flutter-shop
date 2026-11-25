@@ -1,8 +1,20 @@
 # 更新日志
 
-版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.12+13` 里 `1.0.12` 是 `versionName`，`13` 是 `versionCode`）。
+版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.13+14` 里 `1.0.13` 是 `versionName`，`14` 是 `versionCode`）。
 
 打 `v*` 标签时，[Build Mobile](.github/workflows/mobile.yml) 会把这里对应版本的「本次更新」自动写进 GitHub Release 说明，所以新增版本时记得在本文件补一段。
+
+## [1.0.13] - 2026-11-25
+
+首页内容再扩充，并加上「打开时检查新版本」：
+
+- 首页在推荐列表（无限滚动）之上新增三个内容模块：**服务保障条**（正品保障 / 极速发货 / 七天无理由 / 售后无忧，纯静态）、**专题精选**（`/home/special`，横滑卡片展示封面、标题、起价与收藏人数）、**分类楼层**（`/home/goods`，4 个楼层各含楼层名、促销语、二级分类胶囊与横滑商品）。推荐列表仍在最下面，五个补充模块依旧在首屏出图后并发补拉、单个失败静默降级。
+- 新增 `lib/models/home_extra.dart`（`SpecialTopicItem` / `HomeFloor`）、`lib/api/home_extra.dart`、`lib/components/common/hm_goods_compact_card.dart`（紧凑商品卡，新品首发与楼层共用）、`lib/components/Home/{hm_service_promise,hm_special_topic,hm_home_floor}.dart`；`hm_new_goods.dart` 改用统一的紧凑商品卡（131 → 76 行）。
+- 楼层卡价格被截断（`￥298....`）修复：价格行由 `Text` + ellipsis 改成 `FittedBox(scaleDown)` 缩放，`已售 N` 加左内边距并禁止换行——110 宽的卡片也能完整显示 `￥1566.00`。
+- **打开时检查新版本**：`AppUpdateService` 读当前版本（`package_info_plus`）→ 拉 GitHub `releases/latest` → 分段比较版本号；Web / iOS 在页面顶部显示 `HmUpdateBanner`，Android 弹 `showAppUpdateDialog`（版本号 + 安装包体积 + 更新说明），「立即更新」用 `url_launcher` 打开 APK 下载地址，「跳过此版本」写进本地后同一版本不再提示；两次检查间隔 6 小时（GitHub 未登录接口按 IP 限流），请求失败 / 仓库未发版 / debug 构建都静默跳过。
+- 新增 `test/app_update_test.dart`（27 个用例）：版本号归一化与比较、Release 与 APK 资产选择、TTL 与 `force`、跳过版本、横幅与弹窗回调、Android / 非安卓两种提示、GitHub 接口的 404 与 500、`PackageInfo` 版本读取；首页新模块的用例补在 `test/home_modules_test.dart`（服务保障 / 专题精选 / 分类楼层，含空数据与点击跳转）。
+- 整体覆盖率 91.5% → **91.6%**（3885 / 4239 行），用例数 259 → **295**；README 补「版本更新」说明与接口表，`.github/workflows/dart.yml` 的基线注释同步。
+- 版本号提升到 `1.0.13+14`。
 
 ## [1.0.12] - 2026-11-24
 

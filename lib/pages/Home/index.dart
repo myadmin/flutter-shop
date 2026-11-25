@@ -3,17 +3,22 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:hm_shop/api/brand.dart';
 import 'package:hm_shop/api/home.dart';
+import 'package:hm_shop/api/home_extra.dart';
 import 'package:hm_shop/components/common/app_error_view.dart';
 import 'package:hm_shop/components/Home/hm_brand_strip.dart';
 import 'package:hm_shop/components/Home/hm_category.dart';
+import 'package:hm_shop/components/Home/hm_home_floor.dart';
 import 'package:hm_shop/components/Home/hm_hot.dart';
 import 'package:hm_shop/components/Home/hm_more_list.dart';
 import 'package:hm_shop/components/Home/hm_new_goods.dart';
 import 'package:hm_shop/components/Home/hm_rank_list.dart';
+import 'package:hm_shop/components/Home/hm_service_promise.dart';
 import 'package:hm_shop/components/Home/hm_slider.dart';
+import 'package:hm_shop/components/Home/hm_special_topic.dart';
 import 'package:hm_shop/components/Home/hm_suggestion.dart';
 import 'package:hm_shop/models/brand.dart';
 import 'package:hm_shop/models/home.dart';
+import 'package:hm_shop/models/home_extra.dart';
 import 'package:hm_shop/pages/Home/skeleton.dart';
 import 'package:hm_shop/routes/app_routes.dart';
 import 'package:hm_shop/utils/api_exception.dart';
@@ -89,6 +94,12 @@ class _HomeViewState extends State<HomeView> {
   /// 品牌好店（`/home/brand`）
   List<BrandItem> _brandList = [];
 
+  /// 专题精选（`/home/special`）
+  List<SpecialTopicItem> _specialTopicList = [];
+
+  /// 分类楼层（`/home/goods`）
+  List<HomeFloor> _floorList = [];
+
   List<GoodDetailItem> _recommendList = [];
   int _page = 1;
 
@@ -137,12 +148,23 @@ class _HomeViewState extends State<HomeView> {
         ),
       ),
       const SliverToBoxAdapter(child: SizedBox(height: 10)),
+      const SliverToBoxAdapter(child: HmServicePromise()),
+      const SliverToBoxAdapter(child: SizedBox(height: 10)),
       SliverToBoxAdapter(
         child: HmCategory(
           categoryList: _categoryList,
           onCategoryTap: widget.onCategoryTap,
         ),
       ),
+      if (_specialTopicList.isNotEmpty) ...[
+        const SliverToBoxAdapter(child: SizedBox(height: 10)),
+        SliverToBoxAdapter(
+          child: HmSpecialTopic(
+            topics: _specialTopicList,
+            onTopicTap: _onSpecialTopicTap,
+          ),
+        ),
+      ],
       const SliverToBoxAdapter(child: SizedBox(height: 10)),
       SliverToBoxAdapter(
         child: HmSuggestion(
@@ -196,9 +218,42 @@ class _HomeViewState extends State<HomeView> {
           child: HmBrandStrip(brandList: _brandList, onBrandTap: _onBrandTap),
         ),
       ],
+      // 分类楼层：每层一个一级分类，排在无限滚动之上
+      for (final floor in _floorList) ...[
+        const SliverToBoxAdapter(child: SizedBox(height: 10)),
+        SliverToBoxAdapter(
+          child: HmHomeFloor(
+            floor: floor,
+            onGoodsTap: _onGoodsTap,
+            onCategoryTap: _openFloorCategory,
+            onFloorTap: () => _openFloor(floor),
+          ),
+        ),
+      ],
       const SliverToBoxAdapter(child: SizedBox(height: 10)),
       HmMoreList(recommendList: _recommendList, onItemTap: _onGoodsTap),
     ];
+  }
+
+  /// 点楼层「查看全部」：进该楼层分类的商品列表页
+  void _openFloor(HomeFloor floor) {
+    Navigator.pushNamed(context, AppRoutes.goodsList(floor.id, floor.name));
+  }
+
+  /// 点楼层里的二级分类：直接进该子分类的商品列表页
+  ///
+  /// 顶部金刚区的一级分类点进去是「切到分类 tab」，楼层里的二级分类
+  /// 没有对应的 tab 位置，所以走商品列表页。
+  void _openFloorCategory(CategoryItem category) {
+    Navigator.pushNamed(
+      context,
+      AppRoutes.goodsList(category.id, category.name),
+    );
+  }
+
+  /// 点专题卡：接口没有专题详情，只能提示，避免点了完全没反应
+  void _onSpecialTopicTap(SpecialTopicItem topic) {
+    ToastUtils.showToast(context, '专题「${topic.title}」详情正在建设中');
   }
 
   void _onGoodsTap(GoodsItem goods) {
@@ -329,10 +384,18 @@ class _HomeViewState extends State<HomeView> {
     }
 
     try {
-      final (newGoodsList, newRankResult, brandList) = await (
+      final (
+        newGoodsList,
+        newRankResult,
+        brandList,
+        specialTopicList,
+        floorList,
+      ) = await (
         guard(getNewGoodsListAPI, '获取新品首发'),
         guard(getNewRankListAPI, '获取人气好物榜'),
         guard(getBrandListAPI, '获取品牌好店'),
+        guard(getSpecialTopicListAPI, '获取专题精选'),
+        guard(getHomeFloorListAPI, '获取分类楼层'),
       ).wait;
 
       if (!mounted) return;
@@ -345,6 +408,12 @@ class _HomeViewState extends State<HomeView> {
         }
         if (brandList != null) {
           _brandList = brandList;
+        }
+        if (specialTopicList != null) {
+          _specialTopicList = specialTopicList;
+        }
+        if (floorList != null) {
+          _floorList = floorList;
         }
       });
     } finally {

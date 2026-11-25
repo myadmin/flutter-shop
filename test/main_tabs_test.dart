@@ -110,9 +110,9 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: MainPage()));
     await _settle(tester);
 
-    // 首页自己的 9 个请求：首屏 6 个（轮播 / 分类 / 特惠 / 爆款 / 一站 / 推荐）
-    // + 首屏出图后补的 3 个（新品 / 榜单 / 品牌）
-    expect(mock.requests.length, 9);
+    // 首页自己的 11 个请求：首屏 6 个（轮播 / 分类 / 特惠 / 爆款 / 一站 / 推荐）
+    // + 首屏出图后补的 5 个（新品 / 榜单 / 品牌 / 专题 / 楼层）
+    expect(mock.requests.length, 11);
     expect(_count(mock, '/home/banner'), 1);
     expect(_count(mock, '/home/recommend'), 1);
     // 分类页（会再拉一次 /home/category/head）与「我的」页都还没构建

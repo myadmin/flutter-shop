@@ -82,8 +82,8 @@ void main() {
 
       expect(find.byType(HomeSkeleton), findsNothing);
       expect(find.byType(AppErrorView), findsNothing);
-      // 首屏 6 个接口 + 首屏出图后补的 3 个（新品 / 榜单 / 品牌）
-      expect(adapter.requests.length, 9);
+      // 首屏 6 个接口 + 首屏出图后补的 5 个（新品 / 榜单 / 品牌 / 专题 / 楼层）
+      expect(adapter.requests.length, 11);
       expect(
         adapter.requests.where((option) => option.path == '/home/recommend'),
         hasLength(1),

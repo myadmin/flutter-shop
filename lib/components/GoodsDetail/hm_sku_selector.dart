@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hm_shop/components/Cart/hm_cart_quantity_stepper.dart';
 import 'package:hm_shop/components/common/app_network_image.dart';
 import 'package:hm_shop/components/common/hm_bottom_bar.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/goods.dart';
 
@@ -239,14 +240,7 @@ class _HmSkuSelectorState extends State<HmSkuSelector> {
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  stockText,
-                  maxLines: 1,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
+                Text(stockText, maxLines: 1, style: AppTextStyles.caption),
                 if (_selectedText.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Text(

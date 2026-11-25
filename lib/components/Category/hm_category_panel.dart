@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hm_shop/components/common/app_network_image.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/home.dart';
 
@@ -83,13 +84,7 @@ class HmCategoryPanel extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 18),
                   child: Center(
-                    child: Text(
-                      '更多分类持续上新',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
+                    child: Text('更多分类持续上新', style: AppTextStyles.captionSmall),
                   ),
                 ),
               ),
@@ -123,13 +118,7 @@ class HmCategoryPanel extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          Text(
-            '共 $count 个分类',
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppColors.textSecondary,
-            ),
-          ),
+          Text('共 $count 个分类', style: AppTextStyles.captionSmall),
         ],
       ),
     );

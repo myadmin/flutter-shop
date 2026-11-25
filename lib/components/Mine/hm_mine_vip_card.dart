@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hm_shop/constants/app_assets.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 
 /// 「我的」页面会员卡入口
@@ -50,7 +51,7 @@ class HmMineVipCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(18),
                 ),
               ),
-              child: const Text('立即开通', style: TextStyle(fontSize: 12)),
+              child: const Text('立即开通', style: AppTextStyles.bodySmall),
             ),
           ],
         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hm_shop/components/common/app_network_image.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/order_list.dart';
 
@@ -47,10 +48,7 @@ class HmOrderSkuRow extends StatelessWidget {
                     sku.attrsText,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                    ),
+                    style: AppTextStyles.captionSmall,
                   ),
                 ],
               ],
@@ -69,13 +67,7 @@ class HmOrderSkuRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
-                '×${sku.quantity}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
-              ),
+              Text('×${sku.quantity}', style: AppTextStyles.caption),
             ],
           ),
         ],

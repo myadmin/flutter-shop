@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 
 /// 通用空态 / 未登录态
@@ -49,10 +50,7 @@ class HmEmptyView extends StatelessWidget {
               child: Text(
                 description,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
+                style: AppTextStyles.caption,
               ),
             ),
           ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hm_shop/components/Order/hm_order_sku_row.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/order_list.dart';
 
@@ -56,10 +57,7 @@ class HmOrderCard extends StatelessWidget {
                         '订单号 ${order.shortId}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
+                        style: AppTextStyles.caption,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -74,13 +72,7 @@ class HmOrderCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  order.createTime,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
+                Text(order.createTime, style: AppTextStyles.captionSmall),
                 const Divider(height: 16, color: AppColors.divider),
                 for (final sku in visibleSkus) HmOrderSkuRow(sku: sku),
                 if (order.skus.length > visibleSkus.length)
@@ -88,10 +80,7 @@ class HmOrderCard extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       '还有 ${order.skus.length - visibleSkus.length} 件商品',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textSecondary,
-                      ),
+                      style: AppTextStyles.captionSmall,
                     ),
                   ),
                 const SizedBox(height: 6),
@@ -102,22 +91,12 @@ class HmOrderCard extends StatelessWidget {
                   children: [
                     Text(
                       '共 ${order.goodsCount} 件',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
+                      style: AppTextStyles.caption,
                     ),
                     const SizedBox(width: 8),
-                    const Text('实付', style: TextStyle(fontSize: 12)),
+                    const Text('实付', style: AppTextStyles.bodySmall),
                     const SizedBox(width: 2),
-                    Text(
-                      '￥${order.payMoney}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
-                    ),
+                    Text('￥${order.payMoney}', style: AppTextStyles.price),
                   ],
                 ),
                 if (onDelete != null || onPrimaryAction != null) ...[
@@ -188,7 +167,7 @@ class _OrderCardButton extends StatelessWidget {
                 side: const BorderSide(color: AppColors.divider),
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 shape: const StadiumBorder(),
-                textStyle: const TextStyle(fontSize: 12),
+                textStyle: AppTextStyles.bodySmall,
               ),
               child: Text(text),
             ),

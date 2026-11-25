@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 
 /// 底部固定操作栏外壳
@@ -71,11 +72,7 @@ class HmBottomBarPrice extends StatelessWidget {
           amount,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: Colors.black,
-          ),
+          style: AppTextStyles.pageTitle,
         ),
       ],
     );

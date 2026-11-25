@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hm_shop/constants/app_theme.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 
 /// 分页列表底部的状态条
 ///
@@ -41,12 +41,7 @@ class HmListFooter extends StatelessWidget {
     }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 14),
-      child: Center(
-        child: Text(
-          noMoreText,
-          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-        ),
-      ),
+      child: Center(child: Text(noMoreText, style: AppTextStyles.caption)),
     );
   }
 }

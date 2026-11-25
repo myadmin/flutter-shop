@@ -3,6 +3,7 @@ import 'package:hm_shop/api/category.dart';
 import 'package:hm_shop/components/common/app_error_view.dart';
 import 'package:hm_shop/components/common/hm_bottom_bar.dart';
 import 'package:hm_shop/components/common/hm_goods_card.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/category_goods.dart';
 import 'package:hm_shop/models/home.dart';
@@ -228,22 +229,10 @@ class _GoodsListPageState extends State<GoodsListPage> {
       padding: const EdgeInsets.only(bottom: AppSpacing.module),
       child: Row(
         children: [
-          Text(
-            '共 ${result.goods.length} 件商品',
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
-            ),
-          ),
+          Text('共 ${result.goods.length} 件商品', style: AppTextStyles.caption),
           if (parent.isNotEmpty) ...[
             const SizedBox(width: AppSpacing.small),
-            Text(
-              '· $parent',
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
-            ),
+            Text('· $parent', style: AppTextStyles.caption),
           ],
         ],
       ),
@@ -262,10 +251,7 @@ class _GoodsListPageState extends State<GoodsListPage> {
             style: TextStyle(fontSize: 14, color: Colors.black),
           ),
           SizedBox(height: AppSpacing.small),
-          Text(
-            '换个分类看看吧',
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-          ),
+          Text('换个分类看看吧', style: AppTextStyles.caption),
         ],
       ),
     );

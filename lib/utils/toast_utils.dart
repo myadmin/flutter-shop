@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 
 /// 轻提示工具：以居中浮动 SnackBar 的形式展示短文案。
@@ -28,7 +29,7 @@ class ToastUtils {
     _throttleUntil = now.add(Duration(seconds: duration));
     // 测量文本实际宽度，让 toast 宽度随内容自适应
     final TextPainter painter = TextPainter(
-      text: TextSpan(text: text, style: const TextStyle(fontSize: 14)),
+      text: TextSpan(text: text, style: AppTextStyles.body),
       maxLines: 1,
       textDirection: Directionality.of(context),
       textScaler: MediaQuery.textScalerOf(context),

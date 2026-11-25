@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hm_shop/components/Cart/hm_cart_quantity_stepper.dart';
 import 'package:hm_shop/components/common/app_network_image.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/cart.dart';
 
@@ -135,10 +136,7 @@ class HmCartTile extends StatelessWidget {
               item.attrsText,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 10,
-                color: AppColors.textSecondary,
-              ),
+              style: AppTextStyles.label,
             ),
           ),
         ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hm_shop/api/user.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/stores/token_manager.dart';
 import 'package:hm_shop/stores/user_controller.dart';
@@ -148,7 +149,7 @@ class _LoginPageState extends State<LoginPage> {
           child: Text.rich(
             TextSpan(
               text: '查看并同意',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              style: AppTextStyles.caption,
               children: [
                 TextSpan(
                   text: '《隐私条款》',

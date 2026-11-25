@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/app_release.dart';
 
@@ -30,10 +31,7 @@ Future<void> showAppUpdateDialog(
                   sizeText.isEmpty
                       ? '当前版本 $currentVersion'
                       : '当前版本 $currentVersion · 安装包 $sizeText',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
+                  style: AppTextStyles.caption,
                 ),
                 if (release.notes.trim().isNotEmpty) ...[
                   const SizedBox(height: 10),

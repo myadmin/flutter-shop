@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hm_shop/components/common/hm_goods_compact_card.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/home.dart';
 import 'package:hm_shop/models/home_extra.dart';
@@ -128,13 +129,7 @@ class HmHomeFloor extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    '查看全部',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
+                  Text('查看全部', style: AppTextStyles.captionSmall),
                   Icon(
                     Icons.chevron_right,
                     size: 14,

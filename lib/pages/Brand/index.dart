@@ -3,6 +3,7 @@ import 'package:hm_shop/api/brand.dart';
 import 'package:hm_shop/components/common/app_error_view.dart';
 import 'package:hm_shop/components/common/app_network_image.dart';
 import 'package:hm_shop/components/common/hm_bottom_bar.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/brand.dart';
 import 'package:hm_shop/utils/api_exception.dart';
@@ -148,10 +149,7 @@ class _BrandPageState extends State<BrandPage> {
                         detail.nameEn,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
+                        style: AppTextStyles.caption,
                       ),
                     ],
                     if (detail.productionPlace.isNotEmpty) ...[
@@ -160,10 +158,7 @@ class _BrandPageState extends State<BrandPage> {
                         '产地：${detail.productionPlace}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
+                        style: AppTextStyles.caption,
                       ),
                     ],
                   ],
@@ -184,13 +179,7 @@ class _BrandPageState extends State<BrandPage> {
           ],
           if (detail.collectNum > 0) ...[
             const SizedBox(height: 10),
-            Text(
-              '${detail.collectNum} 人关注',
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
-            ),
+            Text('${detail.collectNum} 人关注', style: AppTextStyles.caption),
           ],
         ],
       ),

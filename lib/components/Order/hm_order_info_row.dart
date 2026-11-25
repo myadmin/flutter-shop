@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 
 /// 订单详情里的「标签 + 值」一行
@@ -25,16 +26,7 @@ class HmOrderInfoRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 72,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
+          SizedBox(width: 72, child: Text(label, style: AppTextStyles.caption)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(

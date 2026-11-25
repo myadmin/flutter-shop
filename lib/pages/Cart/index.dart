@@ -6,6 +6,7 @@ import 'package:hm_shop/components/Cart/hm_cart_summary_bar.dart';
 import 'package:hm_shop/components/Cart/hm_cart_tile.dart';
 import 'package:hm_shop/components/common/app_error_view.dart';
 import 'package:hm_shop/components/common/hm_bottom_bar.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/cart.dart';
 import 'package:hm_shop/routes/app_routes.dart';
@@ -373,13 +374,7 @@ class _CartViewState extends State<CartView> {
                 ),
                 const SizedBox(width: 8),
                 if (loggedIn && _items.isNotEmpty)
-                  Text(
-                    '共 $_totalCount 件',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
+                  Text('共 $_totalCount 件', style: AppTextStyles.caption),
               ],
             ),
           ),

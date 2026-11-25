@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hm_shop/components/common/app_network_image.dart';
 import 'package:hm_shop/components/common/hm_section_header.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/home.dart';
 
@@ -125,10 +126,7 @@ class HmRankList extends StatelessWidget {
                       if (goods.soldCount > 0)
                         Text(
                           '已售${goods.soldCount}',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textSecondary,
-                          ),
+                          style: AppTextStyles.captionSmall,
                         ),
                     ],
                   ),

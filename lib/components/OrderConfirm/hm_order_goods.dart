@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hm_shop/components/OrderConfirm/hm_order_card.dart';
 import 'package:hm_shop/components/common/app_network_image.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/order.dart';
 
@@ -37,18 +38,14 @@ class HmOrderGoods extends StatelessWidget {
                   goods.name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
+                  style: AppTextStyles.bodyStrong,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   goods.attrsText,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: AppTextStyles.caption,
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -62,10 +59,7 @@ class HmOrderGoods extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    Text(
-                      'x${goods.count}',
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
+                    Text('x${goods.count}', style: AppTextStyles.caption),
                   ],
                 ),
               ],

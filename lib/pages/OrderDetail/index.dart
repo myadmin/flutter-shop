@@ -4,6 +4,7 @@ import 'package:hm_shop/components/Order/hm_order_info_row.dart';
 import 'package:hm_shop/components/Order/hm_order_sku_row.dart';
 import 'package:hm_shop/components/common/app_error_view.dart';
 import 'package:hm_shop/components/common/hm_bottom_bar.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/order_list.dart';
 import 'package:hm_shop/utils/api_exception.dart';
@@ -196,21 +197,11 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                         detail.receiverContact,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                        ),
+                        style: AppTextStyles.bodyStrong,
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Text(
-                      detail.receiverMobile,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
+                    Text(detail.receiverMobile, style: AppTextStyles.caption),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -236,13 +227,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text(
-                '共 ${detail.goodsCount} 件商品',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
-              ),
+              Text('共 ${detail.goodsCount} 件商品', style: AppTextStyles.caption),
             ],
           ),
         ],

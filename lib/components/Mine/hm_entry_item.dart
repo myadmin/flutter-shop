@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 
 /// 「图标 + 文案」纵向排列的入口按钮，用于「我的收藏 / 待付款」等宫格入口。
@@ -64,7 +65,7 @@ class HmEntryItem extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          Text(label, style: const TextStyle(fontSize: 12)),
+          Text(label, style: AppTextStyles.bodySmall),
         ],
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hm_shop/components/common/app_network_image.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/home.dart';
 
@@ -100,10 +101,7 @@ class HmGoodsCompactCard extends StatelessWidget {
                               '已售${goods.soldCount}',
                               maxLines: 1,
                               softWrap: false,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: AppColors.textSecondary,
-                              ),
+                              style: AppTextStyles.label,
                             ),
                           ),
                       ],

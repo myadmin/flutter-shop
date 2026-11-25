@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/goods.dart';
 
@@ -34,10 +35,7 @@ class HmGoodsProperties extends StatelessWidget {
                 children: [
                   SizedBox(
                     width: 80,
-                    child: Text(
-                      property.name,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
+                    child: Text(property.name, style: AppTextStyles.caption),
                   ),
                   Expanded(
                     child: Text(
@@ -68,14 +66,7 @@ class HmGoodsDetailHeader extends StatelessWidget {
           Expanded(child: Divider(color: AppColors.divider, thickness: 0.5)),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 10),
-            child: Text(
-              '商品详情',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
+            child: Text('商品详情', style: AppTextStyles.bodyStrong),
           ),
           Expanded(child: Divider(color: AppColors.divider, thickness: 0.5)),
         ],

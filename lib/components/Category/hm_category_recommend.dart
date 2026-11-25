@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hm_shop/components/common/hm_goods_card.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/home.dart';
 
@@ -41,19 +42,9 @@ class HmCategoryRecommend extends StatelessWidget {
           padding: EdgeInsets.fromLTRB(12, 14, 12, 10),
           child: Row(
             children: [
-              Text(
-                '猜你喜欢',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
+              Text('猜你喜欢', style: AppTextStyles.bodyStrong),
               Spacer(),
-              Text(
-                '为你精选',
-                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-              ),
+              Text('为你精选', style: AppTextStyles.captionSmall),
             ],
           ),
         ),
@@ -71,12 +62,7 @@ class HmCategoryRecommend extends StatelessWidget {
         else if (items.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(
-              child: Text(
-                '暂无推荐商品',
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-              ),
-            ),
+            child: Center(child: Text('暂无推荐商品', style: AppTextStyles.caption)),
           )
         else
           GridView.builder(

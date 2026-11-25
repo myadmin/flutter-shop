@@ -4,6 +4,7 @@ import 'package:hm_shop/api/user.dart';
 import 'package:hm_shop/components/common/app_error_view.dart';
 import 'package:hm_shop/components/common/hm_bottom_bar.dart';
 import 'package:hm_shop/constants/app_assets.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/user.dart';
 import 'package:hm_shop/stores/token_manager.dart';
@@ -426,7 +427,7 @@ class _ProfilePageState extends State<ProfilePage> {
               controller: controller,
               maxLength: maxLength,
               textAlign: TextAlign.end,
-              style: const TextStyle(fontSize: 14),
+              style: AppTextStyles.body,
               decoration: InputDecoration(
                 hintText: hintText,
                 counterText: '',
@@ -464,7 +465,7 @@ class _ProfilePageState extends State<ProfilePage> {
           children: [
             _buildLabel(label),
             const Spacer(),
-            Text(value, style: const TextStyle(fontSize: 14)),
+            Text(value, style: AppTextStyles.body),
             const SizedBox(width: 4),
             const Icon(
               Icons.chevron_right_outlined,
@@ -489,7 +490,7 @@ class _ProfilePageState extends State<ProfilePage> {
               value,
               textAlign: TextAlign.end,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 14),
+              style: AppTextStyles.body,
             ),
           ),
         ],

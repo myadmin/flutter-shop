@@ -1,8 +1,19 @@
 # 更新日志
 
-版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.14+15` 里 `1.0.14` 是 `versionName`，`15` 是 `versionCode`）。
+版本号写在 `pubspec.yaml` 的 `version` 字段（`1.0.15+16` 里 `1.0.15` 是 `versionName`，`16` 是 `versionCode`）。
 
 打 `v*` 标签时，[Build Mobile](.github/workflows/mobile.yml) 会把这里对应版本的「本次更新」自动写进 GitHub Release 说明，所以新增版本时记得在本文件补一段。
+
+## [1.0.15] - 2026-11-25
+
+第二轮代码体检的第 ③ 项：收敛重复的文字样式与重复的列表条目实现。
+
+- 新增 `lib/constants/app_text_styles.dart`：`AppTextStyles` 收敛 10 档高频文字样式（`caption` / `captionSmall` / `label` / `body` / `bodyStrong` / `bodySmall` / `price` / `tileTitle` / `pageTitle` / `sectionTitle`）。此前同一档样式（例如「12 号次要说明文字」）在十几个文件里各写一遍内联 `TextStyle`，全库共 95 种写法。
+- 迁移 34 个文件的 68 处内联 `TextStyle` 到语义常量（含 7 处 `Colors.grey` 统一成 `AppColors.textSecondary`），lib 侧净减 290 行；需要局部微调时用 `AppTextStyles.xxx.copyWith(...)`。
+- 新增 `lib/components/common/hm_goods_summary_tile.dart`：收藏列表与足迹列表的条目原本是两份几乎逐行相同的实现（93 行 + 82 行，相似度 67%），现在共用 `HmGoodsSummaryTile`（商品图 + 标题 + 价格 + 一行附注），两个 `Hm*Tile` 只负责字段映射：收藏拼「收藏于 …」并保留「信息全空时不显示 ￥0.00」的兜底，足迹拼「… 浏览」且恒显价格。
+- 新增 `test/goods_summary_tile_test.dart`（8 个用例）：名称 / 价格 / 附注展示、`showPrice` 关闭、失效文案兜底、点击回调，以及收藏与足迹两个条目的字段映射。
+- 用例数 305 → **313**，整体覆盖率 91.7%（3921 / 4277 行，行数变少是因为重复样式被常量替换）；README 补「文字样式」「列表条目复用」两条，目录树与 CI 基线注释同步。
+- 版本号提升到 `1.0.15+16`。
 
 ## [1.0.14] - 2026-11-25
 

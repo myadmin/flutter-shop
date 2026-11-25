@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/utils/toast_utils.dart';
 
@@ -95,13 +96,7 @@ class CustomerServicePage extends StatelessWidget {
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                 ),
                 SizedBox(height: 4),
-                Text(
-                  serviceTime,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
+                Text(serviceTime, style: AppTextStyles.caption),
               ],
             ),
           ),
@@ -149,9 +144,7 @@ class CustomerServicePage extends StatelessWidget {
                 color: AppColors.textSecondary,
               ),
               const SizedBox(width: 8),
-              const Expanded(
-                child: Text(hotline, style: TextStyle(fontSize: 14)),
-              ),
+              const Expanded(child: Text(hotline, style: AppTextStyles.body)),
               TextButton(
                 onPressed: () => _copyHotline(context),
                 child: const Text('复制'),
@@ -168,7 +161,7 @@ class CustomerServicePage extends StatelessWidget {
                 color: AppColors.textSecondary,
               ),
               SizedBox(width: 8),
-              Expanded(child: Text(email, style: TextStyle(fontSize: 14))),
+              Expanded(child: Text(email, style: AppTextStyles.body)),
             ],
           ),
         ],
@@ -193,10 +186,7 @@ class CustomerServicePage extends StatelessWidget {
           for (var i = 0; i < faqs.length; i++) ...[
             if (i > 0) const Divider(height: 1, color: AppColors.divider),
             ExpansionTile(
-              title: Text(
-                faqs[i].question,
-                style: const TextStyle(fontSize: 14),
-              ),
+              title: Text(faqs[i].question, style: AppTextStyles.body),
               tilePadding: const EdgeInsets.symmetric(horizontal: 14),
               childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
               expandedCrossAxisAlignment: CrossAxisAlignment.start,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 
 /// 未知路由兜底页
@@ -52,10 +53,7 @@ class UnknownRoutePage extends StatelessWidget {
                     ? '地址可能已经失效，回首页继续逛逛吧'
                     : '地址 $location',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
+                style: AppTextStyles.caption,
               ),
               const SizedBox(height: 20),
               OutlinedButton(

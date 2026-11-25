@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hm_shop/components/Footprint/hm_footprint_tile.dart';
-import 'package:hm_shop/components/common/hm_empty_view.dart';
 import 'package:hm_shop/components/common/hm_bottom_bar.dart';
+import 'package:hm_shop/components/common/hm_empty_view.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/footprint.dart';
 import 'package:hm_shop/routes/app_routes.dart';
@@ -146,7 +147,7 @@ class _FootprintPageState extends State<FootprintPage> {
               child: Text(
                 '足迹仅保存在本机，最多保留 ${FootprintStore.maxItems} 条',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                style: AppTextStyles.captionSmall,
               ),
             ),
           ],

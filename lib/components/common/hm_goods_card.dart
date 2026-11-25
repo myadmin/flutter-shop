@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hm_shop/components/common/app_network_image.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/constants/app_theme.dart';
 import 'package:hm_shop/models/home.dart';
 
@@ -63,11 +64,7 @@ class HmGoodsCard extends StatelessWidget {
                     child: Text.rich(
                       TextSpan(
                         text: '￥${item.price}',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.black,
-                        ),
+                        style: AppTextStyles.pageTitle,
                       ),
                       maxLines: 1,
                     ),

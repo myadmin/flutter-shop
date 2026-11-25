@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hm_shop/constants/app_text_styles.dart';
 import 'package:hm_shop/models/goods.dart';
 
 /// 商品详情页的价格、销量与标题区块
@@ -47,7 +48,7 @@ class HmGoodsPriceInfo extends StatelessWidget {
               const Spacer(),
               Text(
                 '已售${detail.salesCount} · 评价${detail.commentCount}',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                style: AppTextStyles.caption,
               ),
             ],
           ),
@@ -62,10 +63,7 @@ class HmGoodsPriceInfo extends StatelessWidget {
           ),
           if (detail.desc.isNotEmpty) ...[
             const SizedBox(height: 6),
-            Text(
-              detail.desc,
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-            ),
+            Text(detail.desc, style: AppTextStyles.caption),
           ],
         ],
       ),
